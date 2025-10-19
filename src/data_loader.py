@@ -7,7 +7,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_text_splitters.character import RecursiveCharacterTextSplitter
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -46,16 +45,11 @@ def load_healthcaremagic(file_path: str):
         return data
         
 def prepare_chunks(data, chunk_size: int=500, chunk_overlap: int=100):
-    """
-    Merge question and answer, then split into chunks.
-    """
-    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, 
-                                              chunk_overlap=chunk_overlap)
     chunks = []
     
     for item in data:
         combined_text = f"Question: {item['question']}\nAnswer: {item['answer']}"
-        chunks.extend(splitter.split_text(combined_text))
+        chunks.extend(combined_text)
     
     return chunks
 
