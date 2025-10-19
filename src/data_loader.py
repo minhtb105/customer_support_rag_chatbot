@@ -11,7 +11,6 @@ from langchain_text_splitters.character import RecursiveCharacterTextSplitter
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-print(BASE_DIR)
 RAW_DIR = BASE_DIR / "data" / "raw"
 PROCESSED_DIR = BASE_DIR / "data" / "processed"
 EMBEDDINGS_DIR = BASE_DIR / "embeddings" / "chroma_index"
