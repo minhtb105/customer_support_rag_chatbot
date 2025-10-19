@@ -49,14 +49,13 @@ def prepare_chunks(data, chunk_size: int=500, chunk_overlap: int=100):
     """
     Merge question and answer, then split into chunks.
     """
-    docs = []
-    for item in data:
-        combined_text = f"Question: {item["question"]}\nAnswer: {item['answer']}"
-        docs.append(combined_text)
-        
     splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, 
                                               chunk_overlap=chunk_overlap)
-    chunks = splitter.split_text("\n\n".join(docs))
+    chunks = []
+    
+    for item in data:
+        combined_text = f"Question: {item['question']}\nAnswer: {item['answer']}"
+        chunks.extend(splitter.split_text(combined_text))
     
     return chunks
 
