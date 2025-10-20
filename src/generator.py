@@ -57,15 +57,3 @@ def generate_answer(query, contexts, model="llama-3.1-8b-instant"):
     
     return answer
         
-if __name__ == "__main__":
-    from retriever import retrieve_context
-    
-    query = "What are common side affects of antibiotics?"
-    contexts = retrieve_context(query, top_k=10)
-    
-    reranked = rerank_contexts(query, contexts, top_n=3)
-    answer = generate_answer(query, reranked)
-
-    print("\nFinal Answer:")
-    print(answer)
-        
