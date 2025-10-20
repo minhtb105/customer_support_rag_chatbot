@@ -7,6 +7,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_text_splitters.character import RecursiveCharacterTextSplitter
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
@@ -44,18 +45,23 @@ def load_healthcaremagic(file_path: str):
             
         return data
         
-def prepare_chunks(data, chunk_size: int=500, chunk_overlap: int=100):
-    chunks = []
-    
-    for item in data:
+def prepare_chunks(data, chunk_size: int=500, chunk_overlap: int=200):
+    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, 
+                                              chunk_overlap=chunk_overlap)
+    texts, metadatas = [], []
+    for i, item in enumerate(data):
         combined_text = f"Question: {item['question']}\nAnswer: {item['answer']}"
-        chunks.extend(combined_text)
+        parts = splitter.split_text(combined_text)
+        for part in parts:
+            texts.append(part)
+            metadatas.append({"source_id": i})
     
-    return chunks
+    return texts, metadatas
 
-def create_vectorstore(chunks, persist_dir=EMBEDDINGS_DIR):
+def create_vectorstore(texts, metadatas, persist_dir=EMBEDDINGS_DIR):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    db = Chroma.from_texts(chunks, embedding=embeddings, persist_directory=persist_dir)
+    db = Chroma.from_texts(texts, embedding=embeddings, 
+                           persist_directory=persist_dir, metadatas=metadatas)
     
     return db
     
@@ -71,10 +77,10 @@ def main():
     with open(os.path.join(PROCESSED_DIR, "qa_combined.json"), "w", encoding="utf-8") as f:
         json.dump(all_data, f, ensure_ascii=False, indent=2)
 
-    chunks = prepare_chunks(all_data)
-    logging.info(f"Total text chunks created: {len(chunks)}")
+    texts, metadatas = prepare_chunks(all_data)
+    logging.info(f"Total text chunks created: {len(texts)}")
 
-    create_vectorstore(chunks)
+    create_vectorstore(texts, metadatas)
 
 if __name__ == "__main__":
     main()
