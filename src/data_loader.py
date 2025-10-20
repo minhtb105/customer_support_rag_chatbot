@@ -3,17 +3,11 @@ import json
 import logging
 import pandas as pd
 from tqdm import tqdm
-from pathlib import Path
-from dotenv import load_dotenv
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters.character import RecursiveCharacterTextSplitter
+from config import RAW_DIR, PROCESSED_DIR, EMBEDDINGS_DIR, CHUNK_SIZE, CHUNK_OVERLAP
 
-
-BASE_DIR = Path(__file__).resolve().parents[1]
-RAW_DIR = BASE_DIR / "data" / "raw"
-PROCESSED_DIR = BASE_DIR / "data" / "processed"
-EMBEDDINGS_DIR = BASE_DIR / "embeddings" / "chroma_index"
 
 os.makedirs(PROCESSED_DIR, exist_ok=True)
 os.makedirs(EMBEDDINGS_DIR, exist_ok=True)
@@ -45,9 +39,9 @@ def load_healthcaremagic(file_path: str):
             
         return data
         
-def prepare_chunks(data, chunk_size: int=500, chunk_overlap: int=200):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, 
-                                              chunk_overlap=chunk_overlap)
+def prepare_chunks(data):
+    splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, 
+                                              chunk_overlap=CHUNK_OVERLAP)
     texts, metadatas = [], []
     for i, item in enumerate(data):
         combined_text = f"Question: {item['question']}\nAnswer: {item['answer']}"
@@ -58,10 +52,10 @@ def prepare_chunks(data, chunk_size: int=500, chunk_overlap: int=200):
     
     return texts, metadatas
 
-def create_vectorstore(texts, metadatas, persist_dir=EMBEDDINGS_DIR):
+def create_vectorstore(texts, metadatas):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     db = Chroma.from_texts(texts, embedding=embeddings, 
-                           persist_directory=persist_dir, metadatas=metadatas)
+                           persist_directory=EMBEDDINGS_DIR, metadatas=metadatas)
     
     return db
     

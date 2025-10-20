@@ -1,8 +1,9 @@
 from retriever import retrieve_context
 from generator import generate_answer, rerank_contexts
+from config import TOP_K, DEFAULT_MODEL 
 
 
-def rag_chat(question, top_k: int = 10, model: str = "llama-3.1-8b-instant"):
+def rag_chat(question, top_k: int = TOP_K, model: str = DEFAULT_MODEL):
     """
     RAG pipeline: Given a question -> retrieve context -> generate answer
     """

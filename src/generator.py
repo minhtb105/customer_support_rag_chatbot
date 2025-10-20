@@ -1,11 +1,8 @@
-import os
 from openai import OpenAI 
-from dotenv import load_dotenv
 from sentence_transformers import CrossEncoder
+from config import GROQ_API_KEY, DEFAULT_MODEL
 
 
-load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 client = OpenAI(
     api_key=GROQ_API_KEY,
     base_url="https://api.groq.com/openai/v1"
@@ -33,7 +30,7 @@ def format_context(contexts):
     
     return context_text.strip()
 
-def generate_answer(query, contexts, model="llama-3.1-8b-instant"):
+def generate_answer(query, contexts, model=DEFAULT_MODEL):
     context_text = format_context(contexts)
     system_prompt = (
         "You are a helpful medical assistant."
