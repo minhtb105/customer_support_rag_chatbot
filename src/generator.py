@@ -2,7 +2,8 @@ import re
 from openai import OpenAI 
 from sentence_transformers import CrossEncoder
 from config import GROQ_API_KEY, DEFAULT_MODEL
-from prompt_templates import STRICT_PROMPT, FRIENDLY_PROMPT, BALANCED_PROMPT
+from prompt_templates import (
+    STRICT_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT, BALANCED_SYSTEM_PROMPT)
 
 
 client = OpenAI(
@@ -40,14 +41,14 @@ def detect_tone_and_temp(query: str):
     
     # Tone: strict if the query is a serious medical question
     if any(keyword in query_lower for keyword in ["diagnosis", "treatment", "symptom", "disease", "side effect", "risk"]):
-        return STRICT_PROMPT, 0.1
+        return STRICT_SYSTEM_PROMPT, 0.1
     
     # Tone: friendly if the query is a light, advisory question
     if any(keyword in query_lower for keyword in ["feel", "stress", "diet", "exercise", "well-being", "advice"]):
-        return FRIENDLY_PROMPT, 0.5  # friendly tone, slightly higher temperature
+        return FRIENDLY_SYSTEM_PROMPT, 0.5  # friendly tone, slightly higher temperature
 
     # Default: balanced
-    return BALANCED_PROMPT, 0.2
+    return BALANCED_SYSTEM_PROMPT, 0.2
 
 def generate_answer(query, contexts, model=DEFAULT_MODEL):
     context_text = format_context(contexts)
