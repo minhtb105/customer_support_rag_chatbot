@@ -15,6 +15,6 @@ CHUNK_SIZE = 500
 CHUNK_OVERLAP = 200
 
 DEFAULT_MODEL = "llama-3.1-8b-instant"
-TOKENIZER_MODEL = "NousResearch/Llama-3.1-8B"
+TOKENIZER_MODEL = "meta-llama/Llama-3-8b"
 
 TOP_K = 10

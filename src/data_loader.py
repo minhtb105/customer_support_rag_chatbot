@@ -3,6 +3,7 @@ import json
 import logging
 import pandas as pd
 from tqdm import tqdm
+from transformers import AutoTokenizer
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import TokenTextSplitter
@@ -41,10 +42,12 @@ def load_healthcaremagic(file_path: str):
         return data
         
 def prepare_chunks(data, tokenizer_model=TOKENIZER_MODEL):
+    tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_MODEL)
     splitter = TokenTextSplitter.from_huggingface_tokenizer(
-        tokenizer_model,
-        chunk_size=CHUNK_SIZE, 
-        chunk_overlap=CHUNK_OVERLAP)
+        tokenizer,
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP
+    )
     
     texts, metadatas = [], []
     for i, item in enumerate(data):
