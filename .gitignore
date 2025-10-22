@@ -2,3 +2,4 @@
 .env
 data/*
 embeddings/*
+src/__pycache__
