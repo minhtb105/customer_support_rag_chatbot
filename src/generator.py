@@ -1,6 +1,8 @@
+import re
 from openai import OpenAI 
 from sentence_transformers import CrossEncoder
 from config import GROQ_API_KEY, DEFAULT_MODEL
+from prompt_templates import STRICT_PROMPT, FRIENDLY_PROMPT, BALANCED_PROMPT
 
 
 client = OpenAI(
@@ -30,13 +32,28 @@ def format_context(contexts):
     
     return context_text.strip()
 
+def detect_tone_and_temp(query: str):
+    """
+    Heuristics: determine tone + temperature based on the content of the query.
+    """
+    query_lower = query.lower()
+    
+    # Tone: strict if the query is a serious medical question
+    if any(keyword in query_lower for keyword in ["diagnosis", "treatment", "symptom", "disease", "side effect", "risk"]):
+        return STRICT_PROMPT, 0.1
+    
+    # Tone: friendly if the query is a light, advisory question
+    if any(keyword in query_lower for keyword in ["feel", "stress", "diet", "exercise", "well-being", "advice"]):
+        return FRIENDLY_PROMPT, 0.5  # friendly tone, slightly higher temperature
+
+    # Default: balanced
+    return BALANCED_PROMPT, 0.2
+
 def generate_answer(query, contexts, model=DEFAULT_MODEL):
     context_text = format_context(contexts)
-    system_prompt = (
-        "You are a helpful medical assistant."
-        "Answer the user's question using only the provided context."
-        "If the answer is not in the context, say 'I'm not sure based on the provided information.'"
-    )
+    
+    system_prompt, temperature = detect_tone_and_temp(query)
+    
     user_prompt = (
         f"Context: \n{context_text}\n\n"
         f"Question: {query}\n\n"
@@ -48,7 +65,7 @@ def generate_answer(query, contexts, model=DEFAULT_MODEL):
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ],
-        temperature=0.2
+        temperature=temperature
     )
     answer = response.choices[0].message.content.strip()
     
