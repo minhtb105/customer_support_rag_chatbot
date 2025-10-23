@@ -39,13 +39,21 @@ def detect_tone_and_temp(query: str):
     """
     query_lower = query.lower()
     
-    # Tone: strict if the query is a serious medical question
-    if any(keyword in query_lower for keyword in ["diagnosis", "treatment", "symptom", "disease", "side effect", "risk"]):
+    strict_keywords = [
+        "diagnosis", "treatment", "symptom", "disease", "side effect",
+        "risk", "medicine", "disorder", "infection", "pain", "safe for"
+    ]
+    friendly_keywords = [
+        "feel", "stress", "diet", "exercise", "well-being", "advice", "sleep", "healthy"
+    ]
+    
+    # Strict tone
+    if any(k in query_lower for k in strict_keywords):
         return STRICT_SYSTEM_PROMPT, 0.1
     
-    # Tone: friendly if the query is a light, advisory question
-    if any(keyword in query_lower for keyword in ["feel", "stress", "diet", "exercise", "well-being", "advice"]):
-        return FRIENDLY_SYSTEM_PROMPT, 0.5  # friendly tone, slightly higher temperature
+    # Friendly tone
+    if any(k in query_lower for k in friendly_keywords):
+        return FRIENDLY_SYSTEM_PROMPT, 0.4
 
     # Default: balanced
     return BALANCED_SYSTEM_PROMPT, 0.2
