@@ -27,8 +27,10 @@ def rerank_contexts(query, contexts, top_n=3):
 
 def format_context(contexts):
     context_text = ""
-    for i, context in enumerate(contexts):
-        context_text += f"[Source {i + 1} | Score={context.get('score', 'N/A'):.4f}]: {context['content']}\n\n"
+    for context in contexts:
+        src_id = context.get("source_id", "N/A")
+        score = context.get("score", "N/A")
+        context_text += f"[Source {src_id} | Score={score:.4f}]\n{context['content']}\n\n"
     
     return context_text.strip()
 
@@ -58,6 +60,9 @@ def detect_tone_and_temp(query: str):
     return BALANCED_SYSTEM_PROMPT, 0.2
 
 def generate_answer(query, contexts, model=DEFAULT_MODEL):
+    """
+    Generate an answer that includes inline citations like [Source 1].
+    """
     context_text = format_context(contexts)
     
     system_prompt, temperature = detect_tone_and_temp(query)
@@ -77,5 +82,15 @@ def generate_answer(query, contexts, model=DEFAULT_MODEL):
     )
     answer = response.choices[0].message.content.strip()
     
-    return answer
+    # Extract which sources were cited
+    cited_sources = set()
+    import re
+    for match in re.findall(r"\[Source\s+(\d+)\]", answer):
+        cited_sources.add(int(match))
+
+    return {
+        "answer": answer,
+        "cited_sources": sorted(list(cited_sources)),
+        "contexts": contexts,
+    }
         
