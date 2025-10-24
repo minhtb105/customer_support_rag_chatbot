@@ -26,3 +26,43 @@ BALANCED_SYSTEM_PROMPT = (
     "Keep the response well-structured, professional, and easy to follow.\n"
     "Use bullet points if it helps improve clarity."
 )
+
+EVALUATION_PROMPT = """
+You are an expert evaluator for medical Retrieval-Augmented Generation (RAG) systems.
+
+Evaluate the chatbot's answer based on the following four criteria.  
+Each criterion is rated from 0 (very poor) to 5 (excellent).
+
+1. **Faithfulness** - The answer does not contain fabricated or incorrect information; it stays true to the retrieved context.  
+2. **Contextual Precision** - The retrieved context used is highly relevant and specific to the user question.  
+3. **Contextual Recall** - The answer sufficiently uses all relevant context needed to answer the question completely.  
+4. **Fluency** - The answer is natural, grammatically correct, and easy to read.
+
+---
+**Question:**
+{question}
+
+**Answer:**
+{answer}
+
+**Retrieved Contexts:**
+{context_text}
+
+---
+Return your evaluation strictly in this JSON format:
+{{
+  "Faithfulness": <0-5>,
+  "Faithfulness_comment": "<one-sentence evaluation>",
+
+  "Contextual_Precision": <0-5>,
+  "Contextual_Precision_comment": "<one-sentence evaluation>",
+
+  "Contextual_Recall": <0-5>,
+  "Contextual_Recall_comment": "<one-sentence evaluation>",
+
+  "Fluency": <0-5>,
+  "Fluency_comment": "<one-sentence evaluation>",
+
+  "Overall_Comment": "<brief summary in English>"
+}}
+"""
