@@ -45,7 +45,7 @@ def retrieve_context(query: str, top_k: int=TOP_K):
         weights=[1 - HYBRID_ALPHA, HYBRID_ALPHA]  # e.g. 0.4 lexical + 0.6 semantic
     )
     
-    docs = hybrid_retriever.get_relevant_documents(query)
+    docs = hybrid_retriever.invoke(query)
     grouped = {}
     
     for doc in docs:
