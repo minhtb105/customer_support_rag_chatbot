@@ -18,3 +18,4 @@ DEFAULT_MODEL = "llama-3.1-8b-instant"
 TOKENIZER_MODEL = "bert-base-uncased"
 
 TOP_K = 10
+HYBRID_ALPHA=0.6
