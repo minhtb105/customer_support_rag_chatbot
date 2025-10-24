@@ -1,4 +1,3 @@
-import re
 from openai import OpenAI 
 from sentence_transformers import CrossEncoder
 from config import GROQ_API_KEY, DEFAULT_MODEL
