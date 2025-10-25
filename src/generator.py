@@ -112,3 +112,45 @@ def generate_answer(query, contexts, model=DEFAULT_MODEL):
         "contexts": contexts,
     }
         
+def format_answer_for_ui(answer_data: dict) -> str:
+    """
+    Format chatbot answer for frontend display.
+    - Convert newlines to HTML <br> tags
+    - Append citation list with source_id and optional dataset name
+    """
+
+    answer_text = answer_data.get("answer", "").strip()
+    cited_sources = answer_data.get("cited_sources", [])
+    contexts = answer_data.get("contexts", [])
+
+    # Format line breaks for web display
+    formatted_answer = (
+        answer_text
+        .replace("\n\n", "<br><br>")
+        .replace("\n", "<br>")
+    )
+
+    # Build citation text
+    citation_entries = []
+    for src_id in cited_sources:
+        dataset = None
+        for ctx in contexts:
+            if ctx.get("source_id") == src_id:
+                dataset = ctx.get("dataset")
+                break
+        
+        if dataset:
+            citation_entries.append(f"[{src_id}] {dataset}")
+        else:
+            citation_entries.append(f"[{src_id}]")
+
+    # Join citations
+    if citation_entries:
+        citations_text = " — Sources: " + ", ".join(citation_entries)
+    else:
+        citations_text = ""
+
+    # Final HTML-safe answer
+    formatted_output = f"{formatted_answer}<br><br><i>{citations_text}</i>"
+
+    return formatted_output
