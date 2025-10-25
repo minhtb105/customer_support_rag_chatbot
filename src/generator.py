@@ -11,6 +11,18 @@ client = OpenAI(
 )
 reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 
+# In-memory conversation history
+chat_history = []
+
+def format_context(contexts):
+    context_text = ""
+    for context in contexts:
+        src_id = context.get("source_id", "N/A")
+        score = context.get("score", "N/A")
+        context_text += f"[Source {src_id} | Score={score:.4f}]\n{context['content']}\n\n"
+    
+    return context_text.strip()
+
 def rerank_contexts(query, contexts, top_n=3):
     if not contexts:
         return []
@@ -24,15 +36,6 @@ def rerank_contexts(query, contexts, top_n=3):
     ranked = sorted(contexts, key=lambda x: x["score"], reverse=True)
     
     return ranked[:top_n]
-
-def format_context(contexts):
-    context_text = ""
-    for context in contexts:
-        src_id = context.get("source_id", "N/A")
-        score = context.get("score", "N/A")
-        context_text += f"[Source {src_id} | Score={score:.4f}]\n{context['content']}\n\n"
-    
-    return context_text.strip()
 
 def detect_tone_and_temp(query: str):
     """
@@ -50,14 +53,18 @@ def detect_tone_and_temp(query: str):
     
     # Strict tone
     if any(k in query_lower for k in strict_keywords):
-        return STRICT_SYSTEM_PROMPT, 0.1
+        return STRICT_SYSTEM_PROMPT, 0.1, 256 # concise factual
     
     # Friendly tone
     if any(k in query_lower for k in friendly_keywords):
-        return FRIENDLY_SYSTEM_PROMPT, 0.4
+        return FRIENDLY_SYSTEM_PROMPT, 0.4, 256 # conversational tone
+
+    # Balanced tone
+    if query.strip().startswith("why "):
+        return BALANCED_SYSTEM_PROMPT, 0.3, 512  # reasoning-heavy answers
 
     # Default: balanced
-    return BALANCED_SYSTEM_PROMPT, 0.2
+    return BALANCED_SYSTEM_PROMPT, 0.2, 512
 
 def generate_answer(query, contexts, model=DEFAULT_MODEL):
     """
@@ -65,23 +72,34 @@ def generate_answer(query, contexts, model=DEFAULT_MODEL):
     """
     context_text = format_context(contexts)
     
-    system_prompt, temperature = detect_tone_and_temp(query)
+    system_prompt, temperature, max_tokens = detect_tone_and_temp(query)
     
     user_prompt = (
         f"Context: \n{context_text}\n\n"
         f"Question: {query}\n\n"
         "Answer clearly and concisely"
     )
+    
+    # Combine memory + current question
+    messages = [{"role": "system", "content": system_prompt}]
+    for past in chat_history[-5:]:  # keep last 5 exchanges
+        messages.append({"role": "user", "content": past["user"]})
+        messages.append({"role": "assistant", "content": past["assistant"]})
+    messages.append({"role": "user", "content": user_prompt})
+     
     response = client.chat.completions.create(
         model=model,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt}
-        ],
-        temperature=temperature
+        messages=messages,
+        temperature=temperature,
+        max_tokens=max_tokens
     )
     answer = response.choices[0].message.content.strip()
-    
+    # Store in conversation memory
+    chat_history.append({
+        "user": query,
+        "assistant": answer
+    })
+
     # Extract which sources were cited
     cited_sources = set()
     import re
