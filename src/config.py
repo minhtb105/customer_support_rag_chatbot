@@ -11,7 +11,8 @@ RAW_DIR = BASE_DIR / "data" / "raw"
 PDF_DIR = BASE_DIR / "data" / "raw" / "pdfs"
 PROCESSED_DIR = BASE_DIR / "data" / "processed"
 OUTPUT_DIR = BASE_DIR / "data" / "processed" / "docling_chunks"
-EMBEDDINGS_DIR = BASE_DIR / "embeddings" / "chroma_index"
+QA_DB_DIR = BASE_DIR / "embeddings" / "qa_db"
+PDF_DB_DIR = BASE_DIR / "embeddings" / "pdf_db"
 
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 200
