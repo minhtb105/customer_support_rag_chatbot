@@ -43,13 +43,26 @@ def parse_and_chunk_pdf(pdf_path: str) -> List[Dict]:
     
     chunks = []
     for idx, ch in enumerate(chunker.chunk(doc)):
+        meta = ch.meta
+        
+        # Extract heading path (hierarchy)
+        section_path = getattr(meta, "headings", [])
+        
+        # Extract page numbers from Provenance info
+        page_numbers = []
+        if hasattr(meta, "doc_items"):
+            for item in meta.doc_items:
+                if hasattr(item, "prov"):
+                    for prov_item in item.prov:
+                        page_numbers.append(prov_item.page_no)
+                        
         chunk_dict = {
             "source_id": os.path.basename(pdf_path),
             "chunk_id": f"{os.path.basename(pdf_path)}_chunk_{idx+1}",
             "text": ch.text.strip(),
             "metadata": {
-                "section_path": ch.metadata.get("section_path", []),
-                "page_numbers": ch.metadata.get("page_numbers", []),
+                "section_path": section_path,
+                "page_numbers": sorted(set(page_numbers)),
                 "chunk_index": idx + 1,
             },
         }
