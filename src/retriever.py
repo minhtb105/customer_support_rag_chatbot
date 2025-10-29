@@ -50,11 +50,17 @@ def retrieve_context(query: str, top_k: int=TOP_K):
     
     for doc in docs:
         sid = doc.metadata.get("source_id")
-        grouped.setdefault(sid, []).append(doc)
+        section_path = tuple(doc.metadata.get("section_path", []))
+        key = (sid, section_path)
+        grouped.setdefault(key, []).append(doc)
         
     results = []
-    for sid, parts in grouped.items():
+    for (sid, section_path), parts in grouped.items():
         merged = " <CHUNK_BREAK> ".join(part.page_content for part in parts)
-        results.append({"source_id": sid, "content": merged})
+        results.append({
+            "source_id": sid,
+            "section_path": section_path,
+            "content": merged
+        })
 
     return results
