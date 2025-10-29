@@ -2,37 +2,37 @@ from functools import lru_cache
 from langchain_core.documents import Document
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.retrievers import BM25Retriever
-from langchain_classic.retrievers import EnsembleRetriever
-from config import EMBEDDINGS_DIR, TOP_K, HYBRID_ALPHA
+from langchain_community.retrievers import BM25Retriever, EnsembleRetriever
+from config import QA_DB_DIR, PDF_DB_DIR, TOP_K
 
  
-def load_vectorstore():
+def load_vectorstores():
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    db = Chroma(persist_directory=EMBEDDINGS_DIR, embedding_function=embeddings)
+    qa_db = Chroma(persist_directory=QA_DB_DIR, embedding_function=embeddings)
+    pdf_db = Chroma(persist_directory=PDF_DB_DIR, embedding_function=embeddings)
     
-    return db
+    return qa_db, pdf_db
 
 @lru_cache(maxsize=1)
 def cached_documents():
-    db = load_vectorstore()
+    qa_db, pdf_db = load_vectorstores()
     docs = []
-    all_data = db.get()
-    ids = all_data["ids"]
-    metadatas = all_data["metadatas"]
-    contents = all_data["documents"]
-
-    for i in range(len(ids)):
-        docs.append(Document(page_content=contents[i], metadata=metadatas[i]))
-        
+    for db in [qa_db, pdf_db]:
+        data = db.get()
+        for i in range(len(data["ids"])):
+            docs.append(Document(
+                page_content=data["documents"][i],
+                metadata=data["metadatas"][i]
+            ))
+            
     return docs
 
 def retrieve_context(query: str, top_k: int=TOP_K):
-    db = load_vectorstore()
-    embeddings = db._embedding_function
+    qa_db, pdf_db = load_vectorstores()
     
     # Semantic retriever (vector)
-    vector_retriever = db.as_retriever(search_kwargs={"k": top_k})
+    vector_retriever = qa_db.as_retriever(search_kwargs={"k": top_k})
+    vector_retriever_pdf = pdf_db.as_retriever(search_kwargs={"k": top_k})
     
     # Lexical retriever (BM25)
     docs = cached_documents()
@@ -41,8 +41,8 @@ def retrieve_context(query: str, top_k: int=TOP_K):
     
     # Ensemble retriever (Hybrid)
     hybrid_retriever = EnsembleRetriever(
-        retrievers=[bm25_retriever, vector_retriever],
-        weights=[1 - HYBRID_ALPHA, HYBRID_ALPHA]  # e.g. 0.4 lexical + 0.6 semantic
+        retrievers=[bm25_retriever, vector_retriever, vector_retriever_pdf],
+        weights=[0.3, 0.35, 0.35]
     )
     
     docs = hybrid_retriever.invoke(query)
