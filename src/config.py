@@ -8,6 +8,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 RAW_DIR = BASE_DIR / "data" / "raw"
+PDF_DIR = BASE_DIR / "data" / "raw" / "pdfs"
 PROCESSED_DIR = BASE_DIR / "data" / "processed"
 EMBEDDINGS_DIR = BASE_DIR / "embeddings" / "chroma_index"
 
@@ -19,3 +20,5 @@ TOKENIZER_MODEL = "bert-base-uncased"
 
 TOP_K = 10
 HYBRID_ALPHA=0.6
+
+MERGE_PEERS = True
