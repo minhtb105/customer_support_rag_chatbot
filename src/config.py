@@ -8,6 +8,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 RAW_DIR = BASE_DIR / "data" / "raw"
+PROCESSED_DIR = BASE_DIR / "data" / "processed"
 PDF_DIR = BASE_DIR / "data" / "raw" / "pdfs"
 PROCESSED_DIR = BASE_DIR / "data" / "processed"
 OUTPUT_DIR = BASE_DIR / "data" / "processed" / "docling_chunks"
