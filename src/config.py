@@ -17,6 +17,7 @@ PDF_DB_DIR = BASE_DIR / "embeddings" / "pdf_db"
 
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 200
+BATCH_SIZE = 2000
 
 DEFAULT_MODEL = "llama-3.1-8b-instant"
 TOKENIZER_MODEL = "bert-base-uncased"
