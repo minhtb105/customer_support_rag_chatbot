@@ -1,5 +1,4 @@
 import sqlite3, json, time
-from contextlib import closing
 from config import META_DB_PATH
 
 
@@ -55,15 +54,41 @@ def get_chunk_hashes_for_file(file_name, db_path=META_DB_PATH):
         cur = conn.cursor()
         cur.execute("SELECT chunk_hash FROM chunks WHERE file_name=? ORDER BY chunk_index", (file_name,))
         rows = cur.fetchall()
+        
         return [r[0] for r in rows]
 
 # find vector_ids to remove for old chunks that changed
 def find_vector_ids_for_chunk_hashes(chunk_hashes, db_path=META_DB_PATH):
     if not chunk_hashes:
         return []
+    
     q = "SELECT vector_id FROM chunks WHERE chunk_hash IN ({})".format(",".join("?"*len(chunk_hashes)))
+    
     with sqlite3.connect(db_path) as conn:
         cur = conn.cursor()
         cur.execute(q, tuple(chunk_hashes))
+        
         return [r[0] for r in cur.fetchall() if r[0]]
     
+def get_file_hash(file_name: str, db_path=META_DB_PATH):
+    """Return stored file_hash or None if not found."""
+    with sqlite3.connect(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT file_hash FROM files WHERE file_name = ?", (file_name,))
+        row = cur.fetchone()
+        
+        return row[0] if row else None
+
+def delete_chunks_by_hashes(chunk_hashes: list, db_path=META_DB_PATH):
+    """Delete chunk rows (by chunk_hash) from chunks table."""
+    if not chunk_hashes:
+        return
+    
+    placeholders = ",".join("?" * len(chunk_hashes))
+    q = f"DELETE FROM chunks WHERE chunk_hash IN ({placeholders})"
+    
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("PRAGMA foreign_keys = ON;")
+        cur = conn.cursor()
+        cur.execute(q, tuple(chunk_hashes))
+        conn.commit()    
