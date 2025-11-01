@@ -1,13 +1,21 @@
 import pandas as pd
 from tqdm import tqdm
 from typing import List, Dict
-import hashlib, os, json, logging
 from transformers import AutoTokenizer
 from docling.chunking import HybridChunker
+import os, json, time, hashlib, logging
 from langchain_chroma.vectorstores import Chroma
 from langchain_text_splitters import TokenTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from docling.document_converter import DocumentConverter
+from metadata_store import (
+    init_db,
+    upsert_file_and_chunks,
+    get_chunk_hashes_for_file,
+    delete_chunks_by_hashes,
+    get_file_hash,
+    find_vector_ids_for_chunk_hashes
+)
 from config import *
 
 
@@ -17,6 +25,8 @@ os.makedirs(PDF_DB_DIR, exist_ok=True)
 os.makedirs(QA_DB_DIR, exist_ok=True)
 os.makedirs(PDF_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # ---------- Tokenizer & Chunkers ----------
 tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_MODEL)
@@ -33,29 +43,29 @@ chunker = HybridChunker(
     merge_peers=MERGE_PEERS
 )
 
+init_db(META_DB_PATH)
+
 # ---------- PDF Parsing + Chunking ----------
 def parse_and_chunk_pdf(pdf_path: str) -> List[Dict]:
     """
-    Parse a single pdf file -> chunk it using HybridChunker → return a list of chunk dictionaries.
+    Parse a single pdf file → chunk it using HybridChunker → return a list of chunk dictionaries.
     """
     converter = DocumentConverter()
     doc = converter.convert(pdf_path).document
-    
+
     chunks = []
     for idx, ch in enumerate(chunker.chunk(doc)):
         meta = ch.meta
-        
-        # Extract heading path (hierarchy)
         section_path = getattr(meta, "headings", [])
-        
-        # Extract page numbers from Provenance info
+
+        # Extract page numbers
         page_numbers = []
         if hasattr(meta, "doc_items"):
             for item in meta.doc_items:
                 if hasattr(item, "prov"):
                     for prov_item in item.prov:
                         page_numbers.append(prov_item.page_no)
-                        
+
         chunk_dict = {
             "source_id": os.path.basename(pdf_path),
             "chunk_id": f"{os.path.basename(pdf_path)}_chunk_{idx+1}",
@@ -69,6 +79,7 @@ def parse_and_chunk_pdf(pdf_path: str) -> List[Dict]:
         chunks.append(chunk_dict)
 
     return chunks
+
 
 def process_pdf_folder(pdf_dir: str = PDF_DIR, output_dir: str = OUTPUT_DIR):
     """
@@ -84,48 +95,39 @@ def process_pdf_folder(pdf_dir: str = PDF_DIR, output_dir: str = OUTPUT_DIR):
 
     for pdf_path in tqdm(pdf_files, desc="Processing PDFs"):
         try:
-            chunks = parse_and_chunk_pdf(pdf_path)
-            base_name = os.path.splitext(os.path.basename(pdf_path))[0]
-            out_path = os.path.join(output_dir, f"{base_name}_chunks.json")
-
-            with open(out_path, "w", encoding="utf-8") as f:
-                json.dump(chunks, f, ensure_ascii=False, indent=2)
-
-            logging.info(f"Saved {len(chunks)} chunks → {out_path}")
-
+            parse_and_chunk_pdf(pdf_path)
         except Exception as e:
-            logging.info(f"Error processing {pdf_path}: {e}")
+            logging.error(f"Error processing {pdf_path}: {e}")
+
 
 # ---------- Dataset Loading ----------
 def load_medquad(file_path: str):
     df = pd.read_csv(file_path)
     data = []
-    
-    for _, row in tqdm(df.iterrows()):
+
+    for _, row in tqdm(df.iterrows(), total=len(df)):
         q = str(row.get("Question", "")).strip()
         a = str(row.get("Answer", "")).strip()
-        
         if q and a:
             data.append({"source": "MedQuAD", "question": q, "answer": a})
 
     return data
 
+
 def load_healthcaremagic(file_path: str):
-    with open(file_path, 'r', encoding="utf-8") as f:
-        healthcare_data = json.load(f)
-        
+    df = pd.read_json(file_path)
     data = []
-    for item in tqdm(healthcare_data):
-        q = str(item.get("input", "")).strip()
-        a = str(item.get("output", "")).strip()
-        
+    for item in df.iterrows():
+        q = str(item[1]['input']).strip()
+        a = str(item[1]['output']).strip()
         if q and a:
             data.append({"source": "HealthCareMagic", "question": q, "answer": a})
-            
+
     return data
-        
+
+
 # ---------- Text Chunk Preparation ----------
-def prepare_chunks(data):
+def prepare_chunks(data: List[Dict]):
     texts, metadatas = [], []
     for i, item in enumerate(data):
         q = item["question"].strip()
@@ -135,75 +137,172 @@ def prepare_chunks(data):
         for part in parts:
             texts.append(part)
             metadatas.append({"source_id": f"{item['source']}_{i}"})
-    
     return texts, metadatas
 
-# ---------- Vectorstore Creation ----------
-def file_hash(path):
-    with open(path, "rb") as f:
-        return hashlib.md5(f.read()).hexdigest()
-    
-def needs_reindex(path: str, metadata_path: str="processed/embeddings_metadata.json"):
-    if not os.path.exists(metadata_path): return True
-    
-    with open(metadata_path, "r") as f:
-        meta = json.load(f)
-        
-    old_hash = meta.get(hash)
-    new_hash = file_hash(path)
-    
-    return old_hash != new_hash
-    
-def create_vectorstore(texts, metadatas, db_dir):
+
+# ---------- Vectorstore Utilities ----------
+def compute_file_hash(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+def compute_chunk_hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+def hybrid_hash_reindex(path: str, chunk_func, vector_db):
+    """
+    Reindex a file with metadata stored in SQLite.
+    - path: path to the file (used to compute file hash and as key)
+    - chunk_func: function(path) -> either:
+        * list[dict] where each dict has "text" and optional "metadata", OR
+        * (texts: List[str], metadatas: List[Dict])
+    - vector_db: vector database (e.g., Chroma) that supports .add_texts(...) and .delete(ids=[...])
+    """
+    # read file and compute file hash
+    try:
+        with open(path, "rb") as f:
+            file_bytes = f.read()
+    except Exception as e:
+        logging.error(f"Cannot read file {path}: {e}")
+        return
+
+    file_hash = compute_file_hash(file_bytes)
+    fname = os.path.basename(path)
+
+    # get stored file hash (None if not present)
+    stored_file_hash = get_file_hash(fname)
+    if stored_file_hash == file_hash:
+        # file unchanged — skip (fast path)
+        logging.info(f"No file-level changes detected for {fname} (file_hash unchanged). Skipping reindex.")
+        return
+
+    # file is new or changed -> produce chunks and their hashes
+    result = chunk_func(path)
+    # normalize result to (texts, metadatas)
+    texts, metadatas = [], []
+    if (isinstance(result, tuple) or isinstance(result, list)) and len(result) == 2 and isinstance(result[0], list):
+        texts, metadatas = result
+    elif isinstance(result, list):
+        for ch in result:
+            if isinstance(ch, dict) and "text" in ch:
+                texts.append(ch["text"])
+                meta = ch.get("metadata") if isinstance(ch.get("metadata"), dict) else {}
+                metadatas.append(meta)
+            else:
+                texts.append(str(ch))
+                metadatas.append({})
+    else:
+        logging.error("chunk_func returned unsupported type; expected list or (texts, metadatas).")
+        return
+
+    new_hashes = [compute_chunk_hash(t) for t in texts]
+
+    # get old chunk hashes (may be empty list if file is new)
+    old_hashes = get_chunk_hashes_for_file(fname) or []
+
+    # determine removed chunks (present before, absent now)
+    removed_hashes = list(set(old_hashes) - set(new_hashes))
+
+    # determine which new chunks to add (and changed chunks)
+    # we treat any new_hash not in old_hashes as "to add or update"
+    added_or_changed_indices = [i for i, h in enumerate(new_hashes) if h not in old_hashes]
+
+    # --- delete removed chunks from vectorstore + metadata DB ---
+    if removed_hashes:
+        logging.info(f"{fname}: {len(removed_hashes)} chunk(s) removed -> deleting from vector DB and metadata DB.")
+        del_ids = find_vector_ids_for_chunk_hashes(removed_hashes)
+        if del_ids:
+            try:
+                vector_db.delete(ids=del_ids)
+            except Exception as e:
+                logging.error(f"Failed to delete vectors for removed chunks of {fname}: {e}")
+        # remove rows from chunks table
+        try:
+            delete_chunks_by_hashes(removed_hashes)
+        except Exception as e:
+            logging.error(f"Failed to delete chunk rows for {fname}: {e}")
+
+    # --- add/update new or changed chunks ---
+    new_chunks_rows = []
+    if added_or_changed_indices:
+        logging.info(f"{fname}: adding/updating {len(added_or_changed_indices)} chunk(s) to vector DB.")
+        # batch insert for performance
+        for batch_start in range(0, len(added_or_changed_indices), BATCH_SIZE):
+            batch_indices = added_or_changed_indices[batch_start: batch_start + BATCH_SIZE]
+            batch_texts, batch_metas, batch_ids = [], [], []
+
+            for i in batch_indices:
+                text = texts[i]
+                meta = metadatas[i] if i < len(metadatas) else {}
+                vector_id = f"{fname}_chunk_{i}_{new_hashes[i][:12]}"
+                batch_texts.append(text)
+                batch_metas.append(meta)
+                batch_ids.append(vector_id)
+                new_chunks_rows.append({
+                    "chunk_hash": new_hashes[i],
+                    "chunk_index": i,
+                    "vector_id": vector_id,
+                    "extra_meta": meta
+                })
+
+            try:
+                # Add all chunks in a batch
+                vector_db.add_texts(batch_texts, metadatas=batch_metas, ids=batch_ids)
+                logging.info(f"Inserted batch {batch_start // BATCH_SIZE + 1} "
+                            f"({len(batch_indices)} chunks) for {fname}")
+            except Exception as e:
+                logging.error(f"Failed to add batch starting at index {batch_start} for {fname}: {e}")
+
+    # --- Upsert file record + the new/updated chunk rows into metadata DB
+    # This will create or update files.file_hash and insert/update chunk rows
+    try:
+        upsert_file_and_chunks(fname, file_hash, new_chunks_rows)
+    except Exception as e:
+        logging.error(f"Failed to upsert metadata for {fname}: {e}")
+
+    logging.info(f"Reindex complete for {fname}: removed={len(removed_hashes)}, added_or_changed={len(added_or_changed_indices)}")
+
+def get_or_create_vectorstore(db_dir: str):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    db = Chroma.from_texts(
-        texts=texts,
-        embedding=embeddings,
-        persist_directory=db_dir,
-        metadatas=metadatas
-    )
-    db.persist()
+
+    if os.path.exists(os.path.join(db_dir, "chroma.sqlite")):
+        logging.info(f"Loading existing vectorstore from {db_dir}")
+        db = Chroma(persist_directory=db_dir, embedding_function=embeddings)
+    else:
+        logging.info(f"Creating new (empty) vectorstore at {db_dir}")
+        os.makedirs(db_dir, exist_ok=True)
+        # initialize empty Chroma collection manually
+        db = Chroma(persist_directory=db_dir, embedding_function=embeddings)
     
     return db
-    
+
 # ---------- Main Pipeline ----------
 def main():
-    # Step 1: Process PDFs into hierarchical chunks
-    process_pdf_folder(PDF_DIR, OUTPUT_DIR)
-    
-    # Step 2: Load existing QA datasets
-    medquad_path = os.path.join(RAW_DIR, "med_quad.csv")
-    hcm_path = os.path.join(RAW_DIR, "HealthCareMagic-100k.json")
+    META_FILE = os.path.join(PROCESSED_DIR, "embeddings_metadata.json")
 
+    # Step 1: Process PDFs
+    process_pdf_folder(PDF_DIR, OUTPUT_DIR)
+
+    # Step 2: Load QA datasets
+    medquad_path = os.path.join(RAW_DIR, "med_quad.csv")
+    hcm_path = os.path.join(PROCESSED_DIR, "HealthCareMagic-100k.json")
+    
     med_data = load_medquad(medquad_path)
     hcm_data = load_healthcaremagic(hcm_path)
-    all_data = med_data + hcm_data
-    logging.info(f"Total QA pairs loaded: {len(all_data)}")
-
-    # Step 3: Split into token chunks
-    with open(os.path.join(PROCESSED_DIR, "qa_combined.json"), "w", encoding="utf-8") as f:
-        json.dump(all_data, f, ensure_ascii=False, indent=2)
-
-    texts, metadatas = prepare_chunks(all_data)
-    logging.info(f"Total text chunks created: {len(texts)}")
-
-    # Step 4: Build vectorstore
-    qa_db = create_vectorstore(texts, metadatas, QA_DB_DIR)
     
-    pdf_json_files = [os.path.join(OUTPUT_DIR, f) for f in os.listdir(OUTPUT_DIR) if f.endswith("_chunks.json")]
-    pdf_texts, pdf_metas = [], []
-    for fpath in pdf_json_files:
-        with open(fpath, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            for item in data:
-                pdf_texts.append(item["text"])
-                pdf_metas.append({
-                    "source_id": item["source_id"],
-                    "section_path": item["metadata"]["section_path"],
-                    "page_numbers": item["metadata"]["page_numbers"],
-                    "source_type": "pdf"
-                })
-    pdf_db = create_vectorstore(pdf_texts, pdf_metas, PDF_DB_DIR)
+    # Step 3: Reindex QA datasets incrementally
+    qa_db = get_or_create_vectorstore(QA_DB_DIR)
+    hybrid_hash_reindex(medquad_path, lambda _: prepare_chunks(med_data), qa_db)
+    hybrid_hash_reindex(hcm_path, lambda _: prepare_chunks(hcm_data), qa_db)
+
+    # Step 4: PDF reindex
+    pdf_files = [
+        os.path.join(PDF_DIR, f)
+        for f in os.listdir(PDF_DIR)
+        if f.lower().endswith(".pdf")
+    ]
+
+    pdf_db = get_or_create_vectorstore(PDF_DB_DIR)
+    for pdf_path in pdf_files:
+        hybrid_hash_reindex(pdf_path, parse_and_chunk_pdf, pdf_db)
 
 if __name__ == "__main__":
     main()
