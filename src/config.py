@@ -14,6 +14,7 @@ PROCESSED_DIR = BASE_DIR / "data" / "processed"
 OUTPUT_DIR = BASE_DIR / "data" / "processed" / "docling_chunks"
 QA_DB_DIR = BASE_DIR / "embeddings" / "qa_db"
 PDF_DB_DIR = BASE_DIR / "embeddings" / "pdf_db"
+META_DB_PATH = BASE_DIR / "metadata" / "metadata_store.db"
 
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 200
