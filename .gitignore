@@ -2,5 +2,5 @@
 .env
 data/*
 embeddings/*
-src/
+src/__pycache__/
 metadata/*

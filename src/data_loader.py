@@ -81,25 +81,6 @@ def parse_and_chunk_pdf(pdf_path: str) -> List[Dict]:
     return chunks
 
 
-def process_pdf_folder(pdf_dir: str = PDF_DIR, output_dir: str = OUTPUT_DIR):
-    """
-    Iterate through all PDFs in a folder → parse + chunk each → save results as JSON files.
-    """
-    pdf_files = [
-        os.path.join(pdf_dir, f)
-        for f in os.listdir(pdf_dir)
-        if f.lower().endswith(".pdf")
-    ]
-
-    logging.info(f"Found {len(pdf_files)} PDF files in {pdf_dir}")
-
-    for pdf_path in tqdm(pdf_files, desc="Processing PDFs"):
-        try:
-            parse_and_chunk_pdf(pdf_path)
-        except Exception as e:
-            logging.error(f"Error processing {pdf_path}: {e}")
-
-
 # ---------- Dataset Loading ----------
 def load_medquad(file_path: str):
     df = pd.read_csv(file_path)
@@ -263,7 +244,7 @@ def hybrid_hash_reindex(path: str, chunk_func, vector_db):
 def get_or_create_vectorstore(db_dir: str):
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-    if os.path.exists(os.path.join(db_dir, "chroma.sqlite")):
+    if os.path.exists(os.path.join(db_dir, "chroma.sqlite3")):
         logging.info(f"Loading existing vectorstore from {db_dir}")
         db = Chroma(persist_directory=db_dir, embedding_function=embeddings)
     else:
@@ -278,22 +259,19 @@ def get_or_create_vectorstore(db_dir: str):
 def main():
     META_FILE = os.path.join(PROCESSED_DIR, "embeddings_metadata.json")
 
-    # Step 1: Process PDFs
-    process_pdf_folder(PDF_DIR, OUTPUT_DIR)
-
-    # Step 2: Load QA datasets
+    # Step 1: Load QA datasets
     medquad_path = os.path.join(RAW_DIR, "med_quad.csv")
     hcm_path = os.path.join(PROCESSED_DIR, "HealthCareMagic-100k.json")
     
     med_data = load_medquad(medquad_path)
     hcm_data = load_healthcaremagic(hcm_path)
     
-    # Step 3: Reindex QA datasets incrementally
+    # Step 2: Reindex QA datasets incrementally
     qa_db = get_or_create_vectorstore(QA_DB_DIR)
     hybrid_hash_reindex(medquad_path, lambda _: prepare_chunks(med_data), qa_db)
     hybrid_hash_reindex(hcm_path, lambda _: prepare_chunks(hcm_data), qa_db)
 
-    # Step 4: PDF reindex
+    # Step 3: PDF reindex
     pdf_files = [
         os.path.join(PDF_DIR, f)
         for f in os.listdir(PDF_DIR)
