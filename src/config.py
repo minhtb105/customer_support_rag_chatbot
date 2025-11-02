@@ -20,7 +20,8 @@ CHUNK_SIZE = 500
 CHUNK_OVERLAP = 200
 BATCH_SIZE = 2000
 
-DEFAULT_MODEL = "llama-3.1-8b-instant"
+DEFAULT_MODEL = "llama-3.1-8b-instant"  # generator model
+EMBEDDING_MODEL = "pritamdeka/BioBERT-mnli-snli-scinli-scitail-mednli-stsb"
 TOKENIZER_MODEL = "bert-base-uncased"
 
 TOP_K = 10
