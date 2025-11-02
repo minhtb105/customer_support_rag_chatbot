@@ -3,7 +3,7 @@ from tqdm import tqdm
 from typing import List, Dict
 from transformers import AutoTokenizer
 from docling.chunking import HybridChunker
-import os, json, time, hashlib, logging
+import os, hashlib, logging
 from langchain_chroma.vectorstores import Chroma
 from langchain_text_splitters import TokenTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
