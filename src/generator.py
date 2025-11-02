@@ -1,6 +1,6 @@
 from openai import OpenAI 
 from sentence_transformers import CrossEncoder
-from config import GROQ_API_KEY, DEFAULT_MODEL
+from config import GROQ_API_KEY, DEFAULT_MODEL, RERANKER_MODEL
 from prompt_templates import (
     STRICT_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT, BALANCED_SYSTEM_PROMPT)
 
@@ -9,7 +9,7 @@ client = OpenAI(
     api_key=GROQ_API_KEY,
     base_url="https://api.groq.com/openai/v1"
 )
-reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+reranker = CrossEncoder(RERANKER_MODEL)
 
 # In-memory conversation history
 chat_history = []
