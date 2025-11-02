@@ -3,11 +3,11 @@ from langchain_core.documents import Document
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever, EnsembleRetriever
-from config import QA_DB_DIR, PDF_DB_DIR, TOP_K
+from config import QA_DB_DIR, PDF_DB_DIR, TOP_K, EMBEDDING_MODEL
 
  
 def load_vectorstores():
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
     qa_db = Chroma(persist_directory=QA_DB_DIR, embedding_function=embeddings)
     pdf_db = Chroma(persist_directory=PDF_DB_DIR, embedding_function=embeddings)
     
