@@ -3,7 +3,7 @@ from tqdm import tqdm
 from typing import List, Dict
 from transformers import AutoTokenizer
 from docling.chunking import HybridChunker
-import os, hashlib, logging
+import os, hashlib, logging, json
 from langchain_chroma.vectorstores import Chroma
 from langchain_text_splitters import TokenTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -80,6 +80,19 @@ def parse_and_chunk_pdf(pdf_path: str) -> List[Dict]:
 
     return chunks
 
+def clean_metadata(meta: dict):
+    clean_meta = {}
+    for k, v in meta.items():
+        if isinstance(v, list):
+            # join list thành chuỗi
+            clean_meta[k] = ", ".join(map(str, v))
+        elif isinstance(v, dict):
+            # chuyển dict thành JSON string
+            clean_meta[k] = json.dumps(v, ensure_ascii=False)
+        else:
+            clean_meta[k] = v
+            
+    return clean_meta
 
 # ---------- Dataset Loading ----------
 def load_medquad(file_path: str):
@@ -118,6 +131,7 @@ def prepare_chunks(data: List[Dict]):
         for part in parts:
             texts.append(part)
             metadatas.append({"source_id": f"{item['source']}_{i}"})
+            
     return texts, metadatas
 
 
@@ -213,6 +227,7 @@ def hybrid_hash_reindex(path: str, chunk_func, vector_db):
             for i in batch_indices:
                 text = texts[i]
                 meta = metadatas[i] if i < len(metadatas) else {}
+                meta = clean_metadata(meta)
                 vector_id = f"{fname}_chunk_{i}_{new_hashes[i][:12]}"
                 batch_texts.append(text)
                 batch_metas.append(meta)
@@ -242,7 +257,9 @@ def hybrid_hash_reindex(path: str, chunk_func, vector_db):
     logging.info(f"Reindex complete for {fname}: removed={len(removed_hashes)}, added_or_changed={len(added_or_changed_indices)}")
 
 def get_or_create_vectorstore(db_dir: str):
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    embeddings = HuggingFaceEmbeddings(
+        model_name=EMBEDDING_MODEL
+    )
 
     if os.path.exists(os.path.join(db_dir, "chroma.sqlite3")):
         logging.info(f"Loading existing vectorstore from {db_dir}")
@@ -257,8 +274,6 @@ def get_or_create_vectorstore(db_dir: str):
 
 # ---------- Main Pipeline ----------
 def main():
-    META_FILE = os.path.join(PROCESSED_DIR, "embeddings_metadata.json")
-
     # Step 1: Load QA datasets
     medquad_path = os.path.join(RAW_DIR, "med_quad.csv")
     hcm_path = os.path.join(PROCESSED_DIR, "HealthCareMagic-100k.json")
@@ -284,3 +299,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
