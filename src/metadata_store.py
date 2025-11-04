@@ -69,3 +69,25 @@ def find_vector_ids_for_chunk_hashes(chunk_hashes, db_path=META_DB_PATH):
         
         return [r[0] for r in cur.fetchall() if r[0]]
     
+def get_file_hash(file_name: str, db_path=META_DB_PATH):
+    """Return stored file_hash or None if not found."""
+    with sqlite3.connect(db_path) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT file_hash FROM files WHERE file_name = ?", (file_name,))
+        row = cur.fetchone()
+        
+        return row[0] if row else None
+
+def delete_chunks_by_hashes(chunk_hashes: list, db_path=META_DB_PATH):
+    """Delete chunk rows (by chunk_hash) from chunks table."""
+    if not chunk_hashes:
+        return
+    
+    placeholders = ",".join("?" * len(chunk_hashes))
+    q = f"DELETE FROM chunks WHERE chunk_hash IN ({placeholders})"
+    
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("PRAGMA foreign_keys = ON;")
+        cur = conn.cursor()
+        cur.execute(q, tuple(chunk_hashes))
+        conn.commit()    
