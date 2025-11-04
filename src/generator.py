@@ -40,6 +40,7 @@ def rerank_contexts(query, contexts, top_n=3):
 def detect_tone_and_temp(query: str):
     """
     Heuristics: determine tone + temperature based on the content of the query.
+    Return system_prompt, temperature, max_tokens
     """
     query_lower = query.lower()
     
