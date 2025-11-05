@@ -1,0 +1,32 @@
+[project]
+name = "customer_support_rag_chatbot"
+version = "0.1.0"
+description = "A customer support chatbot using RAG and embeddings"
+authors = [
+    { name = "Minh Tran Binh", email = "kisuit4.0@gmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.8"
+
+dependencies = [
+    "langchain>=0.3.27",
+    "langchain-chroma>=0.2.6",
+    "langchain-community>=0.3.31",
+    "sentence-transformers>=5.1.1",
+    "transformers>=4.57.1",
+    "chromadb>=1.2.0",
+    "scikit-learn>=1.7.2",
+    "pandas>=2.3.3",
+    "numpy>=2.2.6",
+    "matplotlib>=3.10.7",
+    "seaborn>=0.13.2",
+    "tqdm>=4.67.1",
+    "torch>=2.9.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src", "."]
