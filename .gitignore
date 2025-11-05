@@ -3,4 +3,5 @@
 data/*
 embeddings/*
 src/__pycache__/
+models/__pycache__/
 metadata/*
