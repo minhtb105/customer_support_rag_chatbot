@@ -3,5 +3,6 @@
 data/*
 embeddings/*
 src/__pycache__/
-models/__pycache__/
+src/models/__pycache__/
 metadata/*
+customer_support_rag_chatbot.egg-info/
