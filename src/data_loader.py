@@ -17,6 +17,7 @@ from metadata_store import (
     find_vector_ids_for_chunk_hashes
 )
 from config import *
+from models.chunk import Chunk, ChunkMetadata
 
 
 # ---------- Directory setup ----------
@@ -66,28 +67,25 @@ def parse_and_chunk_pdf(pdf_path: str) -> List[Dict]:
                     for prov_item in item.prov:
                         page_numbers.append(prov_item.page_no)
 
-        chunk_dict = {
-            "source_id": os.path.basename(pdf_path),
-            "chunk_id": f"{os.path.basename(pdf_path)}_chunk_{idx+1}",
-            "text": ch.text.strip(),
-            "metadata": {
-                "section_path": section_path,
-                "page_numbers": sorted(set(page_numbers)),
-                "chunk_index": idx + 1,
-            },
-        }
-        chunks.append(chunk_dict)
+        chunks.append(Chunk(
+            source_id=os.path.basename(pdf_path),
+            chunk_id=f"{os.path.basename(pdf_path)}_chunk_{idx+1}",
+            text=ch.text.strip(),
+            metadata=ChunkMetadata(
+                section_path=", ".join(map(str, section_path)) if section_path else None,
+                page_numbers=", ".join(map(str, sorted(set(page_numbers)))),
+                chunk_index=idx + 1
+            )
+        ))
 
     return chunks
 
 def clean_metadata(meta: dict):
     clean_meta = {}
     for k, v in meta.items():
-        if isinstance(v, list):
-            # join list thành chuỗi
+        if isinstance(v, list):            
             clean_meta[k] = ", ".join(map(str, v))
         elif isinstance(v, dict):
-            # chuyển dict thành JSON string
             clean_meta[k] = json.dumps(v, ensure_ascii=False)
         else:
             clean_meta[k] = v
@@ -122,17 +120,29 @@ def load_healthcaremagic(file_path: str):
 
 # ---------- Text Chunk Preparation ----------
 def prepare_chunks(data: List[Dict]):
-    texts, metadatas = [], []
+    """
+    Convert QA dataset (e.g., MedQuAD, HealthCareMagic)
+    into standardized Chunk objects compatible with vectorstore.
+    """
+    chunks = []
     for i, item in enumerate(data):
         q = item["question"].strip()
         a = item["answer"].strip()
         combined_text = f"Question: {q}\nAnswer: {a}"
         parts = splitter.split_text(combined_text)
-        for part in parts:
-            texts.append(part)
-            metadatas.append({"source_id": f"{item['source']}_{i}"})
+        
+        for j, part in enumerate(parts):
+            chunk = Chunk(
+                source_id=f"{item['source']}_{i}",
+                chunk_id=f"{item['source']}_{i}_chunk_{j+1}",
+                text=part,
+                metadata=ChunkMetadata(
+                    chunk_index=j + 1
+                )
+            )
+            chunks.append(chunk)
             
-    return texts, metadatas
+    return chunks
 
 
 # ---------- Vectorstore Utilities ----------
@@ -165,30 +175,22 @@ def hybrid_hash_reindex(path: str, chunk_func, vector_db):
     # get stored file hash (None if not present)
     stored_file_hash = get_file_hash(fname)
     if stored_file_hash == file_hash:
-        # file unchanged — skip (fast path)
         logging.info(f"No file-level changes detected for {fname} (file_hash unchanged). Skipping reindex.")
         return
 
-    # file is new or changed -> produce chunks and their hashes
-    result = chunk_func(path)
-    # normalize result to (texts, metadatas)
-    texts, metadatas = [], []
-    if (isinstance(result, tuple) or isinstance(result, list)) and len(result) == 2 and isinstance(result[0], list):
-        texts, metadatas = result
-    elif isinstance(result, list):
-        for ch in result:
-            if isinstance(ch, dict) and "text" in ch:
-                texts.append(ch["text"])
-                meta = ch.get("metadata") if isinstance(ch.get("metadata"), dict) else {}
-                metadatas.append(meta)
-            else:
-                texts.append(str(ch))
-                metadatas.append({})
-    else:
-        logging.error("chunk_func returned unsupported type; expected list or (texts, metadatas).")
+    # --- Step 1: Generate new chunks ---
+    try:
+        chunks = chunk_func(path)  # expect List[Chunk]
+    except Exception as e:
+        logging.error(f"Failed to chunk {fname}: {e}")
         return
 
-    new_hashes = [compute_chunk_hash(t) for t in texts]
+    if not chunks:
+        logging.warning(f"No chunks generated for {fname}. Skipping.")
+        return
+    
+    # --- Step 2: Compute chunk hashes ---
+    new_hashes = [compute_chunk_hash(c.text) for c in chunks]
 
     # get old chunk hashes (may be empty list if file is new)
     old_hashes = get_chunk_hashes_for_file(fname) or []
@@ -200,55 +202,43 @@ def hybrid_hash_reindex(path: str, chunk_func, vector_db):
     # we treat any new_hash not in old_hashes as "to add or update"
     added_or_changed_indices = [i for i, h in enumerate(new_hashes) if h not in old_hashes]
 
-    # --- delete removed chunks from vectorstore + metadata DB ---
+    # --- Step 3: Handle removals ---
     if removed_hashes:
         logging.info(f"{fname}: {len(removed_hashes)} chunk(s) removed -> deleting from vector DB and metadata DB.")
-        del_ids = find_vector_ids_for_chunk_hashes(removed_hashes)
-        if del_ids:
-            try:
-                vector_db.delete(ids=del_ids)
-            except Exception as e:
-                logging.error(f"Failed to delete vectors for removed chunks of {fname}: {e}")
-        # remove rows from chunks table
         try:
+            del_ids = find_vector_ids_for_chunk_hashes(removed_hashes)
+            if del_ids:
+                vector_db.delete(ids=del_ids)
             delete_chunks_by_hashes(removed_hashes)
         except Exception as e:
-            logging.error(f"Failed to delete chunk rows for {fname}: {e}")
+            logging.error(f"Failed to delete outdated chunks for {fname}: {e}")
 
-    # --- add/update new or changed chunks ---
+    # --- Step 4: Add or update chunks ---
     new_chunks_rows = []
     if added_or_changed_indices:
         logging.info(f"{fname}: adding/updating {len(added_or_changed_indices)} chunk(s) to vector DB.")
-        # batch insert for performance
-        for batch_start in range(0, len(added_or_changed_indices), BATCH_SIZE):
-            batch_indices = added_or_changed_indices[batch_start: batch_start + BATCH_SIZE]
-            batch_texts, batch_metas, batch_ids = [], [], []
-
-            for i in batch_indices:
-                text = texts[i]
-                meta = metadatas[i] if i < len(metadatas) else {}
-                meta = clean_metadata(meta)
-                vector_id = f"{fname}_chunk_{i}_{new_hashes[i][:12]}"
-                batch_texts.append(text)
-                batch_metas.append(meta)
-                batch_ids.append(vector_id)
-                new_chunks_rows.append({
-                    "chunk_hash": new_hashes[i],
-                    "chunk_index": i,
-                    "vector_id": vector_id,
-                    "extra_meta": meta
-                })
-
-            try:
-                # Add all chunks in a batch
-                vector_db.add_texts(batch_texts, metadatas=batch_metas, ids=batch_ids)
-                logging.info(f"Inserted batch {batch_start // BATCH_SIZE + 1} "
-                            f"({len(batch_indices)} chunks) for {fname}")
-            except Exception as e:
-                logging.error(f"Failed to add batch starting at index {batch_start} for {fname}: {e}")
-
-    # --- Upsert file record + the new/updated chunk rows into metadata DB
-    # This will create or update files.file_hash and insert/update chunk rows
+        for i in added_or_changed_indices:
+            c = chunks[i]
+            vector_id = f"{fname}_{c.chunk_id}_{new_hashes[i][:12]}"
+            meta_dict = c.metadata.model_dump() | {"source_id": c.source_id}
+            new_chunks_rows.append({
+                "chunk_hash": new_hashes[i],
+                "chunk_index": c.metadata.chunk_index,
+                "vector_id": vector_id,
+                "extra_meta": meta_dict
+            })
+        
+        try:
+            # batch insert into vectorstore
+            vector_db.add_texts(
+                [c.text for c in [chunks[i] for i in added_or_changed_indices]],
+                metadatas=[c.metadata.model_dump() | {"source_id": c.source_id} for c in [chunks[i] for i in added_or_changed_indices]],
+                ids=[f"{fname}_{c.chunk_id}_{new_hashes[i][:12]}" for i, c in enumerate([chunks[i] for i in added_or_changed_indices])]
+            )
+        except Exception as e:
+            logging.error(f"Failed to insert chunks for {fname}: {e}")
+            
+    # --- Step 5: Update metadata DB ---
     try:
         upsert_file_and_chunks(fname, file_hash, new_chunks_rows)
     except Exception as e:
@@ -298,5 +288,5 @@ def main():
         hybrid_hash_reindex(pdf_path, parse_and_chunk_pdf, pdf_db)
 
 if __name__ == "__main__":
-    main()
-    
+    # main()
+    parse_and_chunk_pdf(r"data\raw\pdfs\9241594217_eng.pdf")
