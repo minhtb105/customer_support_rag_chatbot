@@ -34,7 +34,6 @@ MERGE_PEERS = True
 # ==============================
 #  CAG (Cache-Augmented Generation)
 # ==============================
-CAG_MODE = "semantic"                # or "exact"
 CAG_MAX_SIZE = 1024                  # number of maximum entry in cache
 CAG_TTL_SECONDS = 60 * 60 * 24       # 24h
 CAG_SEMANTIC_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
