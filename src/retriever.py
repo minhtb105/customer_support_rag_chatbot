@@ -1,12 +1,11 @@
-from typing import List
 from functools import lru_cache
 from langchain_core.documents import Document
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.retrievers.bm25 import BM25Retriever
-from langchain.retrievers.ensemble import EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever, EnsembleRetriever
 from config import QA_DB_DIR, PDF_DB_DIR, TOP_K, EMBEDDING_MODEL
 from models.llm_io import ContextItem
+from typing import List
 
  
 def load_vectorstores():
@@ -31,11 +30,6 @@ def cached_documents():
     return docs
 
 def retrieve_context(query: str, top_k: int=TOP_K):
-    """
-    Retrieve relevant contexts for a given query.
-    Combines BM25 + vector + PDF retrievers (hybrid retrieval).
-    Returns a list of validated ContextItem objects.
-    """
     qa_db, pdf_db = load_vectorstores()
     
     # Semantic retriever (vector)
@@ -48,6 +42,48 @@ def retrieve_context(query: str, top_k: int=TOP_K):
     bm25_retriever.k = top_k
     
     # Ensemble retriever (Hybrid)
+    hybrid_retriever = EnsembleRetriever(
+        retrievers=[bm25_retriever, vector_retriever, vector_retriever_pdf],
+        weights=[0.3, 0.35, 0.35]
+    )
+    
+    docs = hybrid_retriever.invoke(query)
+    grouped = {}
+    
+    for doc in docs:
+        sid = doc.metadata.get("source_id")
+        section_path = tuple(doc.metadata.get("section_path", []))
+        key = (sid, section_path)
+        grouped.setdefault(key, []).append(doc)
+        
+    results = []
+    for (sid, section_path), parts in grouped.items():
+        merged = " <CHUNK_BREAK> ".join(part.page_content for part in parts)
+        results.append({
+            "source_id": sid,
+            "section_path": section_path,
+            "content": merged
+        })
+
+    return results
+def retrieve_context(query: str, top_k: int = TOP_K) -> List[ContextItem]:
+    """
+    Retrieve relevant contexts for a given query.
+    Combines BM25 + vector + PDF retrievers (hybrid retrieval).
+    Returns a list of validated ContextItem objects.
+    """
+    qa_db, pdf_db = load_vectorstores()
+    
+    # Semantic retrievers
+    vector_retriever = qa_db.as_retriever(search_kwargs={"k": top_k})
+    vector_retriever_pdf = pdf_db.as_retriever(search_kwargs={"k": top_k})
+    
+    # Lexical retriever (BM25)
+    docs = cached_documents()
+    bm25_retriever = BM25Retriever.from_documents(docs)
+    bm25_retriever.k = top_k
+    
+    # Hybrid (ensemble) retriever
     hybrid_retriever = EnsembleRetriever(
         retrievers=[bm25_retriever, vector_retriever, vector_retriever_pdf],
         weights=[0.3, 0.35, 0.35]
@@ -72,14 +108,8 @@ def retrieve_context(query: str, top_k: int=TOP_K):
                 source_id=str(sid),
                 content=merged,
                 dataset=doc.metadata.get("dataset", None),
-                score=None  # score can be added after reranking
+                score=None  # score will be assigned after reranking
             )
         )
-        
-    return results
-
-if __name__ == "__main__":
-    user_query = "What are the common causes of migraine headaches?"
-    contexts = retrieve_context(user_query, top_k=5)
-    print(contexts[0])
     
+    return results
