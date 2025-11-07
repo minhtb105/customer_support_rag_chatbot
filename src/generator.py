@@ -1,8 +1,11 @@
+import re
+from typing import List
 from openai import OpenAI 
 from sentence_transformers import CrossEncoder
 from config import GROQ_API_KEY, DEFAULT_MODEL, RERANKER_MODEL
 from prompt_templates import (
     STRICT_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT, BALANCED_SYSTEM_PROMPT)
+from models.llm_io import LLMInput, LLMOutput, ContextItem
 
 
 client = OpenAI(
@@ -23,7 +26,7 @@ def format_context(contexts):
     
     return context_text.strip()
 
-def rerank_contexts(query, contexts, top_n=3):
+def rerank_contexts(query: str, contexts: List[ContextItem], top_n=3):
     if not contexts:
         return []
     
@@ -67,12 +70,14 @@ def detect_tone_and_temp(query: str):
     # Default: balanced
     return BALANCED_SYSTEM_PROMPT, 0.2, 512
 
-def generate_answer(query, contexts, model=DEFAULT_MODEL):
+def generate_answer(input_data: LLMInput, model=DEFAULT_MODEL) -> LLMOutput:
     """
     Generate an answer that includes inline citations like [Source 1].
     """
-    context_text = format_context(contexts)
+    contexts = [c.model_dump() for c in input_data.contexts]
+    query = input_data.query
     
+    context_text = format_context(contexts)
     system_prompt, temperature, max_tokens = detect_tone_and_temp(query)
     
     user_prompt = (
@@ -96,62 +101,47 @@ def generate_answer(query, contexts, model=DEFAULT_MODEL):
     )
     answer = response.choices[0].message.content.strip()
     # Store in conversation memory
-    chat_history.append({
-        "user": query,
-        "assistant": answer
-    })
+    chat_history.append({"user": query, "assistant": answer})
 
     # Extract which sources were cited
-    cited_sources = set()
-    import re
-    for match in re.findall(r"\[Source\s+(\d+)\]", answer):
-        cited_sources.add(int(match))
+    cited_sources = sorted(
+        {int(m) for m in re.findall(r"\[Source\s+(\d+)\]", answer)}
+    )
 
-    return {
-        "answer": answer,
-        "cited_sources": sorted(list(cited_sources)),
-        "contexts": contexts,
-    }
+    # Return structured output (auto-validates)
+    return LLMOutput(
+        answer=answer,
+        cited_sources=cited_sources,
+        contexts=input_data.contexts
+    )
         
-def format_answer_for_ui(answer_data: dict) -> str:
+def format_answer_for_ui(answer_data: LLMOutput) -> str:
     """
     Format chatbot answer for frontend display.
-    - Convert newlines to HTML <br> tags
-    - Append citation list with source_id and optional dataset name
+    Converts newlines to <br> and appends citation list.
     """
-
-    answer_text = answer_data.get("answer", "").strip()
-    cited_sources = answer_data.get("cited_sources", [])
-    contexts = answer_data.get("contexts", [])
-
-    # Format line breaks for web display
     formatted_answer = (
-        answer_text
+        answer_data.answer
         .replace("\n\n", "<br><br>")
         .replace("\n", "<br>")
     )
 
-    # Build citation text
     citation_entries = []
-    for src_id in cited_sources:
+    for src_id in answer_data.cited_sources:
         dataset = None
-        for ctx in contexts:
-            if ctx.get("source_id") == src_id:
-                dataset = ctx.get("dataset")
+        for ctx in answer_data.contexts:
+            if ctx.source_id == str(src_id):
+                dataset = ctx.dataset
                 break
-        
+
         if dataset:
             citation_entries.append(f"[{src_id}] {dataset}")
         else:
             citation_entries.append(f"[{src_id}]")
 
-    # Join citations
-    if citation_entries:
-        citations_text = " — Sources: " + ", ".join(citation_entries)
-    else:
-        citations_text = ""
+    citations_text = (
+        " — Sources: " + ", ".join(citation_entries)
+        if citation_entries else ""
+    )
 
-    # Final HTML-safe answer
-    formatted_output = f"{formatted_answer}<br><br><i>{citations_text}</i>"
-
-    return formatted_output
+    return f"{formatted_answer}<br><br><i>{citations_text}</i>"
