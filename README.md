@@ -60,11 +60,18 @@ Lightweight Retrieval-Augmented Generation (RAG) project for building a customer
 - data/ — raw and processed datasets
 - requirements.txt — pinned dependencies
 
-## Important notes
-- FAISS is used for semantic indexing. The repository expects `faiss-cpu` in requirements; adjust for GPU if required.
-- Embedding and reranker model names are in `src/config.py` — change as needed.
-- The cache implementation stores LLM outputs (see `models/llm_io.py`) — ensure outputs are serializable if persisting.
-- The repo uses SentenceTransformers and transformers; large models require adequate RAM / GPU.
+### 🧠 Prompt Engineering Layer (`src/prompt_templates.py`)
+
+This layer defines structured system prompts that guide the chatbot's reasoning and response behavior.  
+The design enables **multi-persona prompt control**, **response evaluation**, and **adaptive tone generation**.
+
+**Implemented templates:**
+- **STRICT_SYSTEM_PROMPT** — for factual, concise, and medically accurate responses.  
+- **FRIENDLY_SYSTEM_PROMPT** — for empathetic, approachable explanations for general users.  
+- **BALANCED_SYSTEM_PROMPT** — combines reasoning transparency with readability, including structured "thinking → final answer" outputs.  
+- **EVALUATION_PROMPT** — allows a meta-evaluator agent to rate model responses on *Faithfulness, Recall, Precision,* and *Fluency.*
+
+These templates enable consistent, role-based response control and prepare the system for **self-assessing, event-driven agentic document workflows**.
 
 ## Contributing
 - Create issues / PRs for bugs or improvements.
