@@ -73,6 +73,32 @@ The design enables **multi-persona prompt control**, **response evaluation**, an
 
 These templates enable consistent, role-based response control and prepare the system for **self-assessing, event-driven agentic document workflows**.
 
+### 🧭 Why Context Engineering Matters
+Efficient context management ensures that large language models operate with  
+the *right information, at the right time, in the right format*.  
+This table outlines how to apply **LangChain’s Context Engineering framework** to your RAG pipeline.
+
+## 🧠 Context Engineering Checklist (for RAG & Agentic Systems)
+
+This checklist summarizes key best practices from **LangChain Context Engineering** —  
+helping your RAG or event-driven agent system manage, select, and evolve context effectively.
+
+| 🧩 Step | 🎯 Goal | ⚙️ Implementation Tips | 🧠 Example in Your Project |
+|:--|:--|:--|:--|
+| **1. Define Context Types** | Identify what information is static, dynamic, or persistent | - Static: system prompts, global configs<br>- Dynamic: session state, retrieved chunks<br>- Persistent: FAISS store, user memory | Static → system role<br>Dynamic → retrieval results<br>Persistent → FAISS cache |
+| **2. Write Context** | Record all reasoning and intermediate steps outside LLM window | - Save scratchpads, reasoning traces<br>- Persist memory/state per agent<br>- Log tool calls & results | LangGraph state + Kafka event logs |
+| **3. Select Context** | Provide only relevant information to the model | - Use semantic & metadata filters<br>- Limit `top_k` results<br>- Apply similarity threshold fallback | Hybrid FAISS + exact cache retrieval |
+| **4. Compress Context** | Handle long histories or large documents efficiently | - Summarize chat or chunks<br>- Cluster embeddings<br>- Prune noisy info | Summarizer agent for redundant contexts |
+| **5. Isolate Context** | Prevent context clash between different agents/tasks | - Give each agent its own system prompt<br>- Pass context via events only when needed | Query Planner, Retriever, and Synthesizer agents use scoped contexts |
+| **6. Manage Context Lifecycle** | Control how context evolves, resets, or persists | - Use lifecycle hooks<br>- Reset state between users/sessions<br>- Archive long-term memory | LangGraph memory nodes + FAISS store |
+| **7. Evaluate & Tune Context** | Measure and improve context quality | - Score relevance, faithfulness, precision<br>- Use self-eval or Eval Agent prompts | EVALUATION_PROMPT rates retrieved answers |
+| **8. Event-Driven Context Flow** | Make agents react dynamically to context updates | - Use Kafka or event bus<br>- Trigger re-indexing or query decomposition<br>- Chain agents by events | Document update → triggers Reindex Agent<br>User query → triggers Query Planner Agent |
+
+---
+
+> 💡 **Purpose:**  
+> Apply this checklist to ensure your RAG / Agentic pipeline maintains **context accuracy, scalability, and adaptability** — aligning with LangChain’s *Context Engineering* principles.
+
 ## Contributing
 - Create issues / PRs for bugs or improvements.
 - Add unit tests under `src/` and run locally.
