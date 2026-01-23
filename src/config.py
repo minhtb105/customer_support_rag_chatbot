@@ -10,13 +10,11 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 RAW_DIR = BASE_DIR / "data" / "raw"
 PROCESSED_DIR = BASE_DIR / "data" / "processed"
 PDF_DIR = BASE_DIR / "data" / "raw" / "pdfs"
-PROCESSED_DIR = BASE_DIR / "data" / "processed"
 OUTPUT_DIR = BASE_DIR / "data" / "processed" / "docling_chunks"
-QA_DB_DIR = BASE_DIR / "embeddings" / "qa_db"
 PDF_DB_DIR = BASE_DIR / "embeddings" / "pdf_db"
 META_DB_PATH = BASE_DIR / "metadata" / "metadata_store.db"
 
-CHUNK_SIZE = 500
+MAX_TOKENS = 500
 CHUNK_OVERLAP = 200
 BATCH_SIZE = 2000
 
@@ -26,7 +24,7 @@ RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 TOKENIZER_MODEL = "bert-base-uncased"
 
 TOP_K = 10
-HYBRID_ALPHA=0.6
+HYBRID_ALPHA = 0.6
 
 MERGE_PEERS = True
 
