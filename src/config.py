@@ -14,9 +14,14 @@ OUTPUT_DIR = BASE_DIR / "data" / "processed" / "docling_chunks"
 PDF_DB_DIR = BASE_DIR / "embeddings" / "pdf_db"
 META_DB_PATH = BASE_DIR / "metadata" / "metadata_store.db"
 
-MAX_TOKENS = 500
+MAX_TOKENS = 480
 CHUNK_OVERLAP = 200
 BATCH_SIZE = 2000
+
+SLIDING_WINDOW_TOKENS = 350
+SLIDING_OVERLAP = 64
+SEMANTIC_SIM_THRESHOLD = 0.78
+SENTENCE_GROUP = 4
 
 DEFAULT_MODEL = "llama-3.1-8b-instant"  # generator model
 EMBEDDING_MODEL = "pritamdeka/BioBERT-mnli-snli-scinli-scitail-mednli-stsb"
