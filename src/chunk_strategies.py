@@ -74,12 +74,12 @@ def structure_chunk(doc, source_id: str) -> List[Chunk]:
 
         meta = ChunkMetadata(
             section_path=", ".join(map(str, getattr(c.meta, "headings", [])))
-            if getattr(c.meta, "headings", None)
-            else None,
+            if getattr(c.meta, "headings", None) else None,
+
             page_numbers=", ".join(
                 map(str, sorted(set(getattr(c.meta, "page_numbers", [])))))
-            if getattr(c.meta, "page_numbers", None)
-            else None,
+            if getattr(c.meta, "page_numbers", None) else None,
+
             chunk_index=idx,
         )
 
@@ -232,13 +232,13 @@ def hybrid_section_semantic_chunk(
 
         base_meta = ChunkMetadata(
             section_path=", ".join(map(str, getattr(c.meta, "headings", [])))
-            if getattr(c.meta, "headings", None)
-            else None,
+            if getattr(c.meta, "headings", None) else None,
+
             page_numbers=", ".join(
                 map(str, sorted(set(getattr(c.meta, "page_numbers", [])))))
-            if getattr(c.meta, "page_numbers", None)
-            else None,
-            chunk_index=None,
+            if getattr(c.meta, "page_numbers", None) else None,
+
+            chunk_index=global_idx,
         )
 
         if token_count <= MAX_TOKENS:
