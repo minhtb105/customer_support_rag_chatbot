@@ -24,7 +24,7 @@ SEMANTIC_SIM_THRESHOLD = 0.78
 SENTENCE_GROUP = 4
 
 DEFAULT_MODEL = "llama-3.1-8b-instant"  # generator model
-EMBEDDING_MODEL = "pritamdeka/BioBERT-mnli-snli-scinli-scitail-mednli-stsb"
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 TOKENIZER_MODEL = "bert-base-uncased"
 
