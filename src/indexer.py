@@ -2,22 +2,26 @@ import os
 import logging
 import hashlib
 from docling.document_converter import DocumentConverter
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.document_converter import DocumentConverter, PdfFormatOption
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma.vectorstores import Chroma
 from transformers import AutoTokenizer
 from chunk_strategies import (
     chunk_document,
     extract_full_text_from_doc,
-    ChunkingStrategy
 )
 from embedding.adapter import EmbeddingAdapter
 from models.chunk import Chunk
 from metadata_store import *
-
 from config import *
 
 
 logging.basicConfig(level=logging.INFO)
+
+pdf_options = PdfPipelineOptions()
+pdf_options.do_ocr = False
 
 
 # =========================
@@ -62,14 +66,20 @@ def get_or_create_vectorstore(db_dir: str):
 # =========================
 def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter):
     fname = os.path.basename(pdf_path)
+    file_key = f"{fname}::{strategy.value}"
 
     new_fp = compute_file_fingerprint(pdf_path)
-    old_fp = get_file_hash(fname)
+    old_fp = get_file_hash(file_key)
     if new_fp == old_fp:
         logging.info(f"[SKIP] {fname}")
         return
 
-    doc = DocumentConverter().convert(pdf_path).document
+    converter = DocumentConverter(
+        format_options={
+            InputFormat.PDF: PdfFormatOption(pipeline_options=pdf_options)
+        }
+    )
+    doc = converter.convert(pdf_path).document
     raw_text = extract_full_text_from_doc(doc)
 
     chunks = chunk_document(
@@ -79,6 +89,9 @@ def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter):
         raw_text=raw_text,
         embed_fn=embedding_adapter.embed_texts
     )
+
+    logging.info(
+        f"[DEBUG] {fname} | {strategy.value} | chunked: {len(chunks)}")
 
     new_hashes = [compute_chunk_hash(c) for c in chunks]
     old_hashes = set(get_chunk_hashes_for_file(fname) or [])
@@ -117,7 +130,7 @@ def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter):
     if texts:
         vector_db.add_texts(texts=texts, metadatas=metas, ids=ids)
 
-    upsert_file_and_chunks(fname, new_fp, rows)
+    upsert_file_and_chunks(file_key, new_fp, rows)
 
     logging.info(
         f"[OK] {fname} | {strategy.value} | "
@@ -131,25 +144,31 @@ def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter):
 def main():
     init_db(META_DB_PATH)
 
-    vector_db = get_or_create_vectorstore(PDF_DB_DIR)
+    from chunk_strategies import ChunkingStrategy
 
-    embedding_adapter = EmbeddingAdapter(
-        embedder=HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL),
-        tokenizer=AutoTokenizer.from_pretrained(TOKENIZER_MODEL),
-        max_len=512,
-    )
+    for strategy in [
+        ChunkingStrategy.STRUCTURE,
+        ChunkingStrategy.SLIDING,
+        ChunkingStrategy.SEMANTIC,
+        ChunkingStrategy.HYBRID_SECTION_SEMANTIC,
+    ]:
+        # Tạo thư mục vector DB riêng cho từng strategy
+        strategy_db_dir = os.path.join(PDF_DB_DIR, strategy.value)
+        os.makedirs(strategy_db_dir, exist_ok=True)
 
-    for pdf in os.listdir(PDF_DIR):
-        if not pdf.lower().endswith(".pdf"):
-            continue
-        path = os.path.join(PDF_DIR, pdf)
+        vector_db = get_or_create_vectorstore(strategy_db_dir)
 
-        for strategy in [
-            ChunkingStrategy.STRUCTURE,
-            ChunkingStrategy.SLIDING,
-            ChunkingStrategy.SEMANTIC,
-            ChunkingStrategy.HYBRID_SECTION_SEMANTIC,
-        ]:
+        embedding_adapter = EmbeddingAdapter(
+            embedder=HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL),
+            tokenizer=AutoTokenizer.from_pretrained(TOKENIZER_MODEL),
+            max_len=512,
+        )
+
+        for pdf in os.listdir(PDF_DIR):
+            if not pdf.lower().endswith(".pdf"):
+                continue
+            path = os.path.join(PDF_DIR, pdf)
+
             hybrid_hash_reindex(
                 path,
                 vector_db,
