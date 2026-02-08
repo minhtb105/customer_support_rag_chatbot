@@ -86,7 +86,8 @@ def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter):
         pdf_path,
         strategy,
         raw_text=raw_text,
-        embed_fn=embedding_adapter.embed_texts
+        embed_fn=embedding_adapter.embed_texts,
+        atomic_size=ATOMIC_TOKEN_SIZE,
     )
 
     logging.info(

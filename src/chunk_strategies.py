@@ -15,6 +15,7 @@ from config import (
     SLIDING_OVERLAP,
     SENTENCE_GROUP,
     SEMANTIC_SIM_THRESHOLD,
+    ATOMIC_TOKEN_SIZE
 )
 
 
@@ -259,6 +260,7 @@ def hybrid_section_semantic_chunk(
             source_id,
             embed_fn=embed_fn,
             atomic_tokenizer=tokenizer.tokenizer,
+            atomic_size=ATOMIC_TOKEN_SIZE,
         )
 
         for sub in sub_chunks:
@@ -320,6 +322,7 @@ def chunk_document(
             source_id,
             embed_fn=embed_fn,
             atomic_tokenizer=tokenizer.tokenizer,
+            atomic_size=ATOMIC_TOKEN_SIZE,
         )
 
     chunks = structure_chunk(doc, source_id)
