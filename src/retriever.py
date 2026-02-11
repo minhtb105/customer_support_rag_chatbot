@@ -1,4 +1,5 @@
 from functools import lru_cache
+import os
 from langchain_core.documents import Document
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -8,13 +9,15 @@ from models.llm_io import ContextItem
 from typing import List
 
 
-def load_vectorstores():
+def load_vectorstores(strategy: str = "structure") -> Chroma:
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
-    pdf_db = Chroma(persist_directory=PDF_DB_DIR,
-                    embedding_function=embeddings)
-
-    return pdf_db
-
+    
+    db_dir = os.path.join(PDF_DB_DIR, strategy)
+    
+    return Chroma(
+        persist_directory=db_dir,
+        embedding_function=embeddings
+    )
 
 @lru_cache(maxsize=1)
 def cached_documents():
@@ -48,13 +51,14 @@ def trim_text(text: str, max_chars: int = 4000) -> str:
     return text[:max_chars] + "\n\n[Content truncated]"
 
 
-def retrieve_context(query: str, top_k: int = TOP_K) -> List[ContextItem]:
+def retrieve_context(query: str, top_k: int = TOP_K, 
+                     strategy: str = "structure") -> List[ContextItem]:
     """
     Retrieve relevant contexts for a given query.
     Combines BM25 + vector + PDF retrievers (hybrid retrieval).
     Returns a list of validated ContextItem objects.
     """
-    pdf_db = load_vectorstores()
+    pdf_db = load_vectorstores(strategy=strategy)
 
     # Semantic retrievers
     vector_retriever = pdf_db.as_retriever(search_kwargs={"k": top_k})
