@@ -4,8 +4,8 @@ from langchain_core.documents import Document
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever
-from config import PDF_DB_DIR, TOP_K, EMBEDDING_MODEL
-from models.llm_io import ContextItem
+from src.config import PDF_DB_DIR, TOP_K, EMBEDDING_MODEL
+from src.models.llm_io import ContextItem
 from typing import List
 
 
