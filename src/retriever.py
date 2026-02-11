@@ -2,7 +2,7 @@ from functools import lru_cache
 from langchain_core.documents import Document
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.retrievers import BM25Retriever, EnsembleRetriever
+from langchain_community.retrievers import BM25Retriever
 from config import PDF_DB_DIR, TOP_K, EMBEDDING_MODEL
 from models.llm_io import ContextItem
 from typing import List
@@ -59,41 +59,54 @@ def retrieve_context(query: str, top_k: int = TOP_K) -> List[ContextItem]:
     # Semantic retrievers
     vector_retriever = pdf_db.as_retriever(search_kwargs={"k": top_k})
 
-    # Lexical retriever (BM25)
+    # semantic retriever
+    vector_retriever = pdf_db.as_retriever(search_kwargs={"k": top_k})
+    vector_docs = vector_retriever.get_relevant_documents(query)
+
+    # BM25 lexical
     docs = cached_documents()
     bm25_retriever = BM25Retriever.from_documents(docs)
     bm25_retriever.k = top_k
+    bm25_docs = bm25_retriever.get_relevant_documents(query)
 
-    # Hybrid (ensemble) retriever
-    hybrid_retriever = EnsembleRetriever(
-        retrievers=[bm25_retriever, vector_retriever],
-        weights=[0.3, 0.7]
-    )
+    # combine results
+    combined = vector_docs + bm25_docs
 
-    retrieved_docs = hybrid_retriever.invoke(query)
+    # flatten and dedupe by doc identity + chunk_index
+    seen = set()
+    merged_list = []
+    for d in combined:
+        key = (
+            d.metadata.get("source_id"),
+            d.metadata.get("chunk_index"),
+            d.page_content[:50]  # small fingerprint
+        )
+        if key not in seen:
+            seen.add(key)
+            merged_list.append(d)
 
-    merge = should_merge(query)
+    # sort: put vector matches first (optional)
+    # or keep frequency, or average rank
+    # here we just keep current order
+    results = merged_list[:top_k * 2]  # optionally extend
+
+    # group for merge
     grouped = {}
-
-    for doc in retrieved_docs:
+    for doc in results:
         sid = doc.metadata.get("source_id")
         section = doc.metadata.get("section_path")
-
-        key = (sid, section) if merge else id(doc)
+        key = (sid, section) if should_merge(query) else id(doc)
         grouped.setdefault(key, []).append(doc)
 
-    results: List[ContextItem] = []
-
+    out: List[ContextItem] = []
     for key, parts in grouped.items():
         parts = sorted(
             parts,
             key=lambda d: d.metadata.get("chunk_index", 0)
         )
-
         merged_text = "\n\n---\n\n".join(p.page_content for p in parts)
         merged_text = trim_text(merged_text)
-
-        results.append(
+        out.append(
             ContextItem(
                 source_id=str(parts[0].metadata.get("source_id")),
                 content=merged_text,
@@ -112,4 +125,4 @@ def retrieve_context(query: str, top_k: int = TOP_K) -> List[ContextItem]:
             )
         )
 
-    return results
+    return out
