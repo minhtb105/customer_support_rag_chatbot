@@ -7,9 +7,9 @@ class ContextItem(BaseModel):
     content: str
 
     # citation / highlight metadata
-    section_path: Optional[str] = None
+    section_path: Optional[List[str]] = None
     page_numbers: Optional[List[int]] = None
-    chunk_indices: List[int] = []
+    chunk_indices: List[int] = Field(default_factory=list)
 
     score: Optional[float] = None
     dataset: Optional[str] = None

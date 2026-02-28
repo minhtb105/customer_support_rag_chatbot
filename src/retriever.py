@@ -50,6 +50,29 @@ def trim_text(text: str, max_chars: int = 4000) -> str:
 
     return text[:max_chars] + "\n\n[Content truncated]"
 
+def make_section_key(section):
+    if not section:
+        return None
+    if isinstance(section, list):
+        return tuple(section)
+    return section
+
+def deserialize_metadata(meta: dict) -> dict:
+    if "section_path" in meta and isinstance(meta["section_path"], str):
+        meta["section_path"] = meta["section_path"].split("|||")
+        
+    if "page_numbers" in meta and isinstance(meta["page_numbers"], str):
+        meta["page_numbers"] = [
+            int(x) for x in meta["page_numbers"].split("|||") if x
+        ]
+        
+    return meta
+
+def normalize_docs(docs):
+    for d in docs:
+        d.metadata = deserialize_metadata(d.metadata)
+        
+    return docs
 
 def retrieve_context(query: str, top_k: int = TOP_K, 
                      strategy: str = "structure") -> List[ContextItem]:
@@ -66,13 +89,19 @@ def retrieve_context(query: str, top_k: int = TOP_K,
     # semantic retriever
     vector_retriever = pdf_db.as_retriever(search_kwargs={"k": top_k})
     vector_docs = vector_retriever.get_relevant_documents(query)
+    vector_docs = normalize_docs(
+        vector_retriever.get_relevant_documents(query)
+    )
 
     # BM25 lexical
     docs = cached_documents()
     bm25_retriever = BM25Retriever.from_documents(docs)
     bm25_retriever.k = top_k
     bm25_docs = bm25_retriever.get_relevant_documents(query)
-
+    bm25_docs = normalize_docs(
+        bm25_retriever.get_relevant_documents(query)
+    )
+        
     # combine results
     combined = vector_docs + bm25_docs
 
@@ -98,7 +127,8 @@ def retrieve_context(query: str, top_k: int = TOP_K,
     grouped = {}
     for doc in results:
         sid = doc.metadata.get("source_id")
-        section = doc.metadata.get("section_path")
+        section = make_section_key(doc.metadata.get("section_path"))    
+        
         key = (sid, section) if should_merge(query) else id(doc)
         grouped.setdefault(key, []).append(doc)
 

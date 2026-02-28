@@ -60,6 +60,16 @@ def cosine_sim(a: np.ndarray, b: np.ndarray) -> float:
     denom = np.linalg.norm(a) * np.linalg.norm(b)
     return float(np.dot(a, b) / denom) if denom > 0 else 0.0
 
+def serialize_metatdata(meta: dict):
+    out = {}
+    for k, v in meta.items():
+        if isinstance(v, list):
+            out[k] = "|||".join(map(str, v))
+        else:
+            out[k] = v
+            
+    return out
+
 
 # =========================
 # Chunkers
@@ -72,15 +82,13 @@ def structure_chunk(doc, source_id: str) -> List[Chunk]:
         text = chunker.contextualize(c).strip()
         if not text:
             continue
+        
+        headings = getattr(c.meta, "headings", None)
+        pages = getattr(c.meta, "page_numbers", None)
 
         meta = ChunkMetadata(
-            section_path=", ".join(map(str, getattr(c.meta, "headings", [])))
-            if getattr(c.meta, "headings", None) else None,
-
-            page_numbers=", ".join(
-                map(str, sorted(set(getattr(c.meta, "page_numbers", [])))))
-            if getattr(c.meta, "page_numbers", None) else None,
-
+            section_path=list(headings) if headings else None,
+            page_numbers=list(pages) if pages else None,
             chunk_index=idx,
         )
 
@@ -231,14 +239,12 @@ def hybrid_section_semantic_chunk(
 
         token_count = len(tokenizer.tokenizer.tokenize(base_text))
 
+        headings = getattr(c.meta, "headings", None)
+        pages = getattr(c.meta, "page_numbers", None)
+
         base_meta = ChunkMetadata(
-            section_path=", ".join(map(str, getattr(c.meta, "headings", [])))
-            if getattr(c.meta, "headings", None) else None,
-
-            page_numbers=", ".join(
-                map(str, sorted(set(getattr(c.meta, "page_numbers", [])))))
-            if getattr(c.meta, "page_numbers", None) else None,
-
+            section_path=list(headings) if headings else None,
+            page_numbers=list(pages) if pages else None,
             chunk_index=global_idx,
         )
 

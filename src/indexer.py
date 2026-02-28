@@ -10,6 +10,7 @@ from transformers import AutoTokenizer
 from chunk_strategies import (
     chunk_document,
     extract_full_text_from_doc,
+    serialize_metatdata
 )
 from embedding.adapter import EmbeddingAdapter
 from models.chunk import Chunk
@@ -109,11 +110,13 @@ def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter):
         c = chunks[i]
         vid = f"{fname}_{c.chunk_id}_{h[:12]}"
 
-        meta = c.metadata.model_dump()
-        meta.update({
+        raw_meta = c.metadata.model_dump()
+        raw_meta.update({
             "source_id": c.source_id,
             "chunking_strategy": strategy.value
         })
+
+        meta = serialize_metatdata(raw_meta) 
 
         texts.append(c.text)
         metas.append(meta)
@@ -123,7 +126,7 @@ def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter):
             "chunk_hash": h,
             "chunk_index": c.metadata.chunk_index,
             "vector_id": vid,
-            "extra_meta": meta
+            "extra_meta": raw_meta
         })
 
     if texts:
