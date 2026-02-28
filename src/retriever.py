@@ -9,6 +9,7 @@ from src.models.llm_io import ContextItem
 from typing import List
 
 
+@lru_cache(maxsize=4)
 def load_vectorstores(strategy: str = "structure") -> Chroma:
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
     
@@ -74,6 +75,20 @@ def normalize_docs(docs):
         
     return docs
 
+@lru_cache(maxsize=1)
+def get_bm25():
+    docs = cached_documents()
+    retriever = BM25Retriever.from_documents(docs)
+    retriever.k = TOP_K
+    
+    return retriever
+
+@lru_cache(maxsize=4)
+def get_vector_retriever(strategy: str = "structure"):
+    db = load_vectorstores(strategy)
+    
+    return db.as_retriever(search_kwargs={"k": TOP_K})
+
 def retrieve_context(query: str, top_k: int = TOP_K, 
                      strategy: str = "structure") -> List[ContextItem]:
     """
@@ -81,26 +96,18 @@ def retrieve_context(query: str, top_k: int = TOP_K,
     Combines BM25 + vector + PDF retrievers (hybrid retrieval).
     Returns a list of validated ContextItem objects.
     """
-    pdf_db = load_vectorstores(strategy=strategy)
-
+    
     # Semantic retrievers
-    vector_retriever = pdf_db.as_retriever(search_kwargs={"k": top_k})
+    vector_retriever = get_vector_retriever(strategy)
 
     # semantic retriever
-    vector_retriever = pdf_db.as_retriever(search_kwargs={"k": top_k})
     vector_docs = vector_retriever.get_relevant_documents(query)
-    vector_docs = normalize_docs(
-        vector_retriever.get_relevant_documents(query)
-    )
+    vector_docs = normalize_docs(vector_docs)
 
     # BM25 lexical
-    docs = cached_documents()
-    bm25_retriever = BM25Retriever.from_documents(docs)
-    bm25_retriever.k = top_k
+    bm25_retriever = get_bm25()
     bm25_docs = bm25_retriever.get_relevant_documents(query)
-    bm25_docs = normalize_docs(
-        bm25_retriever.get_relevant_documents(query)
-    )
+    bm25_docs = normalize_docs(bm25_docs)
         
     # combine results
     combined = vector_docs + bm25_docs
