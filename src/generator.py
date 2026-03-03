@@ -20,9 +20,9 @@ chat_history = []
 def format_context(contexts):
     context_text = ""
     for context in contexts:
-        src_id = context.get("source_id", "N/A")
-        score = context.get("score", "N/A")
-        context_text += f"[Source {src_id} | Score={score:.4f}]\n{context['content']}\n\n"
+        src_id = context.source_id if hasattr(context, 'source_id') else "N/A"
+        score = context.score if hasattr(context, 'score') else "N/A"
+        context_text += f"[Source {src_id} | Score={float(score):.4f}]\n{context.content}\n\n"
     
     return context_text.strip()
 
@@ -30,13 +30,13 @@ def rerank_contexts(query: str, contexts: List[ContextItem], top_n=3):
     if not contexts:
         return []
     
-    pairs = [(query, ctx['content']) for ctx in contexts]
+    pairs = [(query, ctx.content) for ctx in contexts]
     scores = reranker.predict(pairs)
     
     for i, ctx in enumerate(contexts):
-        ctx["score"] = scores[i]
+        ctx.score = float(scores[i])
         
-    ranked = sorted(contexts, key=lambda x: x["score"], reverse=True)
+    ranked = sorted(contexts, key=lambda x: x.score, reverse=True)
     
     return ranked[:top_n]
 
@@ -74,25 +74,23 @@ def generate_answer(input_data: LLMInput, model=DEFAULT_MODEL) -> LLMOutput:
     """
     Generate an answer that includes inline citations like [Source 1].
     """
-    contexts = [c.model_dump() for c in input_data.contexts]
     query = input_data.query
-    
-    context_text = format_context(contexts)
+    context_text = format_context(input_data.contexts)
     system_prompt, temperature, max_tokens = detect_tone_and_temp(query)
-    
+
     user_prompt = (
         f"Context: \n{context_text}\n\n"
         f"Question: {query}\n\n"
         "Answer clearly and concisely"
     )
-    
+
     # Combine memory + current question
     messages = [{"role": "system", "content": system_prompt}]
     for past in chat_history[-5:]:  # keep last 5 exchanges
         messages.append({"role": "user", "content": past["user"]})
         messages.append({"role": "assistant", "content": past["assistant"]})
     messages.append({"role": "user", "content": user_prompt})
-     
+
     response = client.chat.completions.create(
         model=model,
         messages=messages,

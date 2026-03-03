@@ -59,7 +59,7 @@ def rag_chat(question: str, top_k: int = TOP_K, model: str = DEFAULT_MODEL) -> D
 
     # 3) Build LLMInput
     t4 = time.perf_counter()
-    llm_input = LLMInput(query=question, contexts=reranked)
+    llm_input = LLMInput(query=question, contexts=[c.model_dump() for c in reranked])
     timings['build_llm_input'] = time.perf_counter() - t4
 
     # 4) Call generator -> returns LLMOutput
@@ -89,5 +89,5 @@ def rag_chat(question: str, top_k: int = TOP_K, model: str = DEFAULT_MODEL) -> D
 if __name__ == "__main__":
     q = "What are the common causes of migraine headaches?"
     r = rag_chat(q)
-    print("Cache stats:", r["cache_stats"])
+    print("Timings:", r["timings"])
     print("Formatted answer:\n", r["formatted_answer"])
