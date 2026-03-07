@@ -101,12 +101,12 @@ def retrieve_context(query: str, top_k: int = TOP_K,
     vector_retriever = get_vector_retriever(strategy)
 
     # semantic retriever
-    vector_docs = vector_retriever.get_relevant_documents(query)
+    vector_docs = vector_retriever.invoke(query)
     vector_docs = normalize_docs(vector_docs)
 
     # BM25 lexical
     bm25_retriever = get_bm25()
-    bm25_docs = bm25_retriever.get_relevant_documents(query)
+    bm25_docs = bm25_retriever.invoke(query)
     bm25_docs = normalize_docs(bm25_docs)
         
     # combine results

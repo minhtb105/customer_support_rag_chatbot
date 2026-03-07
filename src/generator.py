@@ -22,7 +22,11 @@ def format_context(contexts):
     for context in contexts:
         src_id = context.source_id if hasattr(context, 'source_id') else "N/A"
         score = context.score if hasattr(context, 'score') else "N/A"
-        context_text += f"[Source {src_id} | Score={float(score):.4f}]\n{context.content}\n\n"
+        try:
+            score_str = f"{float(score):.4f}"
+        except (ValueError, TypeError):
+            score_str = str(score)
+        context_text += f"[Source {src_id} | Score={score_str}]\n{context.content}\n\n"
     
     return context_text.strip()
 

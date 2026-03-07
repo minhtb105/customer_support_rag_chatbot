@@ -1,66 +1,136 @@
 import json
-from openai import OpenAI 
-from generator import format_context
-from config import GROQ_API_KEY, DEFAULT_MODEL
-from prompt_templates import EVALUATION_PROMPT
+from typing import List, Dict, Any
+from collections import defaultdict
+from retriever import retrieve_context
+from models.llm_io import ContextItem
 
 
-client = OpenAI(
-    api_key=GROQ_API_KEY,
-    base_url="https://api.groq.com/openai/v1"
-)
+# =========================
+# 🔹 Retriever Interface
+# =========================
 
-def evaluate_rag_triad(question, answer, contexts, model=DEFAULT_MODEL):
-    """
-    Evaluate RAG chatbot answers using the RAG Triad framework + Fluency.
+class BaseRetriever:
+    def retrieve(self, query: str) -> List[ContextItem]:
+        raise NotImplementedError
 
-    Metrics:
-    - Faithfulness: Is the answer faithful to the given context (no hallucination)?
-    - Contextual Precision: Does the retrieved context precisely support the answer?
-    - Contextual Recall: Does the context cover enough relevant information?
-    - Fluency: Is the answer written in clear, natural English?
-    """
-    context_text = format_context(contexts)
-    prompt = EVALUATION_PROMPT.format(
-        question=question,
-        answer=answer,
-        context_text=context_text
-    )
-    
-    response = client.chat.completions.create(
-        model=model,
-        temperature=0,
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a strict and knowledgeable evaluator for RAG systems. "
-                    "Evaluate based solely on the context and the answer provided."
-                ),
-            },
-            {"role": "user", "content": prompt},
-        ],
-    )
 
-    content = response.choices[0].message.content.strip()
+class HybridRetriever(BaseRetriever):
+    def retrieve(self, query: str) -> List[ContextItem]:
+        return retrieve_context(query)
 
-    # Try to extract JSON even if extra text appears
-    try:
-        start = content.find("{")
-        end = content.rfind("}") + 1
-        json_str = content[start:end]
-        evaluation = json.loads(json_str)
-    except Exception as e:
-        evaluation = {
-            "Faithfulness": 0,
-            "Faithfulness_comment": "Parsing failed.",
-            "Contextual_Precision": 0,
-            "Contextual_Precision_comment": "Parsing failed.",
-            "Contextual_Recall": 0,
-            "Contextual_Recall_comment": "Parsing failed.",
-            "Fluency": 0,
-            "Fluency_comment": "Parsing failed.",
-            "Overall_Comment": f"Invalid JSON or parsing error: {e}",
+# =========================
+# 🔹 Helper Functions
+# =========================
+
+def extract_doc_id(ctx: ContextItem) -> str:
+    return ctx.source_id if hasattr(ctx, 'source_id') else "N/A"
+
+
+# =========================
+# 🔹 Metrics
+# =========================
+
+def recall_at_k(retrieved: List[ContextItem], relevant: List[str], k: int) -> float:
+    retrieved_ids = [extract_doc_id(r) for r in retrieved[:k]]
+    relevant_set = set(relevant)
+
+    if not relevant_set:
+        return 0.0
+
+    return len(set(retrieved_ids) & relevant_set) / len(relevant_set)
+
+
+def hit_at_k(retrieved: List[ContextItem], relevant: List[str], k: int) -> int:
+    retrieved_ids = [extract_doc_id(r) for r in retrieved[:k]]
+    relevant_set = set(relevant)
+
+    return int(len(set(retrieved_ids) & relevant_set) > 0)
+
+
+def mean_reciprocal_rank(retrieved: List[ContextItem], relevant: List[str], k: int) -> float:
+    retrieved_ids = [extract_doc_id(r) for r in retrieved[:k]]
+    relevant_set = set(relevant)
+
+    for rank, doc_id in enumerate(retrieved_ids, start=1):
+        if doc_id in relevant_set:
+            return 1.0 / rank
+
+    return 0.0
+
+
+# =========================
+# 🔹 Retrieval Evaluator
+# =========================
+
+class RetrievalEvaluator:
+    def __init__(self, retrievers: Dict[str, BaseRetriever]):
+        self.retrievers = retrievers
+
+    def evaluate(self, dataset: List[Dict[str, Any]], k: int = 5) -> Dict[str, Dict[str, float]]:
+        results = {
+            name: {
+                "Recall@K": [],
+                "Hit@K": [],
+                "MRR": []
+            }
+            for name in self.retrievers
         }
 
-    return evaluation
+        for sample in dataset:
+            query = sample["question"]
+            relevant = sample.get("gold_sources", [])
+
+            for name, retriever in self.retrievers.items():
+                contexts = retriever.retrieve(query)
+
+                results[name]["Recall@K"].append(
+                    recall_at_k(contexts, relevant, k)
+                )
+                results[name]["Hit@K"].append(
+                    hit_at_k(contexts, relevant, k)
+                )
+                results[name]["MRR"].append(
+                    mean_reciprocal_rank(contexts, relevant, k)
+                )
+
+        return self._aggregate(results)
+
+    def _aggregate(self, results):
+        return {
+            method: {
+                metric: (sum(vals) / len(vals) if vals else 0.0)
+                for metric, vals in metrics.items()
+            }
+            for method, metrics in results.items()
+        }
+
+
+# =========================
+# 🔹 Dataset Loader
+# =========================
+
+def load_dataset(path: str) -> List[Dict[str, Any]]:
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+# =========================
+# 🔹 Main
+# =========================
+
+if __name__ == "__main__":
+    dataset = load_dataset("F:/customer_support_rag_chatbot/data/evaluation/benchmark_questions.json")
+
+    retrievers = {
+        "hybrid": HybridRetriever(),
+    }
+
+    evaluator = RetrievalEvaluator(retrievers)
+    results = evaluator.evaluate(dataset, k=5)
+
+    print("\n=== Retrieval Evaluation Results ===")
+    for method, metrics in results.items():
+        print(f"\n[{method}]")
+        for m, v in metrics.items():
+            print(f"{m}: {v:.4f}")
+            
