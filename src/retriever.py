@@ -3,7 +3,7 @@ import os
 from langchain_core.documents import Document
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.retrievers import BM25Retriever
+from langchain_community.retrievers import BM25Retriever as LangchainBM25Retriever
 from src.config import PDF_DB_DIR, TOP_K, EMBEDDING_MODEL
 from src.models.llm_io import ContextItem
 from typing import List
@@ -78,7 +78,7 @@ def normalize_docs(docs):
 @lru_cache(maxsize=1)
 def get_bm25():
     docs = cached_documents()
-    retriever = BM25Retriever.from_documents(docs)
+    retriever = LangchainBM25Retriever.from_documents(docs)
     retriever.k = TOP_K
     
     return retriever
