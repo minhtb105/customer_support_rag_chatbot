@@ -4,9 +4,15 @@ from langchain_core.documents import Document
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever as LangchainBM25Retriever
+from langsmith.run_helpers import traceable
 from src.config import PDF_DB_DIR, TOP_K, EMBEDDING_MODEL
 from src.models.llm_io import ContextItem
 from typing import List
+
+try:
+    from observability.tracing import add_trace_metadata
+except ImportError:
+    from src.observability.tracing import add_trace_metadata
 
 
 @lru_cache(maxsize=4)
@@ -89,6 +95,7 @@ def get_vector_retriever(strategy: str = "structure"):
     
     return db.as_retriever(search_kwargs={"k": TOP_K})
 
+@traceable(name="retrieve_context", run_type="retriever")
 def retrieve_context(query: str, top_k: int = TOP_K, 
                      strategy: str = "structure") -> List[ContextItem]:
     """
@@ -138,6 +145,14 @@ def retrieve_context(query: str, top_k: int = TOP_K,
         
         key = (sid, section) if should_merge(query) else id(doc)
         grouped.setdefault(key, []).append(doc)
+
+    add_trace_metadata(
+        strategy=strategy,
+        top_k=top_k,
+        vector_hits=len(vector_docs),
+        bm25_hits=len(bm25_docs),
+        merged_groups=len(grouped),
+    )
 
     out: List[ContextItem] = []
     for key, parts in grouped.items():

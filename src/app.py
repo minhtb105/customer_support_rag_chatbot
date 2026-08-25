@@ -1,7 +1,14 @@
 import streamlit as st
 from rag_pipeline import rag_chat
-from config import DEFAULT_MODEL
+from config import DEFAULT_MODEL, LANGSMITH_PROJECT
 from memory import get_long_term_memory
+
+try:
+    from observability.feedback import submit_thumbs_down, submit_thumbs_up
+    from observability.tracing import is_tracing_enabled, resolve_trace_url
+except ImportError:
+    from src.observability.feedback import submit_thumbs_down, submit_thumbs_up
+    from src.observability.tracing import is_tracing_enabled, resolve_trace_url
 
 
 st.set_page_config(page_title="Customer Support Chatbot with Memory", layout="wide")
@@ -31,6 +38,13 @@ with st.sidebar:
     if st.button("Clear All Memory"):
         st.session_state.clear_all_memory = True
         st.rerun()
+    
+    # LangSmith tracing status
+    st.subheader("Observability")
+    if is_tracing_enabled():
+        st.success(f"LangSmith: ON\n\nProject: `{LANGSMITH_PROJECT}`")
+    else:
+        st.warning("LangSmith: OFF (set LANGSMITH_API_KEY)")
     
     # Memory statistics
     st.subheader("Memory Statistics")
@@ -64,6 +78,48 @@ if st.button("Submit") and query.strip():
         # Display results
         st.markdown("### Chatbot Answer:")
         st.write(result["formatted_answer"], unsafe_allow_html=True)
+        
+        # LangSmith feedback + trace link
+        ls_info = result.get("langsmith") or {}
+        if ls_info.get("enabled"):
+            st.markdown("### Rate this answer")
+            comment = st.text_input(
+                "Optional comment for the team:",
+                key="feedback_comment",
+                placeholder="What was good or wrong about this answer?",
+            )
+            fb_col1, fb_col2, fb_col3 = st.columns([1, 1, 2])
+            with fb_col1:
+                if st.button("👍 Helpful", use_container_width=True):
+                    ok = submit_thumbs_up(ls_info.get("run_id"), comment or None)
+                    st.session_state["fb_status"] = (
+                        "Thanks! Your feedback was recorded on this trace." if ok
+                        else "Could not reach LangSmith - feedback not saved."
+                    )
+            with fb_col2:
+                if st.button("👎 Not helpful", use_container_width=True):
+                    ok = submit_thumbs_down(ls_info.get("run_id"), comment or None)
+                    st.session_state["fb_status"] = (
+                        "Thanks! We recorded that this answer was not helpful." if ok
+                        else "Could not reach LangSmith - feedback not saved."
+                    )
+            with fb_col3:
+                trace_url = ls_info.get("url")
+                if not trace_url and ls_info.get("run_id"):
+                    cache_key = f"trace_url_{ls_info['run_id']}"
+                    if cache_key in st.session_state:
+                        trace_url = st.session_state[cache_key]
+                    else:
+                        trace_url = resolve_trace_url(ls_info["run_id"])
+                        if trace_url:
+                            st.session_state[cache_key] = trace_url
+                if trace_url:
+                    st.markdown(
+                        f"[🔍 View trace in LangSmith]({trace_url})",
+                        unsafe_allow_html=True,
+                    )
+            if st.session_state.get("fb_status"):
+                st.caption(st.session_state["fb_status"])
         
         # Display cache information
         if result.get("cache_hit"):

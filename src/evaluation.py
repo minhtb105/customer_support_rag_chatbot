@@ -4,6 +4,11 @@ from collections import defaultdict
 from retriever import retrieve_context
 from models.llm_io import ContextItem
 
+try:
+    from observability.tracing import log_evaluation_summary
+except ImportError:
+    from src.observability.tracing import log_evaluation_summary
+
 
 # =========================
 # 🔹 Retriever Interface
@@ -133,4 +138,8 @@ if __name__ == "__main__":
         print(f"\n[{method}]")
         for m, v in metrics.items():
             print(f"{m}: {v:.4f}")
+
+    # Push the aggregate snapshot to LangSmith so trends show up in dashboards
+    logged = log_evaluation_summary("retrieval_evaluation", results, k=5)
+    print(f"\nLangSmith logging: {'OK' if logged else 'skipped (tracing unavailable)'}")
             

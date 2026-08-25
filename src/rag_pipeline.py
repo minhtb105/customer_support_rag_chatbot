@@ -1,10 +1,25 @@
 import time
 from typing import Dict, Any, List
-from config import (
-    TOP_K, DEFAULT_MODEL,
-    CAG_MAX_SIZE, CAG_TTL_SECONDS,
-    CAG_SEMANTIC_MODEL, CAG_SEMANTIC_THRESHOLD
-)
+from langsmith.run_helpers import traceable
+
+try:
+    from config import (
+        TOP_K, DEFAULT_MODEL,
+        CAG_MAX_SIZE, CAG_TTL_SECONDS,
+        CAG_SEMANTIC_MODEL, CAG_SEMANTIC_THRESHOLD
+    )
+except ImportError:  # pragma: no cover - allows running as "src." package too
+    from src.config import (
+        TOP_K, DEFAULT_MODEL,
+        CAG_MAX_SIZE, CAG_TTL_SECONDS,
+        CAG_SEMANTIC_MODEL, CAG_SEMANTIC_THRESHOLD
+    )
+
+try:
+    from observability.tracing import add_trace_metadata, get_current_trace_info
+except ImportError:
+    from src.observability.tracing import add_trace_metadata, get_current_trace_info
+
 from retriever import retrieve_context
 from generator import generate_answer, rerank_contexts, format_answer_for_ui
 from models.llm_io import ContextItem, LLMInput, LLMOutput
@@ -28,6 +43,7 @@ episodic_memory = get_episodic_memory()
 long_term_memory = get_long_term_memory()
 
 
+@traceable(name="rag_chat", run_type="chain")
 def rag_chat(question: str, top_k: int = TOP_K, model: str = DEFAULT_MODEL, 
              user_id: str = "default_user") -> Dict[str, Any]:
     """
@@ -36,6 +52,9 @@ def rag_chat(question: str, top_k: int = TOP_K, model: str = DEFAULT_MODEL,
     - If cache hit -> return cached LLMOutput (and formatted HTML)
     - Else -> retrieve contexts, rerank, call generator, store to cache.
     - Update all memory layers with the interaction.
+
+    The whole call is traced as a root run in LangSmith; the returned dict
+    carries `langsmith` info (run id + URL) for feedback linking.
     """
     timings = {}
     
@@ -58,14 +77,21 @@ def rag_chat(question: str, top_k: int = TOP_K, model: str = DEFAULT_MODEL,
         # Update memories with cached response
         _update_memories(question, cached.answer, user_id)
         
-        return {
+        result = {
             "raw_answer": cached.model_dump(),
             "formatted_answer": formatted,
             "cache_hit": True,
             "cache_stats": cache.stats(),
             "memory_stats": _get_memory_stats(),
-            "timings": timings
+            "timings": timings,
+            "contexts": [c.model_dump() for c in cached.contexts],
+            "langsmith": _attach_trace_metadata(
+                question=question, top_k=top_k, model=model,
+                user_id=user_id, cache_hit=True, timings=timings,
+                num_contexts=len(cached.contexts),
+            ),
         }
+        return result
 
     # 1) Retrieve contexts (returns List[ContextItem])
     t2 = time.perf_counter()
@@ -80,9 +106,15 @@ def rag_chat(question: str, top_k: int = TOP_K, model: str = DEFAULT_MODEL,
     # 3) Build LLMInput with memory context
     t4 = time.perf_counter()
     memory_context = _build_memory_context(question, user_id)
-    llm_input = LLMInput(query=question, contexts=[c.model_dump() for c in reranked])
-    # Add memory context to metadata for generator
-    llm_input.contexts.extend(memory_context)
+    # NOTE: serialize to plain dicts at this boundary - retriever.py and
+    # pipeline code may resolve models.llm_io under two different module
+    # paths ("config" vs "src.config" styles), so raw instances are not
+    # interchangeable for pydantic validation.
+    llm_input = LLMInput(
+        query=question,
+        contexts=[c.model_dump() for c in reranked] +
+                 [m.model_dump() for m in memory_context]
+    )
     timings['build_llm_input'] = time.perf_counter() - t4
 
     # 4) Call generator -> returns LLMOutput
@@ -111,44 +143,69 @@ def rag_chat(question: str, top_k: int = TOP_K, model: str = DEFAULT_MODEL,
         "cache_hit": False,
         "cache_stats": cache.stats(),
         "memory_stats": _get_memory_stats(),
-        "timings": timings
+        "timings": timings,
+        "contexts": [c.model_dump() for c in llm_output.contexts],
+        "langsmith": _attach_trace_metadata(
+            question=question, top_k=top_k, model=model,
+            user_id=user_id, cache_hit=False, timings=timings,
+            num_contexts=len(reranked),
+        ),
     }
 
 
-def _build_memory_context(question: str, user_id: str) -> List[Dict[str, Any]]:
-    """Build memory context from all memory layers."""
-    memory_context = []
+def _attach_trace_metadata(question: str, top_k: int, model: str,
+                           user_id: str, cache_hit: bool,
+                           timings: Dict[str, float],
+                           num_contexts: int) -> Dict[str, Any]:
+    """Attach pipeline metadata to the active LangSmith run and return its ids."""
+    total_ms = sum(timings.values()) * 1000
+    add_trace_metadata(
+        user_id=user_id,
+        cache_hit=cache_hit,
+        top_k=top_k,
+        model=model,
+        num_contexts=num_contexts,
+        question_chars=len(question),
+        stage_timings_ms={k: round(v * 1000, 2) for k, v in timings.items()},
+        total_latency_ms=round(total_ms, 2),
+    )
+    return get_current_trace_info()
+
+
+def _build_memory_context(question: str, user_id: str) -> List[ContextItem]:
+    """Build memory context from all memory layers as ContextItem objects."""
+    memory_context: List[ContextItem] = []
     
     # Short-term memory context
     short_term_context = short_term_memory.get_context_string(max_tokens=500)
     if short_term_context:
-        memory_context.append({
-            'source_id': 'short_term_memory',
-            'content': f"Recent conversation context: {short_term_context}",
-            'score': 0.9,
-            'dataset': 'short_term_memory'
-        })
+        memory_context.append(ContextItem(
+            source_id='short_term_memory',
+            content=f"Recent conversation context: {short_term_context}",
+            score=0.9,
+            dataset='short_term_memory'
+        ))
     
     # Episodic memory context
     episodic_context = episodic_memory.get_context_from_summaries(question, max_tokens=300)
     if episodic_context:
-        memory_context.append({
-            'source_id': 'episodic_memory',
-            'content': f"Relevant conversation summaries: {episodic_context}",
-            'score': 0.8,
-            'dataset': 'episodic_memory'
-        })
+        memory_context.append(ContextItem(
+            source_id='episodic_memory',
+            content=f"Relevant conversation summaries: {episodic_context}",
+            score=0.8,
+            dataset='episodic_memory'
+        ))
     
     # Long-term memory context
     long_term_facts = long_term_memory.retrieve_facts(question, top_k=3)
     if long_term_facts:
         facts_text = " ".join([f.text for f in long_term_facts])
-        memory_context.append({
-            'source_id': 'long_term_memory',
-            'content': f"User medical history: {facts_text}",
-            'score': 0.7,
-            'dataset': 'long_term_memory'
-        })
+        memory_context.append(ContextItem(
+            source_id='long_term_memory',
+            content=f"User medical history: {facts_text}",
+            score=0.7,
+            dataset='long_term_memory'
+        ))
     
     return memory_context
 
@@ -183,4 +240,5 @@ if __name__ == "__main__":
     q = "What are the common causes of migraine headaches?"
     r = rag_chat(q)
     print("Timings:", r["timings"])
+    print("LangSmith:", r.get("langsmith"))
     print("Formatted answer:\n", r["formatted_answer"])

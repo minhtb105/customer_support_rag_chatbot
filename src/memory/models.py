@@ -13,7 +13,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from src.config import PDF_DB_DIR
-from memory.database_config import Base, ENV
+from memory.database_config import Base, ENV, Environment
 
 
 class MemoryFact(Base):
@@ -32,22 +32,25 @@ class MemoryFact(Base):
     content = Column(Text, nullable=False)
     
     # Vector embedding (pgvector)
-    if ENV != "local":
+    if ENV != Environment.LOCAL:
         # PostgreSQL with pgvector
-        embedding = Column(VECTOR(384))  # 384-dim vector for all-MiniLM-L6-v2
+        embedding = Column(TSVECTOR(384))  # 384-dim vector for all-MiniLM-L6-v2
     else:
         # SQLite fallback - store as JSON string
         embedding = Column(String(2000))  # Store vector as JSON string
     
     # Metadata and tracking
-    metadata = Column(JSONB if ENV != "local" else JSON)
+    # NOTE: "metadata" is a reserved attribute name in SQLAlchemy Declarative,
+    # so the mapped attribute is "fact_meta" while the DB column stays "metadata".
+    fact_meta = Column("metadata", JSONB if ENV != Environment.LOCAL else JSON)
     confidence = Column(Float, default=0.8)
     source = Column(String(100), default="conversation")
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    user_profile = relationship("UserProfile", back_populates="facts")
+    # NOTE: no relationship() to UserProfile here on purpose: the two tables
+    # are linked only by the string user_id (no FK), and SQLAlchemy 2.x fails
+    # mapper configuration for relationships without a join condition.
     
     # Indexes for performance
     __table_args__ = (
@@ -67,7 +70,7 @@ class MemoryFact(Base):
             "session_id": self.session_id,
             "fact_type": self.fact_type,
             "content": self.content,
-            "metadata": self.metadata,
+            "metadata": self.fact_meta,
             "confidence": self.confidence,
             "source": self.source,
             "created_at": self.created_at.isoformat() if self.created_at else None,
@@ -81,11 +84,8 @@ class UserProfile(Base):
     __tablename__ = "user_profiles"
     
     user_id = Column(String(100), primary_key=True)
-    profile_data = Column(JSONB if ENV != "local" else JSON, nullable=False)
+    profile_data = Column(JSONB if ENV != Environment.LOCAL else JSON, nullable=False)
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relationships
-    facts = relationship("MemoryFact", back_populates="user_profile")
     
     def __repr__(self):
         return f"<UserProfile(user_id={self.user_id}, last_updated={self.last_updated})>"
@@ -128,7 +128,7 @@ class SessionSummary(Base):
     session_id = Column(String(100), primary_key=True)
     user_id = Column(String(100), index=True, nullable=False)
     summary_text = Column(Text, nullable=False)
-    structured_facts = Column(JSONB if ENV != "local" else JSON)
+    structured_facts = Column(JSONB if ENV != Environment.LOCAL else JSON)
     message_count = Column(Integer, default=0)
     topics = Column(String(500))  # Comma-separated topics
     last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -158,7 +158,7 @@ class MemoryStats(Base):
     user_id = Column(String(100), index=True, nullable=False)
     session_id = Column(String(100), index=True)
     stat_type = Column(String(50), nullable=False)  # 'short_term', 'episodic', 'long_term'
-    metrics = Column(JSONB if ENV != "local" else JSON, nullable=False)
+    metrics = Column(JSONB if ENV != Environment.LOCAL else JSON, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     
     def __repr__(self):

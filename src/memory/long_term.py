@@ -328,7 +328,7 @@ class LongTermMemory:
     def clear_user_memory(self):
         """Clear all memory for the current user."""
         self.vector_store.delete(
-            filter={"user_id": self.user_id}
+            where={"user_id": self.user_id}
         )
         self.total_facts = 0
         self.extracted_facts = 0
@@ -337,7 +337,7 @@ class LongTermMemory:
     def get_stats(self) -> Dict[str, Any]:
         """Get statistics about long-term memory."""
         all_docs = self.vector_store.get(
-            filter={"user_id": self.user_id}
+            where={"user_id": self.user_id}
         )
         
         fact_types = {}

@@ -1,17 +1,64 @@
 import re
 from typing import List
-from openai import OpenAI 
+from openai import OpenAI
 from sentence_transformers import CrossEncoder
-from config import GROQ_API_KEY, DEFAULT_MODEL, RERANKER_MODEL
-from prompt_templates import (
-    STRICT_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT, BALANCED_SYSTEM_PROMPT)
+from langsmith.run_helpers import traceable
+from langsmith.wrappers import wrap_openai
+
+try:
+    from config import (
+        GROQ_API_KEY, GROQ_BASE_URL,
+        OPENAI_API_KEY, OPENAI_BASE_URL,
+        LLM_PROVIDER, DEFAULT_MODEL, RERANKER_MODEL,
+    )
+except ImportError:  # pragma: no cover - allows running as "src." package too
+    from src.config import (
+        GROQ_API_KEY, GROQ_BASE_URL,
+        OPENAI_API_KEY, OPENAI_BASE_URL,
+        LLM_PROVIDER, DEFAULT_MODEL, RERANKER_MODEL,
+    )
+
+try:
+    from prompt_manager import get_prompt_version, get_system_prompt
+except ImportError:
+    from src.prompt_manager import get_prompt_version, get_system_prompt
+
+try:
+    from observability.tracing import (
+        add_trace_metadata,
+        add_trace_outputs,
+        short_hash,
+    )
+except ImportError:
+    from src.observability.tracing import (
+        add_trace_metadata,
+        add_trace_outputs,
+        short_hash,
+    )
+
 from models.llm_io import LLMInput, LLMOutput, ContextItem
 
 
-client = OpenAI(
-    api_key=GROQ_API_KEY,
-    base_url="https://api.groq.com/openai/v1"
-)
+def _build_llm_client():
+    """Create the OpenAI-compatible client for the configured provider."""
+    if LLM_PROVIDER == "groq":
+        return OpenAI(api_key=GROQ_API_KEY, base_url=GROQ_BASE_URL)
+    return OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+
+
+def _normalize_model(model: str) -> str:
+    """
+    Map model identifiers to the active provider.
+    - "openai/gpt-4o-mini" on the openai provider -> "gpt-4o-mini"
+    - groq keeps prefixed names as-is (e.g. "openai/gpt-oss-20b")
+    """
+    m = (model or DEFAULT_MODEL).strip()
+    if LLM_PROVIDER != "groq" and m.startswith("openai/"):
+        return m.split("/", 1)[1]
+    return m
+
+
+client = wrap_openai(_build_llm_client())
 reranker = CrossEncoder(RERANKER_MODEL)
 
 # In-memory conversation history
@@ -30,6 +77,7 @@ def format_context(contexts):
     
     return context_text.strip()
 
+@traceable(name="rerank_contexts")
 def rerank_contexts(query: str, contexts: List[ContextItem], top_n=3):
     if not contexts:
         return []
@@ -42,12 +90,19 @@ def rerank_contexts(query: str, contexts: List[ContextItem], top_n=3):
         
     ranked = sorted(contexts, key=lambda x: x.score, reverse=True)
     
+    add_trace_metadata(
+        reranker_model=RERANKER_MODEL,
+        num_candidates=len(contexts),
+        top_n=top_n,
+        top_score=ranked[0].score if ranked else None,
+    )
+    
     return ranked[:top_n]
 
 def detect_tone_and_temp(query: str):
     """
     Heuristics: determine tone + temperature based on the content of the query.
-    Return system_prompt, temperature, max_tokens
+    Return tone_key, temperature, max_tokens
     """
     query_lower = query.lower()
     
@@ -61,26 +116,29 @@ def detect_tone_and_temp(query: str):
     
     # Strict tone
     if any(k in query_lower for k in strict_keywords):
-        return STRICT_SYSTEM_PROMPT, 0.1, 256 # concise factual
+        return "strict", 0.1, 256 # concise factual
     
     # Friendly tone
     if any(k in query_lower for k in friendly_keywords):
-        return FRIENDLY_SYSTEM_PROMPT, 0.4, 256 # conversational tone
+        return "friendly", 0.4, 256 # conversational tone
 
     # Balanced tone
     if query.strip().startswith("why "):
-        return BALANCED_SYSTEM_PROMPT, 0.3, 512  # reasoning-heavy answers
+        return "balanced", 0.3, 512  # reasoning-heavy answers
 
     # Default: balanced
-    return BALANCED_SYSTEM_PROMPT, 0.2, 512
+    return "balanced", 0.2, 512
 
+@traceable(name="generate_answer")
 def generate_answer(input_data: LLMInput, model=DEFAULT_MODEL) -> LLMOutput:
     """
     Generate an answer that includes inline citations like [Source 1].
+    System prompt comes from LangSmith Prompt Hub (fallback: local constants).
     """
     query = input_data.query
     context_text = format_context(input_data.contexts)
-    system_prompt, temperature, max_tokens = detect_tone_and_temp(query)
+    tone, temperature, max_tokens = detect_tone_and_temp(query)
+    system_prompt = get_system_prompt(tone)
 
     user_prompt = (
         f"Context: \n{context_text}\n\n"
@@ -95,8 +153,9 @@ def generate_answer(input_data: LLMInput, model=DEFAULT_MODEL) -> LLMOutput:
         messages.append({"role": "assistant", "content": past["assistant"]})
     messages.append({"role": "user", "content": user_prompt})
 
+    resolved_model = _normalize_model(model)
     response = client.chat.completions.create(
-        model=model,
+        model=resolved_model,
         messages=messages,
         temperature=temperature,
         max_tokens=max_tokens
@@ -104,6 +163,27 @@ def generate_answer(input_data: LLMInput, model=DEFAULT_MODEL) -> LLMOutput:
     answer = response.choices[0].message.content.strip()
     # Store in conversation memory
     chat_history.append({"user": query, "assistant": answer})
+
+    usage = getattr(response, "usage", None)
+    token_usage = {
+        "prompt_tokens": getattr(usage, "prompt_tokens", None),
+        "completion_tokens": getattr(usage, "completion_tokens", None),
+        "total_tokens": getattr(usage, "total_tokens", None),
+    } if usage else {}
+    prompt_version = short_hash(system_prompt)
+
+    add_trace_metadata(
+        tone=tone,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        llm_model=resolved_model,
+        prompt_version=prompt_version,
+        token_usage=token_usage,
+    )
+    add_trace_outputs(
+        prompt_version=prompt_version,
+        token_usage=token_usage,
+    )
 
     # Extract which sources were cited
     cited_sources = sorted(

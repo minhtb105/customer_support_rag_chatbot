@@ -130,20 +130,22 @@ This project applies **LangChain Context Engineering principles** to manage info
 
 ## 🗂 Project Structure
 
-```
-src/
+ ```
+ src/
  ├── app.py              # Streamlit demo app
  ├── cache.py            # Hybrid CAG (exact + semantic cache)
  ├── config.py           # Model and system configuration
  ├── generator.py        # LLM generation & output formatting
  ├── retriever.py        # Multi-stage retrieval logic
  ├── rag_pipeline.py     # End-to-end pipeline orchestration
- ├── prompt_templates.py# System & evaluation prompts
+ ├── prompt_templates.py# System & evaluation prompts (local fallback)
+ ├── prompt_manager.py   # LangSmith Prompt Hub sync + runtime resolution
+ ├── observability/      # LangSmith tracing, feedback, eval logging
  ├── models/             # Pydantic schemas for LLM I/O
-notebooks/               # Embedding & pipeline experiments
-data/                    # Raw and processed datasets
-requirements.txt
-```
+ notebooks/               # Embedding & pipeline experiments
+ data/                    # Raw and processed datasets
+ requirements.txt
+ ```
 
 ---
 
@@ -155,10 +157,19 @@ source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
 pip install -r requirements.txt
 ```
 
-Set environment variables:
+Set environment variables (`.env`):
 
 ```bash
-export GROQ_API_KEY=your_api_key_here
+# LLM provider: "openai" (default) or "groq"
+PROVIDER=openai
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini          # becomes DEFAULT_MODEL
+# GROQ_API_KEY=gsk_...            # only needed when PROVIDER=groq
+
+# LangSmith observability
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=lsv2_...
+LANGSMITH_PROJECT=customer-support-rag
 ```
 
 Run demo:
@@ -168,6 +179,59 @@ python -m src.rag_pipeline
 # or
 streamlit run src/app.py
 ```
+
+---
+
+## 🔍 LangSmith Tracing, Prompt Versioning & Observability
+
+The project is fully instrumented with [LangSmith](https://smith.langchain.com) for tracing, prompt lifecycle management, and user feedback.
+
+### Configuration
+
+Environment variables (already supported via `.env`, legacy `LANGCHAIN_*` names also work):
+
+```bash
+LANGSMITH_TRACING=true
+LANGSMITH_API_KEY=lsv2_...
+LANGSMITH_PROJECT=customer-support-rag   # any project name
+LANGSMITH_ENDPOINT=https://api.smith.langchain.com
+```
+
+If the API key is missing or the Hub is unreachable, the app **keeps working** — prompts fall back to local constants in `src/prompt_templates.py` and tracing silently disables itself.
+
+### Trace structure
+
+Every `rag_chat()` call creates one root trace:
+
+```
+[chain] rag_chat                     # metadata: user_id, cache_hit, top_k,
+├─ [retriever] retrieve_context      #            stage timings, latency, model
+│   ├─ VectorStoreRetriever          # vector_hits / bm25_hits / merged_groups
+│   └─ BM25Retriever
+├─ [chain] rerank_contexts           # reranker model, candidate counts
+└─ [chain] generate_answer           # tone, temperature, prompt_version hash
+    └─ [llm] ChatOpenAI              # token usage + latency (auto-instrumented)
+```
+
+### Prompt versioning (Prompt Hub)
+
+* One-time sync of all prompts to LangSmith Prompt Hub:
+
+  ```bash
+  cd src && python prompt_manager.py
+  ```
+
+  Creates `medical-support-strict|friendly|balanced|evaluation` repos.
+* At runtime `prompt_manager.get_system_prompt(tone)` **pulls the latest committed version from the Hub** (cached for `PROMPT_HUB_CACHE_TTL_SECONDS`), falling back to local constants when offline.
+* Edit a prompt in the LangSmith UI → new commit → running app picks it up within TTL. Every trace records the `prompt_version` hash of the exact prompt text used.
+
+### User feedback
+
+The Streamlit UI adds 👍/👎 buttons plus an optional comment under each answer; feedback is attached to the exact trace run (`client.create_feedback`) together with a deep link "View trace in LangSmith".
+
+### Evaluation logging
+
+`python src/evaluation.py` additionally pushes aggregate Recall@K / Hit@K / MRR results into LangSmith as a `retrieval_evaluation` run so trends appear on dashboards.
 
 ---
 

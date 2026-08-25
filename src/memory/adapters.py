@@ -147,7 +147,7 @@ class SQLAlchemyEpisodicAdapter:
                     fact_type=fact['type'],
                     content=fact['text'],
                     embedding=json.dumps(embedding) if embedding else None,
-                    metadata=fact,
+                    fact_meta=fact,
                     confidence=fact.get('confidence', 0.8),
                     source="episodic_summary"
                 )
@@ -273,7 +273,7 @@ class SQLAlchemyLongTermAdapter:
                 fact_type=fact.fact_type,
                 content=fact.text,
                 embedding=json.dumps(embedding),
-                metadata={
+                fact_meta={
                     'entities': fact.entities,
                     'source': fact.source,
                     'session_id': fact.metadata.get('session_id', ''),
@@ -332,7 +332,7 @@ class SQLAlchemyLongTermAdapter:
                 embedding_data = json.loads(result.embedding) if result.embedding else []
                 
                 # Parse metadata
-                metadata = result.metadata or {}
+                metadata = result.fact_meta or {}
                 
                 fact = MedicalFact(
                     fact_id=result.fact_id,
