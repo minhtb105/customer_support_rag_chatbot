@@ -34,16 +34,22 @@ except ImportError:
 try:
     from prompt_templates import (
         BALANCED_SYSTEM_PROMPT,
+        DIABETES_STRICT_PROMPT,
         EVALUATION_PROMPT,
         FRIENDLY_SYSTEM_PROMPT,
+        SOAP_PROMPT,
         STRICT_SYSTEM_PROMPT,
+        WHO_RAG_AUDIT_PROMPT,
     )
 except ImportError:  # pragma: no cover
     from src.prompt_templates import (
         BALANCED_SYSTEM_PROMPT,
+        DIABETES_STRICT_PROMPT,
         EVALUATION_PROMPT,
         FRIENDLY_SYSTEM_PROMPT,
+        SOAP_PROMPT,
         STRICT_SYSTEM_PROMPT,
+        WHO_RAG_AUDIT_PROMPT,
     )
 
 logger = logging.getLogger(__name__)
@@ -64,6 +70,21 @@ PROMPT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "repo": f"{PROMPT_HUB_REPO_PREFIX}-balanced",
         "description": "Balanced medical assistant - structured reasoning answers",
         "local": BALANCED_SYSTEM_PROMPT,
+    },
+    "diabetes": {
+        "repo": f"{PROMPT_HUB_REPO_PREFIX}-diabetes-strict",
+        "description": "Diabetes specialist — WHO/ADA/BYT guideline RAG with citations",
+        "local": DIABETES_STRICT_PROMPT,
+    },
+    "soap": {
+        "repo": f"{PROMPT_HUB_REPO_PREFIX}-soap",
+        "description": "SOAP pre-visit summary generator for diabetes follow-up",
+        "local": SOAP_PROMPT,
+    },
+    "who_rag": {
+        "repo": f"{PROMPT_HUB_REPO_PREFIX}-who-rag-audit",
+        "description": "WHO-RAG Infrastructure audit trail layer",
+        "local": WHO_RAG_AUDIT_PROMPT,
     },
     "evaluation": {
         "repo": f"{PROMPT_HUB_REPO_PREFIX}-evaluation",

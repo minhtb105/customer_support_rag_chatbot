@@ -7,15 +7,31 @@ from docling.document_converter import DocumentConverter, PdfFormatOption
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma.vectorstores import Chroma
 from transformers import AutoTokenizer
-from chunk_strategies import (
-    chunk_document,
-    extract_full_text_from_doc,
-    serialize_metatdata
-)
-from embedding.adapter import EmbeddingAdapter
-from models.chunk import Chunk
-from metadata_store import *
-from config import *
+try:
+    from langchain_openai import OpenAIEmbeddings
+    _HAS_OPENAI_EMB = True
+except ImportError:
+    _HAS_OPENAI_EMB = False
+try:
+    from chunk_strategies import (
+        chunk_document,
+        extract_full_text_from_doc,
+        serialize_metatdata
+    )
+    from embedding.adapter import EmbeddingAdapter
+    from models.chunk import Chunk
+    from metadata_store import *
+    from config import *
+except ImportError:
+    from src.chunk_strategies import (
+        chunk_document,
+        extract_full_text_from_doc,
+        serialize_metatdata
+    )
+    from src.embedding.adapter import EmbeddingAdapter
+    from src.models.chunk import Chunk
+    from src.metadata_store import *
+    from src.config import *
 
 
 logging.basicConfig(level=logging.INFO)
@@ -53,8 +69,23 @@ def compute_file_fingerprint(path: str, sample_size=512 * 512) -> str:
     return h.hexdigest()
 
 
+def _make_embeddings():
+    if EMBEDDING_PROVIDER == "openai" and _HAS_OPENAI_EMB:
+        try:
+            return OpenAIEmbeddings(model=OPENAI_EMBEDDING_MODEL)
+        except Exception as e:
+            logging.warning(f"[indexer] OpenAIEmbeddings fail ({e}), fallback HuggingFace")
+    return HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+
+
+def _resolve_index_db_dir(strategy_value: str) -> str:
+    if EMBEDDING_PROVIDER == "openai":
+        return str(BASE_DIR / "embeddings" / "pdf_db_openai" / strategy_value)
+    return os.path.join(PDF_DB_DIR, strategy_value)
+
+
 def get_or_create_vectorstore(db_dir: str):
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+    embeddings = _make_embeddings()
     return Chroma(
         persist_directory=db_dir,
         embedding_function=embeddings
@@ -143,10 +174,19 @@ def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter):
 # =========================
 # Main
 # =========================
+def _iter_pdf_files(root: Path):
+    """Quét đệ quy PDF — hỗ trợ guideline subfolders (diabetes, who_iris, byt...)."""
+    for p in root.rglob("*.pdf"):
+        if p.is_file():
+            yield p
+
 def main():
     init_db(META_DB_PATH)
 
-    from chunk_strategies import ChunkingStrategy
+    try:
+        from chunk_strategies import ChunkingStrategy
+    except ImportError:
+        from src.chunk_strategies import ChunkingStrategy
 
     for strategy in [
         ChunkingStrategy.STRUCTURE,
@@ -154,23 +194,41 @@ def main():
         ChunkingStrategy.SEMANTIC,
         ChunkingStrategy.HYBRID_SECTION_SEMANTIC,
     ]:
-        # Tạo thư mục vector DB riêng cho từng strategy
-        strategy_db_dir = os.path.join(PDF_DB_DIR, strategy.value)
+        # Tạo thư mục vector DB riêng cho từng strategy (tách theo embedding provider)
+        strategy_db_dir = _resolve_index_db_dir(strategy.value)
         os.makedirs(strategy_db_dir, exist_ok=True)
 
         vector_db = get_or_create_vectorstore(strategy_db_dir)
 
+        # EmbeddingAdapter: nếu OpenAI, dùng OpenAIEmbeddings + tokenizer fake (không cần truncate HF)
+        if EMBEDDING_PROVIDER == "openai" and _HAS_OPENAI_EMB:
+            from langchain_openai import OpenAIEmbeddings as _OE
+            embedder = _OE(model=OPENAI_EMBEDDING_MODEL)
+            # tokenizer cho truncate: dùng tiktoken fallback, nếu không có thì dùng HF tokenizer
+            try:
+                import tiktoken
+                enc = tiktoken.encoding_for_model(OPENAI_EMBEDDING_MODEL.replace("text-embedding-", "gpt-4"))
+                class _TiktokenWrap:
+                    def __call__(self, text, truncation=True, max_length=512, return_tensors=None):
+                        toks = enc.encode(text)[:max_length]
+                        return {"input_ids": toks}
+                    def decode(self, ids, skip_special_tokens=True):
+                        return enc.decode(ids)
+                tokenizer = _TiktokenWrap()
+            except Exception:
+                tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_MODEL)
+        else:
+            embedder = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+            tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_MODEL)
+
         embedding_adapter = EmbeddingAdapter(
-            embedder=HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL),
-            tokenizer=AutoTokenizer.from_pretrained(TOKENIZER_MODEL),
+            embedder=embedder,
+            tokenizer=tokenizer,
             max_len=512,
         )
 
-        for pdf in os.listdir(PDF_DIR):
-            if not pdf.lower().endswith(".pdf"):
-                continue
-            path = os.path.join(PDF_DIR, pdf)
-
+        for pdf_path in _iter_pdf_files(Path(PDF_DIR)):
+            path = str(pdf_path)
             hybrid_hash_reindex(
                 path,
                 vector_db,

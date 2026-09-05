@@ -12,7 +12,10 @@ from dataclasses import dataclass, asdict
 from collections import deque
 from transformers import AutoTokenizer
 from sentence_transformers import SentenceTransformer
-from config import TOKENIZER_MODEL, MAX_TOKENS, SLIDING_WINDOW_TOKENS, SLIDING_OVERLAP
+try:
+    from config import TOKENIZER_MODEL, MAX_TOKENS, SLIDING_WINDOW_TOKENS, SLIDING_OVERLAP
+except ImportError:
+    from src.config import TOKENIZER_MODEL, MAX_TOKENS, SLIDING_WINDOW_TOKENS, SLIDING_OVERLAP
 
 
 @dataclass

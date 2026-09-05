@@ -35,7 +35,17 @@ ATOMIC_TOKEN_SIZE = 120
 SENTENCE_GROUP = 4
 
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # generator model
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+# Embedding: ưu tiên OpenAI, fallback về local nếu chưa cấu hình
+OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "openai").lower()  # "openai" | "local"
+EMBEDDING_MODEL = OPENAI_EMBEDDING_MODEL if EMBEDDING_PROVIDER == "openai" else "all-MiniLM-L6-v2"
+EMBEDDING_DIMENSIONS_MAP = {
+    "text-embedding-3-small": 1536,
+    "text-embedding-3-large": 3072,
+    "text-embedding-ada-002": 1536,
+    "all-MiniLM-L6-v2": 384,
+}
+EMBEDDING_DIMENSION = EMBEDDING_DIMENSIONS_MAP.get(EMBEDDING_MODEL, 1536)
 RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 TOKENIZER_MODEL = "bert-base-uncased"
 
@@ -52,6 +62,49 @@ GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
 TOP_K = 10
 HYBRID_ALPHA = 0.6
 MERGE_PEERS = True
+
+# ==============================
+#  Guideline Corpus (data pipeline)
+# ==============================
+# Thư mục phân loại theo nguồn — indexer sẽ quét đệ quy
+GUIDELINE_SOURCES = ["who_iris", "ada", "aha_acc", "gold", "gina", "mhgap", "byt"]
+DIABETES_PDF_DIR = PDF_DIR / "diabetes"
+WHO_IRIS_DIR = PDF_DIR / "who_iris"
+ADA_DIR = PDF_DIR / "ada"
+BYT_DIR = PDF_DIR / "byt"
+# Map nguồn -> thư mục (dùng cho crawler + indexer)
+GUIDELINE_SOURCE_DIRS = {
+    "who_iris": WHO_IRIS_DIR,
+    "ada": ADA_DIR,
+    "aha_acc": PDF_DIR / "aha_acc",
+    "gold": PDF_DIR / "gold",
+    "gina": PDF_DIR / "gina",
+    "mhgap": PDF_DIR / "mhgap",
+    "byt": BYT_DIR,
+    "diabetes": DIABETES_PDF_DIR,
+}
+
+# ==============================
+#  Glucose tracking (Hướng A)
+# ==============================
+GLUCOSE_THRESHOLDS_MGDL = {
+    "fasting_normal_max": 100,
+    "fasting_prediabetes_max": 125,
+    "fasting_diabetes": 126,
+    "postprandial_normal_max": 140,
+    "postprandial_prediabetes_max": 199,
+    "postprandial_diabetes": 200,
+    "random_critical_high": 300,
+    "hypoglycemia": 70,
+}
+GLUCOSE_DB_PATH = BASE_DIR / "metadata" / "glucose_logs.db"
+
+# ==============================
+#  API (Hướng C)
+# ==============================
+API_TITLE = "WHO-RAG Infrastructure API"
+API_VERSION = "1.0.0"
+API_PREFIX = "/v1"
 
 
 # ==============================

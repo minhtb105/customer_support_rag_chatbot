@@ -20,13 +20,18 @@ try:
 except ImportError:
     from src.observability.tracing import add_trace_metadata, get_current_trace_info
 
-from retriever import retrieve_context
-from generator import generate_answer, rerank_contexts, format_answer_for_ui
-from models.llm_io import ContextItem, LLMInput, LLMOutput
-from cache import CAGHybridCache
-from memory import (
-    get_short_term_memory, get_episodic_memory, get_long_term_memory
-)
+try:
+    from retriever import retrieve_context
+    from generator import generate_answer, rerank_contexts, format_answer_for_ui
+    from models.llm_io import ContextItem, LLMInput, LLMOutput
+    from cache import CAGHybridCache
+    from memory import get_short_term_memory, get_episodic_memory, get_long_term_memory
+except ImportError:
+    from src.retriever import retrieve_context
+    from src.generator import generate_answer, rerank_contexts, format_answer_for_ui
+    from src.models.llm_io import ContextItem, LLMInput, LLMOutput
+    from src.cache import CAGHybridCache
+    from src.memory import get_short_term_memory, get_episodic_memory, get_long_term_memory
 
 
 # create a module-level cache instance

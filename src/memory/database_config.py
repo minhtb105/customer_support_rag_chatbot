@@ -12,7 +12,10 @@ from sqlalchemy import create_engine, Engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.pool import QueuePool
-from config import PDF_DB_DIR
+try:
+    from config import PDF_DB_DIR
+except ImportError:
+    from src.config import PDF_DB_DIR
 
 
 class Environment(Enum):
@@ -80,20 +83,20 @@ def create_database_engine() -> Engine:
     url = get_database_url()
     config = get_database_config()
     
-    print(f"🔧 Database Engine: {ENV.value}")
-    print(f"📍 Database URL: {url}")
+    print(f"Database Engine: {ENV.value}")
+    print(f"Database URL: {url}")
     
     try:
         engine = create_engine(url, **config)
         
         # Test connection
         with engine.connect() as conn:
-            print("✅ Database connection successful")
+            print("Database connection successful")
         
         return engine
     
     except Exception as e:
-        print(f"❌ Database connection failed: {e}")
+        print(f"Database connection failed: {e}")
         raise
 
 
@@ -122,9 +125,9 @@ def init_database():
     """Initialize database tables."""
     try:
         Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created successfully")
+        print("Database tables created successfully")
     except Exception as e:
-        print(f"❌ Failed to create database tables: {e}")
+        print(f"Failed to create database tables: {e}")
         raise
 
 
@@ -134,33 +137,33 @@ def test_connection():
         with engine.connect() as conn:
             # Test basic connection
             result = conn.execute("SELECT 1").scalar()
-            print(f"✅ Basic connection test: {result}")
+            print(f"Basic connection test: {result}")
             
             # Test pgvector if using PostgreSQL
             if ENV != Environment.LOCAL:
                 try:
                     result = conn.execute("SELECT extname FROM pg_extension WHERE extname = 'vector'").scalar()
                     if result:
-                        print("✅ pgvector extension available")
+                        print("pgvector extension available")
                     else:
-                        print("⚠️  pgvector extension not found - install with: CREATE EXTENSION vector;")
+                        print("pgvector extension not found - install with: CREATE EXTENSION vector;")
                 except Exception as e:
-                    print(f"⚠️  pgvector test failed: {e}")
+                    print(f"pgvector test failed: {e}")
             
             return True
     
     except Exception as e:
-        print(f"❌ Connection test failed: {e}")
+        print(f"Connection test failed: {e}")
         return False
 
 
 if __name__ == "__main__":
-    print("🔧 Database Configuration Test")
+    print("Database Configuration Test")
     print(f"Environment: {ENV.value}")
     print(f"Database URL: {get_database_url()}")
     
     if test_connection():
         init_database()
-        print("🎉 Database setup complete!")
+        print("Database setup complete!")
     else:
-        print("💥 Database setup failed!")
+        print("Database setup failed!")

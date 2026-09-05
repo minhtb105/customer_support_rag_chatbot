@@ -13,7 +13,10 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from src.config import PDF_DB_DIR
-from memory.database_config import Base, ENV, Environment
+try:
+    from memory.database_config import Base, ENV, Environment
+except ImportError:
+    from src.memory.database_config import Base, ENV, Environment
 
 
 class MemoryFact(Base):

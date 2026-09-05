@@ -16,9 +16,14 @@ from pathlib import Path
 import schedule
 import redis
 from sqlalchemy import text
-from memory.database_config import SessionLocal, engine
-from memory.models import MemoryFact, SessionSummary, UserProfile, MemoryStats
-from memory.adapters import get_stats_adapter
+try:
+    from memory.database_config import SessionLocal, engine
+    from memory.models import MemoryFact, SessionSummary, UserProfile, MemoryStats
+    from memory.adapters import get_stats_adapter
+except ImportError:
+    from src.memory.database_config import SessionLocal, engine
+    from src.memory.models import MemoryFact, SessionSummary, UserProfile, MemoryStats
+    from src.memory.adapters import get_stats_adapter
 
 
 @dataclass

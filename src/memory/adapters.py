@@ -13,12 +13,22 @@ from datetime import datetime
 from dataclasses import asdict
 from redis import Redis
 from sentence_transformers import SentenceTransformer
-from memory.database_config import SessionLocal, engine, Base
-from memory.models import MemoryFact, SessionSummary, UserProfile, MemoryStats
-from memory.short_term import ShortTermMemory, Message
-from memory.episodic import EpisodicMemory, ConversationSummary
-from memory.long_term import LongTermMemory, MedicalFact
-from config import TOKENIZER_MODEL
+try:
+    from memory.database_config import SessionLocal, engine, Base
+    from memory.models import MemoryFact, SessionSummary, UserProfile, MemoryStats
+    from memory.short_term import ShortTermMemory, Message
+    from memory.episodic import EpisodicMemory, ConversationSummary
+    from memory.long_term import LongTermMemory, MedicalFact
+except ImportError:
+    from src.memory.database_config import SessionLocal, engine, Base
+    from src.memory.models import MemoryFact, SessionSummary, UserProfile, MemoryStats
+    from src.memory.short_term import ShortTermMemory, Message
+    from src.memory.episodic import EpisodicMemory, ConversationSummary
+    from src.memory.long_term import LongTermMemory, MedicalFact
+try:
+    from config import TOKENIZER_MODEL
+except ImportError:
+    from src.config import TOKENIZER_MODEL
 
 
 class RedisShortTermAdapter:

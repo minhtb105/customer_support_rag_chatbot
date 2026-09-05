@@ -14,7 +14,18 @@ from datetime import datetime, timedelta
 from sentence_transformers import SentenceTransformer
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from config import EMBEDDING_MODEL, PDF_DB_DIR
+try:
+    from config import EMBEDDING_MODEL, PDF_DB_DIR
+except ImportError:
+    from src.config import EMBEDDING_MODEL, PDF_DB_DIR
+try:
+    from src.config import EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL
+except ImportError:
+    try:
+        from config import EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL  # type: ignore
+    except ImportError:
+        EMBEDDING_PROVIDER = "local"
+        OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
 
 
 @dataclass
@@ -130,8 +141,15 @@ class LongTermMemory:
         self.memory_db_dir = memory_db_dir
         self.temporal_weighting = TemporalWeighting(half_life_days)
         
-        # Initialize vector store
-        self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+        # Initialize vector store — OpenAI nếu cấu hình, fallback HuggingFace
+        if EMBEDDING_PROVIDER == "openai":
+            try:
+                from langchain_openai import OpenAIEmbeddings
+                self.embeddings = OpenAIEmbeddings(model=OPENAI_EMBEDDING_MODEL)
+            except Exception:
+                self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+        else:
+            self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
         self.vector_store = Chroma(
             persist_directory=memory_db_dir,
             embedding_function=self.embeddings

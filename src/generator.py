@@ -36,7 +36,10 @@ except ImportError:
         short_hash,
     )
 
-from models.llm_io import LLMInput, LLMOutput, ContextItem
+try:
+    from models.llm_io import LLMInput, LLMOutput, ContextItem
+except ImportError:
+    from src.models.llm_io import LLMInput, LLMOutput, ContextItem
 
 
 def _build_llm_client():
@@ -99,12 +102,23 @@ def rerank_contexts(query: str, contexts: List[ContextItem], top_n=3):
     
     return ranked[:top_n]
 
+DIABETES_KEYWORDS = [
+    "diabetes", "đái tháo đường", "đai thao duong", "tiểu đường", "tieu duong",
+    "hba1c", "insulin", "glucose", "đường huyết", "duong huyet",
+    "hypoglycemia", "hyperglycemia", "who", "ada", "pen", "hearts-d",
+    "chẩn đoán đái tháo đường", "biến chứng đái tháo đường"
+]
+
 def detect_tone_and_temp(query: str):
     """
     Heuristics: determine tone + temperature based on the content of the query.
     Return tone_key, temperature, max_tokens
     """
     query_lower = query.lower()
+
+    # Diabetes-specific strict (ưu tiên cao nhất)
+    if any(k in query_lower for k in DIABETES_KEYWORDS):
+        return "diabetes", 0.1, 512  # factual + cite
     
     strict_keywords = [
         "diagnosis", "treatment", "symptom", "disease", "side effect",
