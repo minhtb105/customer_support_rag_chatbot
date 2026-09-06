@@ -3,7 +3,10 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Optional, List
 from sentence_transformers import SentenceTransformer
-from models.llm_io import LLMOutput
+try:
+    from models.llm_io import LLMOutput
+except ImportError:
+    from src.models.llm_io import LLMOutput
 
 
 @dataclass

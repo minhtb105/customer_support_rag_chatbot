@@ -1,143 +1,116 @@
-# Customer Support RAG Chatbot — Diabetes Assistant (WHO-RAG)
+# Diabetes Assistant — WHO-RAG (Customer Support RAG Chatbot)
 
-**LLM-powered Customer Support Agent with Advanced RAG & Agentic System — Nâng cấp cho Đái tháo đường tại Việt Nam**
+**LLM-powered Customer Support Agent with Advanced RAG & Agentic System — Specialized for Diabetes Care in Vietnam**
 
-> **Song ngữ / Bilingual:** Phần 0–4 trình bày song ngữ Việt–Anh (thị trường & giải pháp). Phần 5+ là tài liệu kỹ thuật (Technical Documentation) bằng tiếng Anh để giữ tính quốc tế cho CV/GitHub.
-> **Bilingual note:** Sections 0–4 are bilingual VI–EN (market & solution). Sections 5+ remain in English for international readability.
-
-This project implements a **task-oriented customer support chatbot** using an **advanced Retrieval-Augmented Generation (RAG) pipeline** designed to be production-oriented, observable, and extensible. The system focuses on **high answer precision, low latency, and reduced hallucination** through multi-stage retrieval, reranking, caching, and structured generation.
-
-**Nâng cấp 2025–2026:** Hệ thống đã được mở rộng thành **trợ lý đái tháo đường** với 3 hướng giải pháp (A/B/C) dựa trên khảo sát thị trường Việt Nam, hỗ trợ **OpenAI embeddings (`text-embedding-3-small`)**, **FastAPI WHO-RAG Infrastructure API**, và **Next.js frontend**.
+An advanced Retrieval-Augmented Generation (RAG) pipeline designed for production use — focused on high answer precision, low latency, and reduced hallucination via multi-stage retrieval, reranking, caching, and structured generation. Since 2025–2026 the system has been extended into a **diabetes assistant with 3 tracks (A/B/C)**, grounded in Vietnam market research, with **OpenAI embeddings (`text-embedding-3-small`)**, **FastAPI WHO-RAG Infrastructure API**, and **Next.js frontend**.
 
 ---
 
-## 0. TL;DR — Vì sao Đái tháo đường tại Việt Nam là “Pain Point chín muồi” / Why Diabetes in Vietnam is a “Ripe Pain Point”
+## 0. TL;DR — Why Diabetes in Vietnam Is a “Ripe Pain Point”
 
-**🇻🇳 Tiếng Việt:**
-- **7,3% người trưởng thành (~7 triệu người)** mắc đái tháo đường (ĐTĐ), tăng từ 2,7% (2002) → 5,4% (2012) → 7,3% (2020); tiền ĐTĐ 17,8%. Hơn **60% chưa được chẩn đoán**, >50% người trưởng thành chưa từng xét nghiệm đường huyết. Hơn **55% đã có biến chứng** (tim mạch 34%, mắt/thần kinh 39,5%, thận 24%). Dự báo **+78% đến 2045**.
-- **Khoảng trống giữa 2 lần tái khám:** tuân thủ dùng thuốc 76,9–83,5% nhưng **tự theo dõi đường huyết tại nhà chỉ 20,2%** (BV Thanh Nhàn, n=104) và tái khám định kỳ 46,2–63,1% — bệnh nhân “mù thông tin” hàng tháng trời (chuẩn HbA1c mỗi 3 tháng).
-- **Đã có hành vi chi trả:** cảm biến FreeStyle Libre 2–4 triệu/14 ngày bán rộng rãi; Jio Health gọi vốn 20M USD, Doctor Anywhere 27M USD; telemedicine 242M USD (2023) → 374M USD (2029, CAGR 7,5%).
-- **Lực đẩy:** từ **1/7/2025 BHYT chi trả khám chữa bệnh từ xa**; chỉ **14 bác sĩ/10.000 dân** (mục tiêu 15, so với Pháp 34) — AI lọc case là nhu cầu thực.
-- **Khoảng trống cạnh tranh:** DiaB, Medihome, eDoctor đông nhưng thiếu lớp RAG có audit trail trên guideline WHO/BYT đáng tin.
-
-**🇬🇧 English:**
-- **7.3% adults (~7M people)** have diabetes in Vietnam, rising from 2.7% (2002) → 5.4% (2012) → 7.3% (2020); prediabetes 17.8%. >**60% undiagnosed**, >50% adults never tested glucose. >**55% already have complications** (CV 34%, eye/nerve 39.5%, kidney 24%). Forecast **+78% by 2045**.
-- **Gap between follow-ups:** medication adherence 76.9–83.5% but **self-monitoring only 20.2%** (Thanh Nhan Hosp., n=104) and follow-up 46.2–63.1% — patients are “blind” for months (HbA1c every 3 months).
-- **Willingness to pay exists:** FreeStyle Libre 2–4M VND/14 days sold widely; Jio Health $20M, Doctor Anywhere $27M; telemedicine $242M (2023) → $374M (2029, CAGR 7.5%).
-- **Tailwind:** **National health insurance reimburses telehealth from 1/7/2025**; only **14 doctors/10k** (target 15, vs France 34) — AI triage is real need.
-- **Competition gap:** DiaB/Medihome/eDoctor exist but lack auditable RAG over WHO/MOH guidelines.
+- **7.3% of adults (~7M people)** have diabetes, rising from 2.7% (2002) → 5.4% (2012) → 7.3% (2020); prediabetes 17.8%. Over **60% undiagnosed**, >50% of adults never had a glucose test. Over **55% already have complications** (cardiovascular 34%, eye/neuropathy 39.5%, kidney 24%). Forecast **+78% by 2045**.
+- **Gap between follow-ups:** medication adherence 76.9–83.5% but **self-monitoring at home only 20.2%** (Thanh Nhan Hospital, type 2 + kidney complication, n=104) and periodic follow-up 46.2–63.1% — patients are “blind” for months (standard HbA1c every 3 months).
+- **Willingness to pay proven:** FreeStyle Libre sensor (14 days, no finger prick) **2–4M VND/kit** sold at Pharmacity/Tiki; Jio Health raised **$5M (Series A, 2019) → $20M (Series B, 2022, Heritas Capital)**; Doctor Anywhere **$27M** entering Vietnam; telemedicine market **$242M (2023) → $374M (2029, CAGR ~7.5%, TechSci)**.
+- **Tailwind:** National health insurance **reimburses telehealth from 1 July 2025**; only **14 doctors per 10,000 people** (target 15 by 2025; France 34, Australia 36) — AI triage is a real need. Major hospitals (Bach Mai, Vinmec, 108, Tam Anh, Duc Giang) already use AI for imaging and EMR.
+- **Competitive gap:** DiaB, Medihome, eDoctor, FPT MediCare are crowded but lack an **auditable RAG layer over WHO/MOH guidelines with faithfulness scoring**.
 
 ---
 
-## 1. Khung đánh giá “Pain Point chín muồi” / 5-Criteria Framework for “Ripe Pain Point”
+## 1. Five-Criteria Framework for a “Ripe Pain Point”
 
-| # | Tiêu chí / Criterion | Câu hỏi kiểm tra / Key Question |
-|---|----------------------|----------------------------------|
-| 1 | **Quy mô & mức độ nghiêm trọng / Scale & Severity** | Bao nhiêu người ảnh hưởng? Hậu quả nếu không giải quyết (tiền, sức khỏe, thời gian)? / How many affected? Cost if unsolved? |
-| 2 | **Tần suất & vị trí trong hành trình / Frequency & Journey** | Vấn đề xảy ra thường xuyên? Nằm ở bước nào mà người dùng chủ động tìm giải pháp? / How frequent? Where in user journey? |
-| 3 | **Hành vi chi trả đã tồn tại / Existing Payment Behavior** | Người dùng đã trả tiền cho giải pháp nào (dù chưa hoàn hảo)? Tín hiệu mạnh hơn “khảo sát nói sẽ trả”. / Have users already paid for workaround? |
-| 4 | **Lực đẩy bên ngoài / Tailwind** | Chính sách, bảo hiểm, công nghệ, xu hướng nào làm thị trường “chín” nhanh hơn? / Policy/tech trends accelerating? |
-| 5 | **Khoảng trống cạnh tranh / Competitive Gap** | Ai đã làm? Họ bỏ sót phần nào mà bạn có lợi thế kỹ thuật? / Who built what? What gap can you fill technically? |
+| # | Criterion | Key Question |
+|---|-----------|--------------|
+| 1 | **Scale & Severity** | How many are affected? What is the cost if unsolved (money, health, time)? |
+| 2 | **Frequency & Journey Position** | How often does it occur? Where in the user journey does the user actively seek a solution? |
+| 3 | **Existing Payment Behavior** | Have users already paid for a workaround (even imperfect)? Stronger signal than “survey says will pay.” |
+| 4 | **Tailwind** | What policy, insurance, technology, or trend accelerates the market? |
+| 5 | **Competitive Gap** | Who built what? What gap can you fill with a technical advantage? |
 
-> **Cách dùng / How to use:** Chấm điểm mỗi tiêu chí 0–5, ưu tiên tiêu chí 3 (hành vi chi trả thật) và 4 (tailwind). Điểm 5/5 ở tiêu chí 1 không đủ nếu thiếu 3.
+> **How to use:** Score each criterion 0–5; prioritize #3 (real payment) and #4 (tailwind). 5/5 on #1 alone is insufficient without #3.
 
 ---
 
-## 2. Bằng chứng thị trường — Sức khỏe: Đái tháo đường / Market Evidence — Health: Diabetes
+## 2. Market Evidence — Health: Diabetes in Vietnam
 
-### 2.1 Quy mô & mức độ nghiêm trọng / Scale & Severity
+### 2.1 Scale & Severity
 
-**🇻🇳 Tiếng Việt:**
-- Điều tra toàn quốc 2020: **7,3%** người trưởng thành mắc ĐTĐ (~7 triệu), tăng mạnh từ 2,7% (2002) và 5,4% (2012). Tiền ĐTĐ **17,8%** [^vtv] [^tuoitre] [^sytbn].
-- Bệnh tiến triển âm thầm: **>60% chưa được chẩn đoán**, >50% người trưởng thành chưa từng xét nghiệm đường huyết (VTV 11/2025) [^vtv-undiagnosed]. Hội Nội tiết – ĐTĐ VN: chỉ **31% được chẩn đoán**, trong đó **29% điều trị đạt yêu cầu** (GS.TS Trần Hữu Dàng) [^baodautu].
-- Hậu quả: **>55% đã có biến chứng** — tim mạch 34%, mắt/thần kinh 39,5%, thận 24% [^baodautu]. Dự báo **+78% đến 2045**, nhanh hơn hầu hết nước khu vực [^sytbn].
+- National survey 2020: **7.3%** of adults have diabetes (~7M), up from 2.7% (2002) and 5.4% (2012). Prediabetes **17.8%** [^vtv] [^tuoitre] [^sytbn].
+- Silent progression: **>60% undiagnosed**, >50% never tested (VTV, Nov 2025) [^vtv-undiagnosed]. Vietnam Endocrine-Diabetes Association: only **31% diagnosed**, and among them **29% controlled** (Prof. Tran Huu Dang) [^baodautu].
+- Consequences: **>55% have complications** — cardiovascular 34%, eye/nerve 39.5%, kidney 24% [^baodautu]. Forecast **+78% by 2045**, faster than most regional peers [^sytbn].
 
-**🇬🇧 English:**
-- National survey 2020: **7.3%** adults have diabetes (~7M), up from 2.7% (2002) and 5.4% (2012). Prediabetes **17.8%** [^vtv] [^tuoitre] [^sytbn].
-- Silent progression: **>60% undiagnosed**, >50% never tested glucose (VTV 11/2025) [^vtv-undiagnosed]. Vietnam Endocrine-Diabetes Association: only **31% diagnosed**, **29% of those controlled** (Prof. Tran Huu Dang) [^baodautu].
-- Consequences: **>55% have complications** — CV 34%, eye/nerve 39.5%, kidney 24% [^baodautu]. Forecast **+78% by 2045**, faster than regional peers [^sytbn].
+→ **Criterion 1: very strong.** Not a rare disease; the price of uncontrolled disease is permanent complications.
 
-→ **Tiêu chí 1: rất mạnh / Criterion 1: very strong.** Không phải bệnh hiếm; giá của không kiểm soát là biến chứng vĩnh viễn.
+### 2.2 Gap Between Follow-ups — Quantified
 
-### 2.2 Khoảng trống giữa các lần tái khám — có dẫn chứng định lượng / Gap Between Follow-ups — Quantified
+| Study | Medication Adherence | Self-Monitoring at Home | Periodic Follow-up |
+|-------|----------------------|-------------------------|-------------------|
+| **Thanh Nhan Hospital 2025** (type 2 + kidney complication, n=104) | 76.9% | **20.2%** | 46.2% |
+| **Thong Nhat Hospital 2023** (n=255) | 83.5% | 63.1% *(combined “glucose control + follow-up”)* | 63.1% (combined) |
+| **University of Public Health Clinic 2022** (n=240 records) | — | — | 53.75% |
 
-| Nghiên cứu / Study | Tuân thủ dùng thuốc / Medication | Tự theo dõi tại nhà / Self-monitoring | Tái khám định kỳ / Follow-up |
-|-------------------|----------------------------------|----------------------------------------|------------------------------|
-| **BV Thanh Nhàn 2025** (ĐTĐ type 2 + biến chứng thận, n=104) | 76,9% | **20,2%** | 46,2% |
-| **BV Thống Nhất 2023** (n=255) | 83,5% | 63,1% *(gộp “kiểm soát đường huyết + khám định kỳ”)* | 63,1% (gộp) |
-| **PK ĐH Y tế Công cộng 2022** (n=240 hồ sơ) | — | — | 53,75% |
+*Sources:* Vietnam Journal of Medicine 2022 [^tapchi2022], 2025 [^tapchi2025]; VISTA 2023 [^vista2023]; standard HbA1c every 3 months [^daithaoduong].
 
-*Nguồn / Sources:* Tạp chí Y học Việt Nam 2022 [^tapchi2022], 2025 [^tapchi2025]; sti.vista.gov.vn 2023 [^vista2023]; chuẩn tái khám HbA1c mỗi 3 tháng [^daithaoduong].
+**Insight:** Patients take meds regularly (76.9–83.5%) but are **blind to actual glucose trends** between visits — exactly the gap this project targets. A 3-month HbA1c cycle = months-long blind spot.
 
-**🇻🇳 Phân tích:** Uống thuốc đều (76,9–83,5%) nhưng **gần như “mù” đường huyết thực tế** giữa 2 lần khám — đúng khoảng trống dự án nhắm. Lịch HbA1c 3 tháng/lần = khoảng trống kéo dài hàng tháng.
+→ **Criterion 2: strong, quantified.** Cite this table directly in the “Problem” section.
 
-**🇬🇧 Insight:** Patients take meds regularly (76.9–83.5%) but are **blind to glucose trends** between visits — the exact gap this project targets. HbA1c every 3 months = months-long blind spot.
+### 2.3 Willingness to Pay — Real Evidence
 
-→ **Tiêu chí 2: mạnh, có số định lượng / Criterion 2: strong, quantified.** Trích trực tiếp bảng này vào phần “Problem” của đồ án.
-
-### 2.3 Bằng chứng thị trường đã sẵn sàng chi trả / Willingness to Pay — Real Evidence
-
-**🇻🇳 Tiếng Việt:**
-- **Tự trả tiền túi / Out-of-pocket:** FreeStyle Libre (14 ngày, không chích máu) **2–4 triệu/bộ**, bán tại Pharmacity, Tiki — nhóm bệnh nhân đã tự mua công nghệ theo dõi [^pharmacity] [^nhathuocHN].
-- **Vốn mạo hiểm / VC:** Jio Health **$5M (2019 Series A) → $20M (2022 Series B, Heritas Capital)** [^vjst]; eDoctor từng nhận tài trợ Facebook/Google; Doctor Anywhere **$27M** khi vào VN [^baodautu-yte].
-- **Quy mô thị trường / Market size:** telemedicine **$242,12M (2023) → $374,10M (2029, CAGR ~7,5%, TechSci)** [^medpro]; health IT **$4,4B vào 2033 (CAGR ~13%)**; VJST/VnEconomy ghi nhận tiềm năng chăm sóc sức khỏe trực tuyến [^vneconomy].
-
-**🇬🇧 English:**
-- **Out-of-pocket:** FreeStyle Libre (14-day, no finger prick) **2–4M VND/kit**, sold via Pharmacity, Tiki — patients already buy monitoring tech [^pharmacity] [^nhathuocHN].
-- **VC:** Jio Health **$5M (2019) → $20M (2022, Heritas)** [^vjst]; eDoctor backed by Facebook/Google; Doctor Anywhere **$27M** entering Vietnam [^baodautu-yte].
+- **Out-of-pocket:** FreeStyle Libre (14-day, no finger prick) **2–4M VND/kit** at Pharmacity, Tiki — a segment already buys monitoring tech out-of-pocket [^pharmacity] [^nhathuocHN].
+- **VC investment:** Jio Health **$5M (2019 Series A) → $20M (2022 Series B, Heritas Capital)** [^vjst]; eDoctor backed by Facebook/Google; Doctor Anywhere **$27M** entering Vietnam [^baodautu-yte].
 - **Market size:** telemedicine **$242.12M (2023) → $374.10M (2029, CAGR ~7.5%, TechSci)** [^medpro]; health IT **$4.4B by 2033 (CAGR ~13%)** [^vneconomy].
 
-> ⚠️ **Lưu ý quan trọng / Honest caveat:** Chi trả hiện gắn với **phần cứng/khám** (Jio, eDoctor), **chưa có bằng chứng người dùng cá nhân trả subscription cho app thuần phần mềm**. Đây là rủi ro mô hình B2C — lý do Hướng B chọn **B2B2C** (bán cho phòng khám).
+> ⚠️ **Honest caveat:** Current payments are tied to **hardware or consultations** (Jio Health, eDoctor); **no evidence yet of personal subscription payments for pure software**. This is a B2C risk — hence Track B is positioned as **B2B2C** (sell to clinics).
 
-→ **Tiêu chí 3: có bằng chứng thật, nhưng cần B2B2C / Criterion 3: real but hardware-tied — B2B2C mitigates.**
+→ **Criterion 3: real but hardware-tied — B2B2C mitigates.**
 
-### 2.4 Lực đẩy chính sách & nhân lực / Tailwind — Policy & Workforce
+### 2.4 Tailwind — Policy & Workforce
 
-- **BHYT chi trả telehealth từ 1/7/2025** — cú hích chuyển đổi số, giảm rào cản “ai trả tiền” cho theo dõi từ xa [^bhyt2025].
-- **Thiếu bác sĩ:** **14 bác sĩ/10.000 dân** (mục tiêu 2025 là 15; Pháp 34, Úc 36) [^tuoitre-bs] [^nld-bs] — thời gian bác sĩ khan hiếm → **AI lọc case** (chỉ đẩy khi bất thường) có giá trị thật với cả **bác sĩ**, không chỉ bệnh nhân.
-- **AI đã được chấp nhận:** Bạch Mai, Vinmec, 108, Tâm Anh, ĐK Đức Giang đã dùng AI chẩn đoán hình ảnh & bệnh án điện tử [^skds-ai].
+- **Telehealth reimbursed by national insurance from 1 July 2025** — a digital-health inflection that removes the “who pays” barrier for remote monitoring [^bhyt2025].
+- **Doctor shortage:** **14 doctors per 10,000** (target 15 by 2025; France 34, Australia 36) [^tuoitre-bs] [^nld-bs] — doctor time is scarce → **AI triage** (only escalate when truly abnormal) has real value for doctors, not just patients.
+- **AI accepted:** Major hospitals (Bach Mai, Vinmec, 108, Tam Anh) already use AI for imaging and EMR [^skds-ai].
 
-→ **Tiêu chí 4: thuận lợi rõ rệt từ giữa 2025 / Criterion 4: clear tailwind since mid-2025.**
+→ **Criterion 4: clear tailwind since mid-2025.**
 
-### 2.5 Khoảng trống cạnh tranh / Competitive Gap
+### 2.5 Competitive Gap
 
-| Đối thủ / Player | Đã làm / Done | Bỏ sót / Gap | Lợi thế của dự án / Our edge |
-|------------------|---------------|--------------|------------------------------|
-| **DiaB** (Docosan), **FPT MediCare**, eDoctor, Medihome | App theo dõi, đặt khám, tư vấn [^docosan] [^fptmedicare] | Thiếu **RAG có audit trail** trên WHO/BYT guideline đáng tin; thiếu đo faithfulness | **WHO-RAG Infrastructure API** có citation + faithfulness đo được |
-| **Thiết bị** (FreeStyle Libre) | Phần cứng chính xác | Không diễn giải xu hướng bằng ngôn ngữ dễ hiểu | **Hướng A:** RAG diễn giải trend + chỉ escalate khi vượt ngưỡng |
-| **Phòng khám** | Hồ sơ giấy, tóm tắt thủ công | Mất thời gian chuẩn bị trước tái khám | **Hướng B:** tóm tắt **SOAP/ADA** chuẩn hóa, bán B2B2C |
+| Player | What They Built | Gap | Our Edge |
+|--------|-----------------|-----|----------|
+| **DiaB** (Docosan), **FPT MediCare**, eDoctor, Medihome | Tracking apps, appointment booking, consultations [^docosan] [^fptmedicare] | Lack **auditable RAG** over trustworthy WHO/MOH guidelines; no faithfulness metric | **WHO-RAG Infrastructure API** with citations + measurable faithfulness |
+| **Devices** (FreeStyle Libre) | Accurate hardware | No plain-language trend explanation | **Track A:** RAG explains trends, only escalates when thresholds exceeded |
+| **Clinics** | Paper records, manual summaries | Time-consuming pre-visit prep | **Track B:** standardized **SOAP/ADA** summaries, B2B2C |
 
-→ **Tiêu chí 5: khoảng trống là lớp “hạ tầng kiến thức y tế đáng tin” / Criterion 5: gap is trustworthy knowledge infrastructure.**
+→ **Criterion 5: gap is a trustworthy medical knowledge infrastructure layer.**
 
 ---
 
-## 3. Ba hướng giải pháp / Three Solution Tracks (A/B/C)
+## 3. Three Solution Tracks (A/B/C)
 
-### Hướng A — Trợ lý tuân thủ tự theo dõi đường huyết / Track A — Self-Monitoring Adherence Assistant
+### Track A — Self-Monitoring Adherence Assistant
 
-**Nhắm thẳng vào con số 20,2% / Targets the 20.2% directly.**
-- Bệnh nhân nhập/kết nối chỉ số đường huyết tại nhà; chatbot dùng **RAG trên WHO/BYT** để diễn giải xu hướng bằng ngôn ngữ dễ hiểu, và **chỉ đẩy lên bác sĩ khi vượt ngưỡng rõ ràng** (giảm tải cho bác sĩ khan hiếm — §2.4).
-- **Thước đo thành công / Success metric:** *“% người dùng thử nghiệm duy trì tự theo dõi ≥3 lần/tuần sau 4 tuần”* (thay vì chỉ đo chất lượng retrieval).
-- **Kỹ thuật / Tech:** `src/features/glucose_tracker.py` (SQLite `glucose_logs.db` + ngưỡng WHO/ADA) + `POST /v1/glucose` + RAG `diabetes` tone.
+**Directly targets the 20.2% figure.**
+- Patients log or connect home glucose readings; chatbot uses **RAG over WHO/MOH** guidelines to explain trends in plain language and **only escalates to a doctor when thresholds are clearly exceeded** (reduces load on scarce doctors — §2.4).
+- **Success metric:** *“% of trial users who maintain self-monitoring ≥3 times/week after 4 weeks”* (not just retrieval quality).
+- **Tech:** `src/features/glucose_tracker.py` (SQLite `glucose_logs.db` + WHO/ADA thresholds) + `POST /v1/glucose` + RAG `diabetes` tone.
 
-### Hướng B — Công cụ “chuẩn bị hồ sơ trước tái khám” / Track B — Pre-Visit Summary Tool
+### Track B — Pre-Visit Summary Tool
 
-**Nhắm vào 46–53% tuân thủ tái khám / Targets 46–53% follow-up adherence.**
-- Tóm tắt dữ liệu tự theo dõi thành **bản chuẩn hóa SOAP/khuyến cáo ADA** gửi bác sĩ trước hẹn — **bán vào phòng khám/bệnh viện (B2B2C)** thay vì trực tiếp cho bệnh nhân, tận dụng BHYT chi trả telehealth.
-- **Kỹ thuật / Tech:** `src/features/soap_summary.py` (LLM tạo SOAP + fallback rule-based) + `POST /v1/soap/generate` → JSON/PDF/markdown.
+**Targets the 46–53% follow-up adherence.**
+- Summarizes self-monitoring data into a **standardized SOAP / ADA summary** sent to the doctor before the appointment — **sold to clinics/hospitals (B2B2C)** instead of direct-to-patient, leveraging telehealth reimbursement.
+- **Tech:** `src/features/soap_summary.py` (LLM SOAP + rule-based fallback) + `POST /v1/soap/generate` → JSON/PDF/markdown.
 
-### Hướng C — Lớp “hạ tầng WHO-RAG” làm API / Track C — WHO-RAG Infrastructure API
+### Track C — WHO-RAG Infrastructure API
 
-**Vì thị trường consumer app đã đông / Consumer app market is crowded.**
-- Định vị như **lớp truy vấn kiến thức y tế đáng tin cậy (có audit trail, có chỉ số faithfulness đo được)** mà các app hiện có (eDoctor, Medihome…) có thể tích hợp, thay vì tự xây thêm một app cạnh tranh.
-- **Kỹ thuật / Tech:** `src/api/main.py` FastAPI — `POST /v1/query` trả về `{answer, citations, prompt_version, faithfulness, trace_url}`. Dùng cho mọi app bên thứ 3.
+**Because the consumer app market is crowded.**
+- Positioned as a **trustworthy medical knowledge query layer (with audit trail and measurable faithfulness)** that existing apps (eDoctor, Medihome, etc.) can integrate, instead of building yet another competing app.
+- **Tech:** `src/api/main.py` FastAPI — `POST /v1/query` returns `{answer, citations, prompt_version, faithfulness, trace_url}`.
 
-**Kiến trúc tổng thể / Architecture:**
+**Overall Architecture:**
 
 ```
 [Next.js Frontend] ──┐
 [Streamlit (legacy)] ├──► [FastAPI /v1/*  — Track C] ─► [RAG Pipeline v2]
-                     │         │                       ├─ retrieve_context (WHO ĐTĐ corpus mới)
+                     │         │                       ├─ retrieve_context (WHO diabetes corpus)
                      │         └─ audit logs           ├─ rerank + faithfulness scorer
 [Track B — SOAP] ────┘                                 └─ generator (tone=diabetes strict)
 [Track A — Glucose] ──► SQLite `glucose_logs` + thresholds engine
@@ -145,57 +118,57 @@ This project implements a **task-oriented customer support chatbot** using an **
 
 ---
 
-## 4. Nguồn dữ liệu & Data Pipeline / Data Sources & Pipeline
+## 4. Data Sources & Pipeline
 
-### 4.1 Corpus hiện có / Existing Corpus
+### 4.1 Existing Corpus
 
-`data/raw/pdfs/` (18 PDFs WHO về vận động/dinh dưỡng/ngủ) + `data/raw/pdfs/diabetes/` *(mới — 3 PDFs tải tự động)*:
+`data/raw/pdfs/` (18 WHO PDFs on physical activity/nutrition/sleep) + `data/raw/pdfs/diabetes/` *(new — auto-downloaded 3 PDFs)*:
 - `WHO_Classification_Diabetes_2019.pdf` (990 KB) — IRIS 10665/325182
 - `WHO_HEARTS_D_Diabetes_2020.pdf` (1.2 MB) — IRIS 10665/331710
-- `WHO_PEN_2020_NCD.pdf` (2.5 MB) — IRIS 10665/334186 (có chương ĐTĐ)
-- `ADA_Standards_of_Care_2024_Abridged.pdf` — *optional, paywall 403; hướng dẫn tải thủ công trong `scripts/crawl_guidelines.py`*.
+- `WHO_PEN_2020_NCD.pdf` (2.5 MB) — IRIS 10665/334186 (contains diabetes chapter)
+- `ADA_Standards_of_Care_2024_Abridged.pdf` — *optional, paywall 403; manual download instructions in `scripts/crawl_guidelines.py`*.
 
-### 4.2 Pipeline crawl guideline / Guideline Crawler Pipeline
+### 4.2 Guideline Crawler Pipeline
 
-**Crawler đa nguồn / Multi-source crawler:** `scripts/crawl_guidelines.py`
+**Multi-source crawler:** `scripts/crawl_guidelines.py`
 
-| Nguồn / Source | Thư mục / Folder | Phương pháp / Method |
-|----------------|------------------|----------------------|
+| Source | Folder | Method |
+|--------|--------|--------|
 | **WHO IRIS** | `data/raw/pdfs/who_iris/` | DSpace 7 REST: `discover/search/objects` → `items/{id}/bundles` → `bitstreams/{id}/content` (resolve handle `10665/xxx`) |
-| **ADA** | `data/raw/pdfs/ada/` | Curated seeds + alt PDF (paywall → placeholder hướng dẫn) |
+| **ADA** | `data/raw/pdfs/ada/` | Curated seeds + alt PDF (paywall → placeholder guide) |
 | **AHA/ACC, GOLD, GINA** | `data/raw/pdfs/aha_acc|gold|gina/` | Curated direct PDF URLs (GOLD 2024, GINA 2024) |
-| **BYT — Quyết định/Bộ Y tế** | `data/raw/pdfs/byt/` | Crawl `moh.gov.vn` + `thuvienphapluat.vn` (QĐ 3319/QĐ-BYT và cập nhật) — curated, bổ sung thủ công nếu cần |
+| **MOH — Decisions/Ministry of Health** | `data/raw/pdfs/byt/` | Scrape `moh.gov.vn` + `thuvienphapluat.vn` (Decision 3319/QD-BYT and updates) — curated, manual supplement if needed |
 | **mhGAP, Diabetes** | `data/raw/pdfs/mhgap|diabetes/` | WHO mhGAP v2.0 + Diabetes curated |
 
-**Sử dụng / Usage:**
+**Usage:**
 
 ```bash
-# 1. Tạo manifest (curated seeds)
+# 1. Create manifest (curated seeds)
 python scripts/crawl_guidelines.py crawl --all --limit 5
 python scripts/crawl_guidelines.py crawl --source who_iris --query "diabetes" --limit 5
 
-# 2. Tải 3 PDF diabetes public (WHO Classification + HEARTS-D + PEN)
+# 2. Download 3 public diabetes PDFs (WHO Classification + HEARTS-D + PEN)
 python scripts/crawl_guidelines.py diabetes3
-# hoặc
+# or
 python scripts/download_diabetes_pdfs.py --force
 
-# 3. Tải toàn bộ theo manifest
+# 3. Download everything in manifest
 python scripts/crawl_guidelines.py download
 
-# 4. Kiểm tra trạng thái
+# 4. Check status
 python scripts/crawl_guidelines.py status
 ```
 
-**Indexer đệ quy / Recursive indexer:** `src/indexer.py` quét **đệ quy** `data/raw/pdfs/**/*.pdf` (hỗ trợ subfolder), hỗ trợ **OpenAI embeddings** (`text-embedding-3-small`, 1536d) với fallback HuggingFace (`all-MiniLM-L6-v2`, 384d). DB tách riêng: `embeddings/pdf_db/` (local) vs `embeddings/pdf_db_openai/` (OpenAI) để tránh lệch dimension.
+**Recursive indexer:** `src/indexer.py` scans **recursively** `data/raw/pdfs/**/*.pdf` (supports subfolders), supports **OpenAI embeddings** (`text-embedding-3-small`, 1536d) with HuggingFace fallback (`all-MiniLM-L6-v2`, 384d). Separate DBs: `embeddings/pdf_db/` (local) vs `embeddings/pdf_db_openai/` (OpenAI) to avoid dimension mismatch.
 
 ```bash
-# Index tất cả PDFs (bao gồm diabetes subfolder)
+# Index all PDFs (including diabetes subfolder)
 python -m src.indexer
-# hoặc với OpenAI embeddings (cần OPENAI_API_KEY trong .env)
+# or with OpenAI embeddings (requires OPENAI_API_KEY in .env)
 EMBEDDING_PROVIDER=openai python -m src.indexer
 ```
 
-### 4.3 Cấu hình embedding / Embedding Configuration
+### 4.3 Embedding Configuration
 
 `.env`:
 ```bash
@@ -206,17 +179,17 @@ OPENAI_EMBEDDING_MODEL=text-embedding-3-small  # 1536 dims
 EMBEDDING_PROVIDER=openai   # "openai" | "local"
 ```
 
-`src/config.py` tự động chọn model và tách DB theo provider. Nếu thiếu key hoặc `langchain-openai` chưa cài, hệ thống **fallback về local** mà không crash.
+`src/config.py` auto-selects model and splits DB by provider. If the key or `langchain-openai` is missing, the system **falls back to local** without crashing.
 
 ---
 
-## 5. Technical Documentation (English)
+## 5. Technical Documentation
 
 ### 5.1 Project Overview
 
-* Built as a **research-to-production style project** aligned with real-world customer support use cases (now specialized for diabetes).
+* Built as a **research-to-production** project aligned with real-world customer support use cases (now specialized for diabetes).
 * Combines **hybrid retrieval (dense + sparse)**, **cache-augmented generation (CAG)**, and **agentic routing**.
-* Designed to demonstrate best practices in **RAG architecture, context engineering, evaluation, and observability**.
+* Demonstrates best practices in **RAG architecture, context engineering, evaluation, and observability**.
 * New: **3-track diabetes assistant** + **FastAPI** + **Next.js**.
 
 ### 5.2 Key Features
@@ -249,12 +222,12 @@ EMBEDDING_PROVIDER=openai   # "openai" | "local"
 | `STRICT_SYSTEM_PROMPT` | Factual, concise (regulated domains) |
 | `FRIENDLY_SYSTEM_PROMPT` | Empathetic, simple language |
 | `BALANCED_SYSTEM_PROMPT` | Reasoning + structured |
-| `DIABETES_STRICT_PROMPT` | **New:** WHO/ADA/BYT RAG with citations, VN language, thresholds |
+| `DIABETES_STRICT_PROMPT` | **New:** WHO/ADA/MOH RAG with citations, thresholds |
 | `SOAP_PROMPT` | **New:** Pre-visit SOAP generator |
 | `WHO_RAG_AUDIT_PROMPT` | **New:** Infrastructure audit layer |
 | `EVALUATION_PROMPT` | LLM-as-judge (faithfulness/precision/recall/fluency 0–5) |
 
-Hub-first with local fallback: `prompt_manager.get_system_prompt(tone)` pulls latest Hub version (TTL `PROMPT_HUB_CACHE_TTL_SECONDS`), falls back to local constants offline. New tones: `diabetes`, `soap`, `who_rag`.
+Hub-first with local fallback: `prompt_manager.get_system_prompt(tone)` pulls the latest Hub version (TTL `PROMPT_HUB_CACHE_TTL_SECONDS`), falling back to local constants offline. New tones: `diabetes`, `soap`, `who_rag`.
 
 ### 5.4 RAG Evaluation & Observability
 
@@ -306,10 +279,23 @@ frontend/                    # Next.js 14 (App Router)
 │   ├── tracker/page.tsx     # Track A
 │   ├── previsit/page.tsx    # Track B
 │   └── api-playground/page.tsx # Track C
+├── e2e/                     # Playwright E2E (chromium)
+│   ├── fixtures.ts
+│   ├── overview.spec.ts
+│   ├── tracker.spec.ts
+│   ├── previsit.spec.ts
+│   └── api-playground.spec.ts
+tests/                       # Pytest suite (diabetes-focused)
+├── conftest.py
+├── test_glucose_tracker.py
+├── test_soap_summary.py
+├── test_api_diabetes.py
+├── test_diabetes_retrieval.py
+└── security/test_owasp_top10.py  # OWASP Top 10 2021
 data/
-├── raw/pdfs/                # WHO IRIS / ADA / BYT / diabetes subfolders
+├── raw/pdfs/                # WHO IRIS / ADA / MOH / diabetes subfolders
 ├── guideline_manifest.json  # Crawler manifest
-└── evaluation/              # Benchmark datasets
+└── evaluation/              # Benchmark datasets (diabetes_retrieval_*, legacy)
 embeddings/
 ├── pdf_db/                  # Chroma (local 384d)
 └── pdf_db_openai/           # Chroma (OpenAI 1536d)
@@ -328,8 +314,8 @@ metadata/
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-# hoặc
-pip install -e .
+# or
+pip install -e .[test]
 
 # .env
 PROVIDER=openai
@@ -343,13 +329,13 @@ LANGSMITH_PROJECT=customer-support-rag
 ```
 
 ```bash
-# 1. Tải diabetes PDFs
+# 1. Download diabetes PDFs
 python scripts/crawl_guidelines.py diabetes3
 
-# 2. Index (tự động dùng OpenAI embeddings nếu cấu hình)
+# 2. Index (auto uses OpenAI embeddings if configured)
 python -m src.indexer
 
-# 3. Chạy FastAPI (Track C)
+# 3. Run FastAPI (Track C)
 uvicorn src.api.main:app --reload --port 8000
 # Docs: http://localhost:8000/docs
 # Health: http://localhost:8000/v1/health
@@ -357,7 +343,7 @@ uvicorn src.api.main:app --reload --port 8000
 # 4. Test RAG
 curl -X POST http://localhost:8000/v1/query \
   -H "Content-Type: application/json" \
-  -d '{"query":"Dấu hiệu đái tháo đường type 2?","top_k":5,"user_id":"demo"}'
+  -d '{"query":"What are WHO diagnostic thresholds for diabetes?","top_k":5,"user_id":"demo"}'
 
 # 5. Track A — log glucose
 curl -X POST http://localhost:8000/v1/glucose \
@@ -396,15 +382,66 @@ cd src && python prompt_manager.py
 
 ---
 
-## 7. LangSmith Tracing, Prompt Versioning & Observability
+## 7. Testing
 
-*(unchanged — see previous README for full details; added `diabetes`, `soap`, `who_rag` prompt repos)*
+### Backend — Pytest (diabetes-focused)
 
-Every `rag_chat()` call creates one root trace with `retrieve_context`, `rerank_contexts`, `generate_answer` spans. New diabetes queries use `tone=diabetes` and `DIABETES_STRICT_PROMPT` (versioned in Hub as `medical-support-diabetes-strict`).
+```bash
+pip install -e .[test]
+pytest tests/ -v                          # all diabetes tests (unit + API + retrieval)
+pytest tests/ -v -m "not legacy"          # exclude legacy generic tests
+pytest tests/security -v -m security       # OWASP Top 10 only
+pytest tests/test_diabetes_retrieval.py -v # 15 diabetes retrieval Qs
+```
+
+- **Generic non-diabetes tests removed:** Original `retrieval_evaluation.json` (20 Qs on physical activity, sodium, sleep, water/sanitation) was **pruned**. The diabetes-specific set is `data/evaluation/diabetes_retrieval_evaluation.json` (15 Qs) and `diabetes_benchmark_questions.json` (5 multi-hop diabetes Qs) referencing only `WHO_Classification_Diabetes_2019.pdf`, `WHO_HEARTS_D_Diabetes_2020.pdf`, `WHO_PEN_2020_NCD.pdf`, `ADA_SoC_2024`. Legacy files kept as `*legacy.json` with `pytest.mark.legacy` (skipped by default).
+- **Coverage:** `test_glucose_tracker.py` (fasting/postprandial thresholds 126/200, hypo 70, critical 300, escalation 3×high), `test_soap_summary.py` (4-section SOAP, markdown, no-log edge), `test_api_diabetes.py` (RAG citation, glucose roundtrip, validation 422, SOAP, guidelines/health).
+
+### Backend — Security (OWASP Top 10 2021)
+
+```bash
+pytest tests/security/test_owasp_top10.py -v
+```
+
+| OWASP | Test |
+|-------|------|
+| A01 Broken Access Control | `test_a01_user_isolation` — user_id isolation |
+| A02 Cryptographic Failures | `test_a02_no_secrets_in_health` |
+| A03 Injection | `test_a03_prompt_injection_blocked`, `test_a03_sql_injection_glucose_notes`, `test_a03_xss_notes_escaped` |
+| A04 Insecure Design | `test_a04_escalation_design_critical / _three_high` |
+| A05 Security Misconfiguration | `test_a05_cors_misconfiguration` (documents wildcard `allow_origins=["*"]` + `allow_credentials=True` → xfail until env allowlist) |
+| A06 Vulnerable Components | `test_a06_no_high_vulns_in_lockfiles` |
+| A07 Auth Failures | `test_a07_soap_requires_auth` (xfail placeholder, no JWT yet) |
+| A08 Data Integrity | `test_a08_file_fingerprint_detects_tampering` |
+| A09 Logging & Monitoring | `test_a09_logging_present` (langsmith/timings) |
+| A10 SSRF | `test_a10_ssrf_crawler_rejects_private_ips` |
+
+### Frontend — Playwright E2E
+
+```bash
+cd frontend
+npm install  # includes @playwright/test
+npx playwright install chromium
+npm run test:e2e        # headless
+npm run test:e2e:ui     # UI mode
+```
+
+- Config `frontend/playwright.config.ts` (webServer `npm run dev` on 3000, baseURL, trace on retry).
+- Specs `frontend/e2e/overview.spec.ts` (hero stats 7.3%/20.2%, 5-criteria, 3 cards, nav), `tracker.spec.ts` (form → classification badge, chart ReferenceLines 126/200/70, KPI alert, escalation banner, RAG trend mock), `previsit.spec.ts` (SOAP 4 sections, markdown download), `api-playground.spec.ts` (audit trail, top_k slider, raw JSON, error handling).
 
 ---
 
-## 8. Purpose
+## 8. LangSmith Tracing, Prompt Versioning & Observability
+
+Every `rag_chat()` call creates one root trace with `retrieve_context`, `rerank_contexts`, `generate_answer` spans. New diabetes queries use `tone=diabetes` and `DIABETES_STRICT_PROMPT` (versioned in Hub as `medical-support-diabetes-strict`).
+
+- One-time sync: `cd src && python prompt_manager.py` creates 7 repos (`strict|friendly|balanced|diabetes|soap|who_rag|evaluation`).
+- At runtime `prompt_manager.get_system_prompt(tone)` pulls the latest Hub version (TTL `PROMPT_HUB_CACHE_TTL_SECONDS`), falls back to local constants offline.
+- User feedback via 👍/👎 buttons attached to trace (`client.create_feedback`).
+
+---
+
+## 9. Purpose
 
 This project demonstrates:
 * Production-style **RAG system design** (hybrid retrieval + reranking + CAG)
@@ -415,37 +452,37 @@ This project demonstrates:
 
 ---
 
-## 9. Contributing
+## 10. Contributing
 
 * Open issues/PRs
-* Add unit tests under `src/` or `frontend/`
+* Run tests before PR: `pytest tests/ -v && cd frontend && npm run test:e2e`
 * Follow clean architecture & reproducibility
 
 ---
 
-## 10. References / Nguồn tham khảo
+## 11. References
 
-[^vtv]: VTV — Tỷ lệ mắc ĐTĐ: https://suckhoe.vtv.vn/suc-khoe/ty-le-nguoi-mac-dai-thao-duong-chua-duoc-chan-doan-tai-viet-nam-hien-tai-la-hon-60-20241109143256325.htm
-[^tuoitre]: Tuổi Trẻ — Khoảng 7 triệu người Việt mắc ĐTĐ: https://tuoitre.vn/khoang-7-trieu-nguoi-viet-dang-mac-dai-thao-duong-20240701080303435.htm
-[^sytbn]: Sở Y tế Bắc Ninh — Hơn 3,5 triệu → 6,3 triệu vào 2045: https://syt.bacninh.gov.vn/news/-/details/22511/hon-3-5-trieu-nguoi-viet-mac-ai-thao-uong-va-se-tang-len-6-3-trieu-vao-nam-2045
-[^vtv-undiagnosed]: VTV — Ngày Thế giới phòng chống ĐTĐ 2025: https://vtv.vn/ngay-the-gioi-phong-chong-dai-thao-duong-2025-chung-tay-hanh-dong-vi-suc-khoe-cong-dong-100251113233503187.htm
-[^baodautu]: Báo Đầu Tư — Báo động tỷ lệ mắc ĐTĐ (GS Trần Hữu Dàng): https://baodautu.vn/bao-dong-ty-le-mac-benh-dai-thao-duong-o-nguoi-viet-d230000.html
-[^tapchi2022]: Tạp chí Y học Việt Nam — Tuân thủ tái khám, PK ĐH YTCC 2022: https://tapchiyhocvietnam.vn/index.php/vmj/article/view/6421
-[^tapchi2025]: Tạp chí Y học Việt Nam — Tuân thủ ĐTĐ type 2 + thận, BV Thanh Nhàn 2025: https://tapchiyhocvietnam.vn/index.php/vmj/article/view/16281
-[^vista2023]: STI/VISTA — Tuân thủ ĐTĐ type 2, BV Thống Nhất 2023: https://sti.vista.gov.vn/publication/view/nghien-cuu-su-tuan-thu-dieu-tri-cua-nguoi-benh-dai-thao-duong-type-2-dieu-tri-ngoai-tru-tai-benh-vien-thong-nhat-nam-2023-dddd5a1294a2e26a9f9c922233e890a0-381685.html
-[^daithaoduong]: Đái tháo đường .com — Lịch tái khám: https://daithaoduong.com/lich-trinh-theo-doi-benh-tieu-duong/
+[^vtv]: VTV — Diabetes undiagnosed rate: https://suckhoe.vtv.vn/suc-khoe/ty-le-nguoi-mac-dai-thao-duong-chua-duoc-chan-doan-tai-viet-nam-hien-tai-la-hon-60-20241109143256325.htm
+[^tuoitre]: Tuoi Tre — ~7M people with diabetes in Vietnam: https://tuoitre.vn/khoang-7-trieu-nguoi-viet-dang-mac-dai-thao-duong-20240701080303435.htm
+[^sytbn]: Bac Ninh Health Dept — 3.5M → 6.3M by 2045: https://syt.bacninh.gov.vn/news/-/details/22511/hon-3-5-trieu-nguoi-viet-mac-ai-thao-uong-va-se-tang-len-6-3-trieu-vao-nam-2045
+[^vtv-undiagnosed]: VTV — World Diabetes Day 2025: https://vtv.vn/ngay-the-gioi-phong-chong-dai-thao-duong-2025-chung-tay-hanh-dong-vi-suc-khoe-cong-dong-100251113233503187.htm
+[^baodautu]: Dau Tu — Diabetes alert (Prof. Tran Huu Dang): https://baodautu.vn/bao-dong-ty-le-mac-benh-dai-thao-duong-o-nguoi-viet-d230000.html
+[^tapchi2022]: Vietnam Journal of Medicine — Follow-up adherence, Univ. of Public Health Clinic 2022: https://tapchiyhocvietnam.vn/index.php/vmj/article/view/6421
+[^tapchi2025]: Vietnam Journal of Medicine — Type 2 diabetes + kidney complication, Thanh Nhan Hospital 2025: https://tapchiyhocvietnam.vn/index.php/vmj/article/view/16281
+[^vista2023]: STI/VISTA — Type 2 diabetes adherence, Thong Nhat Hospital 2023: https://sti.vista.gov.vn/publication/view/nghien-cuu-su-tuan-thu-dieu-tri-cua-nguoi-benh-dai-thao-duong-type-2-dieu-tri-ngoai-tru-tai-benh-vien-thong-nhat-nam-2023-dddd5a1294a2e26a9f9c922233e890a0-381685.html
+[^daithaoduong]: Diabetes .com — Follow-up schedule: https://daithaoduong.com/lich-trinh-theo-doi-benh-tieu-duong/
 [^pharmacity]: Pharmacity — FreeStyle Libre: https://www.pharmacity.vn/bo-cam-bien-may-do-duong-huyet-nhanh-freestyle-libre.html
-[^nhathuocHN]: Nhà thuốc Dược Hà Nội — Giá FreeStyle Libre 2–4 triệu: https://nhathuocduochanoi.com.vn/san-pham/may-do-duong-huyet-freestyle-libre-cham-soc-suc-khoe-benh-tieu-duong.html
+[^nhathuocHN]: Hanoi Drug Pharmacy — FreeStyle Libre 2–4M VND: https://nhathuocduochanoi.com.vn/san-pham/may-do-duong-huyet-freestyle-libre-cham-soc-suc-khoe-benh-tieu-duong.html
 [^vjst]: VJST — Jio Health $20M: https://vjst.vn/20-trieu-usd-duoc-rot-vao-start-up-viet-jio-health-21832.html
-[^baodautu-yte]: Báo Đầu Tư — Startup y tế $27M (Doctor Anywhere): https://baodautu.vn/startup-y-te-hung-dong-von-khung-d120819.html
-[^medpro]: Medpro — Telemedicine Việt Nam (TechSci 2023): https://medpro.vn/tin-tuc/telemedicine-kham-benh-tu-xa-la-gi-va-no-hoat-dong-the-nao-
-[^vneconomy]: VnEconomy — Tiềm năng chăm sóc sức khỏe trực tuyến: https://vneconomy.vn/tiem-nang-tu-thi-truong-cham-soc-suc-khoe-truc-tuyen
-[^bhyt2025]: BHYT chi trả telehealth từ 1/7/2025 (tổng hợp từ báo chí; kiểm chứng qua Cổng TTĐT BYT)
-[^tuoitre-bs]: Tuổi Trẻ — Mục tiêu 15 bác sĩ/vạn dân: https://tuoitre.vn/nld/viet-nam-dat-muc-tieu-15-bac-si-van-dan-196240228205038154.htm
-[^nld-bs]: Người Lao Động — Đạt 14 bác sĩ/10.000 dân: https://nld.com.vn/viet-nam-dat-14-bac-si-tren-10000-dan-196241224105553454.htm
-[^skds-ai]: Sức khỏe & Đời sống — AI trợ thủ bác sĩ: https://suckhoedoisong.vn/tri-tue-nhan-tao-ai-tro-thu-dac-luc-cua-bac-si-trong-kham-chua-benh-quan-ly-benh-an-dien-tu-169250720153923241.htm
-[^docosan]: Docosan — Ứng dụng DiaB: https://www.docosan.com/blog/noi-tiet/ung-dung-diab/
-[^fptmedicare]: FPT MediCare — Ứng dụng theo dõi đường huyết: https://fptmedicare.vn/ung-dung-theo-doi-duong-huyet-thong-minh/
+[^baodautu-yte]: Dau Tu — Health startup $27M (Doctor Anywhere): https://baodautu.vn/startup-y-te-hung-dong-von-khung-d120819.html
+[^medpro]: Medpro — Telemedicine Vietnam (TechSci 2023): https://medpro.vn/tin-tuc/telemedicine-kham-benh-tu-xa-la-gi-va-no-hoat-dong-the-nao-
+[^vneconomy]: VnEconomy — Online healthcare potential: https://vneconomy.vn/tiem-nang-tu-thi-truong-cham-soc-suc-khoe-truc-tuyen
+[^bhyt2025]: National insurance reimburses telehealth from 1/7/2025 (press synthesis; verify via MOH portal)
+[^tuoitre-bs]: Tuoi Tre — Target 15 doctors/10k: https://tuoitre.vn/nld/viet-nam-dat-muc-tieu-15-bac-si-van-dan-196240228205038154.htm
+[^nld-bs]: Nguoi Lao Dong — 14 doctors/10k achieved: https://nld.com.vn/viet-nam-dat-14-bac-si-tren-10000-dan-196241224105553454.htm
+[^skds-ai]: Suc Khoe & Doi Song — AI as doctor assistant: https://suckhoedoisong.vn/tri-tue-nhan-tao-ai-tro-thu-dac-luc-cua-bac-si-trong-kham-chua-benh-quan-ly-benh-an-dien-tu-169250720153923241.htm
+[^docosan]: Docosan — DiaB app: https://www.docosan.com/blog/noi-tiet/ung-dung-diab/
+[^fptmedicare]: FPT MediCare — Glucose tracking app: https://fptmedicare.vn/ung-dung-theo-doi-duong-huyet-thong-minh/
 [^who-class]: WHO Classification of Diabetes Mellitus 2019 (IRIS 10665/325182): https://iris.who.int/handle/10665/325182
 [^who-hearts]: WHO HEARTS-D Diagnosis & Management of Type 2 Diabetes 2020 (IRIS 10665/331710): https://iris.who.int/handle/10665/331710
 [^who-pen]: WHO PEN 2020 (IRIS 10665/334186): https://iris.who.int/handle/10665/334186

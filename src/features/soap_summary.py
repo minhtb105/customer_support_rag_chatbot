@@ -120,12 +120,16 @@ def generate_soap(user_id: str, days: int = 14, language: str = "vi") -> Dict[st
         import json
         txt = resp.choices[0].message.content.strip()
         data = json.loads(txt)
-        # chuẩn hoá keys
+        # chuẩn hoá keys — coerce list → string (LLM sometimes returns bullet arrays)
+        def _coerce(v):
+            if isinstance(v, list):
+                return "\n".join(f"- {x}" for x in v)
+            return v or ""
         soap = {
-            "subjective": data.get("subjective") or data.get("Subjective") or "",
-            "objective": data.get("objective") or data.get("Objective") or "",
-            "assessment": data.get("assessment") or data.get("Assessment") or "",
-            "plan": data.get("plan") or data.get("Plan") or "",
+            "subjective": _coerce(data.get("subjective") or data.get("Subjective") or ""),
+            "objective": _coerce(data.get("objective") or data.get("Objective") or ""),
+            "assessment": _coerce(data.get("assessment") or data.get("Assessment") or ""),
+            "plan": _coerce(data.get("plan") or data.get("Plan") or ""),
         }
         # fallback nếu thiếu
         if not all(soap.values()):

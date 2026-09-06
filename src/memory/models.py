@@ -60,6 +60,7 @@ class MemoryFact(Base):
         Index("idx_memory_facts_user_type", "user_id", "fact_type"),
         Index("idx_memory_facts_session", "session_id"),
         Index("idx_memory_facts_created", "created_at"),
+        {'extend_existing': True}
     )
     
     def __repr__(self):
@@ -85,6 +86,7 @@ class UserProfile(Base):
     """User profile table for aggregated medical information."""
     
     __tablename__ = "user_profiles"
+    __table_args__ = {'extend_existing': True}
     
     user_id = Column(String(100), primary_key=True)
     profile_data = Column(JSONB if ENV != Environment.LOCAL else JSON, nullable=False)
@@ -127,6 +129,7 @@ class SessionSummary(Base):
     """Session summary table for episodic memory (derived from MemoryFact)."""
     
     __tablename__ = "session_summaries"
+    __table_args__ = {'extend_existing': True}
     
     session_id = Column(String(100), primary_key=True)
     user_id = Column(String(100), index=True, nullable=False)
@@ -156,6 +159,7 @@ class MemoryStats(Base):
     """Memory usage statistics for monitoring and optimization."""
     
     __tablename__ = "memory_stats"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(String(100), index=True, nullable=False)

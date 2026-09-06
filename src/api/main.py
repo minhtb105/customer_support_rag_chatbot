@@ -44,10 +44,11 @@ except ImportError:  # pragma: no cover
 
 app = FastAPI(title=API_TITLE, version=API_VERSION, description="WHO-RAG Infrastructure API — Hướng C: lớp truy vấn y tế đáng tin cậy cho app bên thứ 3.")
 
-# CORS cho Next.js frontend
+# CORS — env-driven allowlist (OWASP A05 fix: no wildcard with credentials)
+_ALLOWED_ORIGINS = [o.strip() for o in os.getenv("FRONTEND_URL", "http://localhost:3000,http://localhost:8000").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

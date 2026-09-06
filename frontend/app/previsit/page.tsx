@@ -44,12 +44,12 @@ export default function PrevisitPage() {
       <div className="rounded-2xl border bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-end gap-3">
           <div>
-            <label className="text-xs text-slate-600">User ID</label>
-            <input value={userId} onChange={(e) => setUserId(e.target.value)} className="mt-1 rounded-lg border px-3 py-2 text-sm" />
+            <label htmlFor="previsit-userid" className="text-xs text-slate-600">User ID</label>
+            <input id="previsit-userid" data-testid="previsit-userid" value={userId} onChange={(e) => setUserId(e.target.value)} className="mt-1 rounded-lg border px-3 py-2 text-sm" />
           </div>
           <div>
-            <label className="text-xs text-slate-600">Số ngày</label>
-            <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="mt-1 rounded-lg border px-3 py-2 text-sm">
+            <label htmlFor="previsit-days" className="text-xs text-slate-600">Số ngày</label>
+            <select id="previsit-days" data-testid="previsit-days" value={days} onChange={(e) => setDays(Number(e.target.value))} className="mt-1 rounded-lg border px-3 py-2 text-sm">
               <option value={7}>7 ngày</option>
               <option value={14}>14 ngày</option>
               <option value={30}>30 ngày</option>

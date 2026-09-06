@@ -87,24 +87,24 @@ export default function TrackerPage() {
           <h2 className="text-sm font-semibold">Nhập chỉ số</h2>
           <div className="mt-4 space-y-3">
             <div>
-              <label className="text-xs text-slate-600">User ID</label>
-              <input value={userId} onChange={(e) => setUserId(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
+              <label htmlFor="tracker-userid" className="text-xs text-slate-600">User ID</label>
+              <input id="tracker-userid" data-testid="tracker-userid" value={userId} onChange={(e) => setUserId(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs text-slate-600">Giá trị (mg/dL)</label>
-                <input type="number" value={value} onChange={(e) => setValue(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
+                <label htmlFor="tracker-value" className="text-xs text-slate-600">Giá trị (mg/dL)</label>
+                <input id="tracker-value" data-testid="tracker-value" type="number" value={value} onChange={(e) => setValue(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="text-xs text-slate-600">Bối cảnh</label>
-                <select value={context} onChange={(e) => setContext(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
+                <label htmlFor="tracker-context" className="text-xs text-slate-600">Bối cảnh</label>
+                <select id="tracker-context" data-testid="tracker-context" value={context} onChange={(e) => setContext(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm">
                   {contexts.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                 </select>
               </div>
             </div>
             <div>
-              <label className="text-xs text-slate-600">Ghi chú</label>
-              <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="vd: sau ăn phở, căng thẳng" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
+              <label htmlFor="tracker-notes" className="text-xs text-slate-600">Ghi chú</label>
+              <input id="tracker-notes" data-testid="tracker-notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="vd: sau ăn phở, căng thẳng" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" />
             </div>
             <button onClick={submit} className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-700">Lưu chỉ số</button>
             {msg && <div className="rounded-lg border bg-slate-50 p-3 text-xs">{msg}</div>}

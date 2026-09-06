@@ -1,0 +1,57 @@
+[
+    {
+        "id": "db1",
+        "question": "If fasting glucose is 130 mg/dL and 2-hour post-meal is 210 mg/dL, what does WHO classification say and when should the patient be escalated?",
+        "type": "reasoning",
+        "supporting_docs": ["WHO_Classification_Diabetes_2019.pdf", "WHO_HEARTS_D_Diabetes_2020.pdf"],
+        "gold_passages": ["fasting >=126 mg/dL diabetes", "2-hour >=200 mg/dL diabetes", "escalate if critical >=300 or 3 consecutive high"],
+        "hard_negatives": ["normal fasting <100 mg/dL"],
+        "expected_answer": "Both values meet diabetes thresholds (fasting 126, 2h 200) → high classification, monitor closely, not yet critical but 3 consecutive high triggers escalation.",
+        "failure_mode_vector": "needs numeric threshold matching across two contexts",
+        "why_hybrid_wins": "Sparse BM25 catches numbers 130/210/126/200, dense captures diabetes classification semantics"
+    },
+    {
+        "id": "db2",
+        "question": "Patient has 20.2% self-monitoring adherence but takes medication 83.5% — what intervention does WHO PEN recommend for primary care?",
+        "type": "multi_hop",
+        "supporting_docs": ["WHO_PEN_2020_NCD.pdf", "WHO_HEARTS_D_Diabetes_2020.pdf"],
+        "gold_passages": ["self-monitoring gap", "Package of Essential NCD Interventions", "home-based monitoring protocol"],
+        "hard_negatives": ["physical activity 150 minutes/week"],
+        "expected_answer": "Gap indicates blind spot between visits; PEN recommends structured home monitoring protocol and counseling at primary care.",
+        "failure_mode_vector": "requires linking adherence stats to intervention",
+        "why_hybrid_wins": "Hybrid links statistical phrase + protocol semantics"
+    },
+    {
+        "id": "db3",
+        "question": "Explain why diabetes +78% forecast to 2045 in Vietnam implications for 14 doctors per 10k population and BHYT telehealth policy from 1/7/2025.",
+        "type": "multi_hop_cross_domain",
+        "supporting_docs": ["WHO_PEN_2020_NCD.pdf", "WHO_Classification_Diabetes_2019.pdf"],
+        "gold_passages": ["78% increase by 2045", "14 doctors per 10,000", "telehealth reimbursement from 1/7/2025"],
+        "hard_negatives": ["sodium intake <2g per day"],
+        "expected_answer": "Rising burden + workforce shortage → telehealth AI triage is high value, reducing GP load, justified by insurance policy.",
+        "failure_mode_vector": "cross-domain reasoning: epidemiology + workforce + policy",
+        "why_hybrid_wins": "Needs lexical 78%, 14/10k, 1/7/2025 plus semantic burden trend"
+    },
+    {
+        "id": "db4",
+        "question": "What is the management for hypoglycemia (<70) versus critical high (>=300) and how should a glucose tracker classify them?",
+        "type": "reasoning",
+        "supporting_docs": ["WHO_HEARTS_D_Diabetes_2020.pdf"],
+        "gold_passages": ["hypoglycemia <70 mg/dL immediate action", "critical high >=300 mg/dL emergency"],
+        "hard_negatives": ["water and sanitation for all"],
+        "expected_answer": "Low: urgent carbohydrate, High 300: emergency contact; tracker should flag low/critical and escalate.",
+        "failure_mode_vector": "threshold classification at extremes",
+        "why_hybrid_wins": "Exact numbers + clinical action semantics"
+    },
+    {
+        "id": "db5",
+        "question": "How does diabetes classification distinguish type 1, type 2, hybrid, and unclassified forms?",
+        "type": "multi_hop",
+        "supporting_docs": ["WHO_Classification_Diabetes_2019.pdf"],
+        "gold_passages": ["type 1 autoimmune", "type 2 insulin resistance", "hybrid forms", "unclassified"],
+        "hard_negatives": ["mental health mhGAP"],
+        "expected_answer": "Four categories based on etiology and presentation; hybrid shows features of both, unclassified pending further data.",
+        "failure_mode_vector": "requires full taxonomy recall",
+        "why_hybrid_wins": "BM25 for taxonomy terms, dense for etiology reasoning"
+    }
+]

@@ -1,7 +1,12 @@
 import streamlit as st
-from rag_pipeline import rag_chat
-from config import DEFAULT_MODEL, LANGSMITH_PROJECT
-from memory import get_long_term_memory
+try:
+    from rag_pipeline import rag_chat
+    from config import DEFAULT_MODEL, LANGSMITH_PROJECT
+    from memory import get_long_term_memory
+except ImportError:
+    from src.rag_pipeline import rag_chat
+    from src.config import DEFAULT_MODEL, LANGSMITH_PROJECT
+    from src.memory import get_long_term_memory
 
 try:
     from observability.feedback import submit_thumbs_down, submit_thumbs_up

@@ -1,0 +1,107 @@
+[
+    {
+        "question_id": "DQ1",
+        "question": "What are the WHO diagnostic thresholds for diabetes (fasting plasma glucose and 2-hour post-load)?",
+        "relevant_documents": ["WHO_Classification_Diabetes_2019.pdf"],
+        "topic": "diabetes_diagnosis",
+        "expected_answer_span": ["fasting plasma glucose >= 7.0 mmol/L (126 mg/dL)", "2-hour plasma glucose >= 11.1 mmol/L (200 mg/dL)"]
+    },
+    {
+        "question_id": "DQ2",
+        "question": "How does WHO classify diabetes mellitus in the 2019 classification?",
+        "relevant_documents": ["WHO_Classification_Diabetes_2019.pdf"],
+        "topic": "diabetes_classification",
+        "expected_answer_span": ["type 1 diabetes", "type 2 diabetes", "hybrid forms", "unclassified"]
+    },
+    {
+        "question_id": "DQ3",
+        "question": "What is the WHO HEARTS-D approach for diagnosis and management of type 2 diabetes in primary care?",
+        "relevant_documents": ["WHO_HEARTS_D_Diabetes_2020.pdf"],
+        "topic": "diabetes_management",
+        "expected_answer_span": ["HEARTS technical package", "primary health care", "protocol for type 2 diabetes"]
+    },
+    {
+        "question_id": "DQ4",
+        "question": "What lifestyle interventions does WHO recommend for prevention of type 2 diabetes?",
+        "relevant_documents": ["WHO_HEARTS_D_Diabetes_2020.pdf", "WHO_PEN_2020_NCD.pdf"],
+        "topic": "diabetes_guideline",
+        "expected_answer_span": ["healthy diet", "physical activity", "weight control"]
+    },
+    {
+        "question_id": "DQ5",
+        "question": "What are common complications of diabetes mentioned in WHO PEN 2020?",
+        "relevant_documents": ["WHO_PEN_2020_NCD.pdf"],
+        "topic": "diabetes_complications",
+        "expected_answer_span": ["cardiovascular disease", "kidney disease", "eye disease", "neuropathy"]
+    },
+    {
+        "question_id": "DQ6",
+        "question": "How often should HbA1c be monitored for diabetes follow-up according to guidelines?",
+        "relevant_documents": ["WHO_HEARTS_D_Diabetes_2020.pdf", "WHO_PEN_2020_NCD.pdf"],
+        "topic": "diabetes_management",
+        "expected_answer_span": ["HbA1c every 3 months", "regular monitoring"]
+    },
+    {
+        "question_id": "DQ7",
+        "question": "What does the gap between medication adherence (76.9-83.5%) and self-monitoring (20.2%) indicate for diabetes care in Vietnam?",
+        "relevant_documents": ["WHO_PEN_2020_NCD.pdf", "WHO_HEARTS_D_Diabetes_2020.pdf"],
+        "topic": "diabetes_adherence",
+        "expected_answer_span": ["blind spot between visits", "self-monitoring gap", "need for home tracking"]
+    },
+    {
+        "question_id": "DQ8",
+        "question": "What does WHO PEN recommend for essential NCD interventions including diabetes at primary care level?",
+        "relevant_documents": ["WHO_PEN_2020_NCD.pdf"],
+        "topic": "ncd_pen",
+        "expected_answer_span": ["Package of Essential NCD Interventions", "primary care", "protocols for diabetes"]
+    },
+    {
+        "question_id": "DQ9",
+        "question": "How does diabetes prevalence in Vietnam compare (7.3% adults) and what is the forecast to 2045?",
+        "relevant_documents": ["WHO_PEN_2020_NCD.pdf", "WHO_Classification_Diabetes_2019.pdf"],
+        "topic": "diabetes_market",
+        "expected_answer_span": ["7.3% adults", "increase 78% by 2045"]
+    },
+    {
+        "question_id": "DQ10",
+        "question": "What pharmacological treatment does WHO recommend for type 2 diabetes when lifestyle alone is insufficient?",
+        "relevant_documents": ["WHO_HEARTS_D_Diabetes_2020.pdf"],
+        "topic": "diabetes_management",
+        "expected_answer_span": ["metformin", "first-line medication"]
+    },
+    {
+        "question_id": "DQ11",
+        "question": "What thresholds define prediabetes vs diabetes for fasting and postprandial glucose?",
+        "relevant_documents": ["WHO_Classification_Diabetes_2019.pdf", "WHO_HEARTS_D_Diabetes_2020.pdf"],
+        "topic": "diabetes_diagnosis",
+        "expected_answer_span": ["fasting 100-125 mg/dL prediabetes", "126 mg/dL diabetes", "140-199 postprandial prediabetes", "200 mg/dL diabetes"]
+    },
+    {
+        "question_id": "DQ12",
+        "question": "How should hypoglycemia (<70 mg/dL) be managed according to diabetes guidelines?",
+        "relevant_documents": ["WHO_HEARTS_D_Diabetes_2020.pdf", "WHO_PEN_2020_NCD.pdf"],
+        "topic": "diabetes_management",
+        "expected_answer_span": ["hypoglycemia <70 mg/dL", "immediate carbohydrate intake", "monitoring"]
+    },
+    {
+        "question_id": "DQ13",
+        "question": "What role does telehealth reimbursement from 1/7/2025 play for diabetes follow-up in Vietnam?",
+        "relevant_documents": ["WHO_PEN_2020_NCD.pdf"],
+        "topic": "diabetes_policy",
+        "expected_answer_span": ["telehealth", "health insurance reimbursement", "remote monitoring"]
+    },
+    {
+        "question_id": "DQ14",
+        "question": "What does ADA Standards of Care 2024 say about diabetes self-management and frequency of self-monitoring?",
+        "relevant_documents": ["ADA_Standards_of_Care_2024_Abridged.pdf", "WHO_HEARTS_D_Diabetes_2020.pdf"],
+        "topic": "ada_soc",
+        "expected_answer_span": ["self-monitoring", "at least 3 times per week", "individualized care"]
+    },
+    {
+        "question_id": "DQ15",
+        "question": "How does WHO classify hybrid forms and unclassified diabetes?",
+        "relevant_documents": ["WHO_Classification_Diabetes_2019.pdf"],
+        "topic": "diabetes_classification",
+        "expected_answer_span": ["hybrid forms", "unclassified diabetes", "ketosis-prone type 2"]
+    }
+]

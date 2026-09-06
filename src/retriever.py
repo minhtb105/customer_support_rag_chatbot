@@ -40,8 +40,8 @@ def _resolve_db_dir(strategy: str) -> str:
     return os.path.join(PDF_DB_DIR, strategy)
 
 
-@lru_cache(maxsize=4)
 def load_vectorstores(strategy: str = "structure") -> Chroma:
+    # No cache — provider may switch between openai/local and dimension mismatch would break cached instance
     embeddings = _get_embeddings()
     db_dir = _resolve_db_dir(strategy)
     _os.makedirs(db_dir, exist_ok=True)
@@ -50,7 +50,6 @@ def load_vectorstores(strategy: str = "structure") -> Chroma:
         embedding_function=embeddings
     )
 
-@lru_cache(maxsize=1)
 def cached_documents():
     # thử DB theo provider hiện tại, nếu rỗng thì fallback sang legacy pdf_db
     pdf_db = load_vectorstores()
@@ -127,18 +126,14 @@ def normalize_docs(docs):
         
     return docs
 
-@lru_cache(maxsize=1)
 def get_bm25():
     docs = cached_documents()
     retriever = LangchainBM25Retriever.from_documents(docs)
     retriever.k = TOP_K
-    
     return retriever
 
-@lru_cache(maxsize=4)
 def get_vector_retriever(strategy: str = "structure"):
     db = load_vectorstores(strategy)
-    
     return db.as_retriever(search_kwargs={"k": TOP_K})
 
 @traceable(name="retrieve_context", run_type="retriever")

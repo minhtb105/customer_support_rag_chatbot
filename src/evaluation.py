@@ -2,8 +2,12 @@ import json
 import re
 from typing import List, Dict, Any, Optional
 from collections import defaultdict
-from retriever import retrieve_context
-from models.llm_io import ContextItem
+try:
+    from retriever import retrieve_context
+    from models.llm_io import ContextItem
+except ImportError:
+    from src.retriever import retrieve_context
+    from src.models.llm_io import ContextItem
 
 try:
     from observability.tracing import log_evaluation_summary

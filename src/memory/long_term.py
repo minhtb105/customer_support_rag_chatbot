@@ -133,11 +133,17 @@ class LongTermMemory:
         self,
         user_id: str = "default_user",
         embedding_model: str = EMBEDDING_MODEL,
-        memory_db_dir: str = "embeddings/memory_db",
+        memory_db_dir: str = None,
         half_life_days: int = 90
     ):
         self.user_id = user_id
         self.embedding_model = embedding_model
+        # Separate DB for OpenAI (1536d) vs local (384d) to avoid dimension mismatch
+        if memory_db_dir is None:
+            if EMBEDDING_PROVIDER == "openai":
+                memory_db_dir = "embeddings/memory_db_openai"
+            else:
+                memory_db_dir = "embeddings/memory_db"
         self.memory_db_dir = memory_db_dir
         self.temporal_weighting = TemporalWeighting(half_life_days)
         
@@ -150,6 +156,9 @@ class LongTermMemory:
                 self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
         else:
             self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+        # Ensure directory exists
+        import os
+        os.makedirs(self.memory_db_dir, exist_ok=True)
         self.vector_store = Chroma(
             persist_directory=memory_db_dir,
             embedding_function=self.embeddings
