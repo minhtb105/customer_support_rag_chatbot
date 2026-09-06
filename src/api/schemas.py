@@ -42,6 +42,14 @@ class QueryResponse(BaseModel):
     langsmith: Optional[Dict[str, Any]] = None
     cache_hit: bool = False
     timings: Optional[Dict[str, float]] = None
+    # HILT extensions
+    status: Optional[str] = Field(None, description="answered | pending_review")
+    review_id: Optional[str] = None
+    evaluation: Optional[Dict[str, Any]] = None
+    is_low_confidence: Optional[bool] = None
+    effective_user_id: Optional[str] = None
+
+    model_config = {"extra": "allow"}
 
 
 # ---------- Glucose Tracking (Hướng A) ----------

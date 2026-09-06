@@ -12,7 +12,10 @@ except ImportError:
 try:
     from observability.tracing import log_evaluation_summary
 except ImportError:
-    from src.observability.tracing import log_evaluation_summary
+    try:
+        from src.observability.tracing import log_evaluation_summary
+    except ImportError:
+        def log_evaluation_summary(*a, **kw): return False  # type: ignore
 
 
 # =========================

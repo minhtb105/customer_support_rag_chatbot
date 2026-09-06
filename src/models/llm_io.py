@@ -13,6 +13,15 @@ class ContextItem(BaseModel):
 
     score: Optional[float] = None
     dataset: Optional[str] = None
+    # --- enriched for tracing ---
+    file_name: Optional[str] = None  # e.g., WHO_Classification_Diabetes_2019.pdf
+    chunking_strategy: Optional[str] = None
+    embedding_model: Optional[str] = None
+    chunk_hash: Optional[str] = None
+    updated_at: Optional[str] = None  # ISO from metadata_store.files.updated_at
+    first_page: Optional[int] = None  # trang đầu tiên nếu chunk span nhiều trang
+
+    model_config = {"extra": "allow"}
 
 
 class LLMInput(BaseModel):

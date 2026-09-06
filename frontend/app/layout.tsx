@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/Header";
+import { AuthProvider } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Diabetes RAG — WHO-RAG Assistant",
@@ -11,11 +12,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi">
       <body className="min-h-screen bg-slate-50 text-slate-900">
-        <Header />
-        <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">{children}</main>
-        <footer className="mx-auto max-w-6xl px-4 py-6 text-center text-xs text-slate-500">
-          Diabetes WHO-RAG • FastAPI + Next.js • Không thay thế chỉ định bác sĩ • Built for B2B2C
-        </footer>
+        <AuthProvider>
+          <Header />
+          <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">{children}</main>
+          <footer className="mx-auto max-w-6xl px-4 py-6 text-center text-xs text-slate-500">
+            Diabetes WHO-RAG • FastAPI + Next.js • Không thay thế chỉ định bác sĩ • Built for B2B2C
+          </footer>
+        </AuthProvider>
       </body>
     </html>
   );

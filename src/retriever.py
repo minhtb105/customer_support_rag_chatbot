@@ -4,16 +4,12 @@ from langchain_core.documents import Document
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever as LangchainBM25Retriever
-from langsmith.run_helpers import traceable
 from src.config import PDF_DB_DIR, TOP_K, EMBEDDING_MODEL, EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL, BASE_DIR
 from src.models.llm_io import ContextItem
-from typing import List
+from typing import List, Optional
 import os as _os
-
-try:
-    from observability.tracing import add_trace_metadata
-except ImportError:
-    from src.observability.tracing import add_trace_metadata
+import sqlite3
+import time as _time
 
 
 def _get_embeddings():
@@ -136,7 +132,25 @@ def get_vector_retriever(strategy: str = "structure"):
     db = load_vectorstores(strategy)
     return db.as_retriever(search_kwargs={"k": TOP_K})
 
-@traceable(name="retrieve_context", run_type="retriever")
+def _file_updated_at(source_id: str) -> Optional[str]:
+    # lookup metadata_store files.updated_at for file matching source_id
+    try:
+        from src.metadata_store import META_DB_PATH
+        import sqlite3
+        conn = sqlite3.connect(str(META_DB_PATH))
+        conn.row_factory = sqlite3.Row
+        # file_name stored as "filename::strategy", need LIKE
+        row = conn.execute("SELECT updated_at FROM files WHERE file_name LIKE ?", (f"%{source_id}%",)).fetchone()
+        if row and row["updated_at"]:
+            try:
+                return __import__("datetime").datetime.fromtimestamp(row["updated_at"]).isoformat()
+            except Exception:
+                return str(row["updated_at"])
+        conn.close()
+    except Exception:
+        pass
+    return None
+
 def retrieve_context(query: str, top_k: int = TOP_K, 
                      strategy: str = "structure") -> List[ContextItem]:
     """
@@ -187,14 +201,6 @@ def retrieve_context(query: str, top_k: int = TOP_K,
         key = (sid, section) if should_merge(query) else id(doc)
         grouped.setdefault(key, []).append(doc)
 
-    add_trace_metadata(
-        strategy=strategy,
-        top_k=top_k,
-        vector_hits=len(vector_docs),
-        bm25_hits=len(bm25_docs),
-        merged_groups=len(grouped),
-    )
-
     out: List[ContextItem] = []
     for key, parts in grouped.items():
         parts = sorted(
@@ -203,22 +209,44 @@ def retrieve_context(query: str, top_k: int = TOP_K,
         )
         merged_text = "\n\n---\n\n".join(p.page_content for p in parts)
         merged_text = trim_text(merged_text)
+        pages = sorted({p for d in parts for p in (d.metadata.get("page_numbers") or [])})
+        first_page = pages[0] if pages else None
+        upd = _file_updated_at(str(parts[0].metadata.get("source_id")))
+        # file_name from source_id
+        file_name = parts[0].metadata.get("source_id")
+        # try to find actual pdf name via dataset or file lookup; fallback source_id.pdf
+        if file_name and not file_name.endswith(".pdf"):
+            # attempt to resolve to real file
+            try:
+                from pathlib import Path as _P
+                from src.config import PDF_DIR as _PDF
+                # search rglob for match
+                for cand in _PDF.rglob(f"{file_name}.pdf"):
+                    file_name = cand.name
+                    break
+                else:
+                    file_name = file_name + ".pdf"
+            except Exception:
+                file_name = file_name + ".pdf"
         out.append(
             ContextItem(
                 source_id=str(parts[0].metadata.get("source_id")),
                 content=merged_text,
                 section_path=parts[0].metadata.get("section_path"),
-                page_numbers=sorted({
-                    p for d in parts
-                    for p in (d.metadata.get("page_numbers") or [])
-                }),
+                page_numbers=pages,
                 chunk_indices=[
                     d.metadata.get("chunk_index")
                     for d in parts
                     if d.metadata.get("chunk_index") is not None
                 ],
                 dataset=parts[0].metadata.get("dataset"),
-                score=None
+                score=None,
+                file_name=file_name,
+                chunking_strategy=parts[0].metadata.get("chunking_strategy") or strategy,
+                embedding_model=EMBEDDING_MODEL,
+                chunk_hash=parts[0].metadata.get("chunk_hash"),
+                updated_at=upd,
+                first_page=first_page
             )
         )
 

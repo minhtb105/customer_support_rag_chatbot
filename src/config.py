@@ -138,6 +138,43 @@ GLUCOSE_DB_PATH = BASE_DIR / "metadata" / "glucose_logs.db"
 PII_REDACT_FIELDS = {"name", "phone", "email", "address", "cmnd", "cccd"}
 
 # ==============================
+#  Auth & RBAC (mới)
+# ==============================
+AUTH_DB_PATH = BASE_DIR / "metadata" / "auth.db"
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production-please-set-env")
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+# Cookie settings cho httpOnly
+COOKIE_SECURE = os.getenv("COOKIE_SECURE", "false").lower() in ("true", "1", "yes")  # true khi https
+COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "lax")  # lax | strict | none
+# Roles: user, doctor, pharmacist, specialist, admin
+VALID_ROLES = {"user", "doctor", "pharmacist", "specialist", "admin"}
+EXPERT_ROLES = {"doctor", "pharmacist", "specialist"}
+
+# ==============================
+#  HILT — RAG Confidence & Review Routing
+# ==============================
+# Ngưỡng 0-5 cho từng metric (LLM-as-judge). Nếu < ngưỡng → low confidence → cần HILT
+RAG_EVAL_THRESHOLDS = {
+    "faithfulness": float(os.getenv("HILT_FAITHFULNESS_THRESHOLD", "3.5")),
+    "context_precision": float(os.getenv("HILT_CONTEXT_PRECISION_THRESHOLD", "3.5")),
+    "context_recall": float(os.getenv("HILT_CONTEXT_RECALL_THRESHOLD", "3.5")),
+    "answer_relevance": float(os.getenv("HILT_ANSWER_RELEVANCE_THRESHOLD", "3.5")),
+}
+# Routing: metric thấp → role nào duyệt
+HILT_ROUTING = {
+    "faithfulness": os.getenv("HILT_ROUTE_FAITHFULNESS", "doctor"),      # factual → doctor
+    "context_precision": os.getenv("HILT_ROUTE_PRECISION", "specialist"), # retrieval precision → specialist
+    "context_recall": os.getenv("HILT_ROUTE_RECALL", "specialist"),
+    "answer_relevance": os.getenv("HILT_ROUTE_RELEVANCE", "doctor"),
+    # fallback khi không xác định
+    "default": os.getenv("HILT_ROUTE_DEFAULT", "doctor"),
+}
+# Nếu có từ khoá dược → ưu tiên pharmacist
+PHARMACIST_KEYWORDS = ["thuốc", "medication", "drug", "dosage", "liều", "tác dụng phụ", "side effect", "pharmacist", "dược"]
+
+# ==============================
 #  API (Hướng C)
 # ==============================
 API_TITLE = "WHO-RAG Infrastructure API"
@@ -155,16 +192,15 @@ CAG_SEMANTIC_THRESHOLD = 0.82
 
 
 # ==============================
-#  LangSmith (tracing / observability / prompt hub)
+#  Local Tracing & Prompt Versioning (thay LangSmith)
 # ==============================
-# Supports both new (LANGSMITH_*) and legacy (LANGCHAIN_*) variable names
-LANGSMITH_TRACING = _env_first("LANGSMITH_TRACING", default="false").lower() in ("true", "1", "yes")
-LANGSMITH_API_KEY = _env_first("LANGSMITH_API_KEY", "LANGCHAIN_API_KEY")
-LANGSMITH_PROJECT = _env_first("LANGSMITH_PROJECT", "LANGCHAIN_PROJECT", default="customer-support-rag")
-LANGSMITH_ENDPOINT = _env_first("LANGSMITH_ENDPOINT", "LANGCHAIN_ENDPOINT",
-                                default="https://api.smith.langchain.com")
+TRACING_DB_PATH = BASE_DIR / "metadata" / "tracing.db"
+TRACING_RETENTION_DAYS = int(os.getenv("TRACING_RETENTION_DAYS", "30"))
+TRACING_PAGE_SIZE = int(os.getenv("TRACING_PAGE_SIZE", "10"))  # max 10 per spec
+PROMPT_ACTIVE_CACHE_TTL_SECONDS = int(os.getenv("PROMPT_ACTIVE_CACHE_TTL_SECONDS", "300"))
+# RAGAS on-demand per trace (admin bật mới tính)
+RAGAS_ON_DEMAND = os.getenv("RAGAS_ON_DEMAND", "true").lower() in ("true","1","yes")
+EVALUATOR_MODEL = os.getenv("EVALUATOR_MODEL", DEFAULT_MODEL)
 
-# Prompt Hub repository prefix: prompts are stored as "<owner>/<repo-prefix>-<prompt-name>"
 PROMPT_HUB_REPO_PREFIX = os.getenv("PROMPT_HUB_REPO_PREFIX", "medical-support")
-# How long (seconds) a prompt pulled from LangSmith Hub stays cached locally
-PROMPT_HUB_CACHE_TTL_SECONDS = int(os.getenv("PROMPT_HUB_CACHE_TTL_SECONDS", "300"))
+PROMPT_HUB_CACHE_TTL_SECONDS = PROMPT_ACTIVE_CACHE_TTL_SECONDS
