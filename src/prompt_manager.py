@@ -18,12 +18,14 @@ try:
         BALANCED_SYSTEM_PROMPT, DIABETES_STRICT_PROMPT, HYPERTENSION_STRICT_PROMPT,
         RESPIRATORY_STRICT_PROMPT, MENTAL_HEALTH_STRICT_PROMPT, EVALUATION_PROMPT,
         FRIENDLY_SYSTEM_PROMPT, SOAP_PROMPT, STRICT_SYSTEM_PROMPT, WHO_RAG_AUDIT_PROMPT,
+        GUIDELINE_DIFF_PROMPT, SAFETY_SUMMARY_PROMPT,
     )
 except ImportError:
     from src.prompt_templates import (
         BALANCED_SYSTEM_PROMPT, DIABETES_STRICT_PROMPT, HYPERTENSION_STRICT_PROMPT,
         RESPIRATORY_STRICT_PROMPT, MENTAL_HEALTH_STRICT_PROMPT, EVALUATION_PROMPT,
         FRIENDLY_SYSTEM_PROMPT, SOAP_PROMPT, STRICT_SYSTEM_PROMPT, WHO_RAG_AUDIT_PROMPT,
+        GUIDELINE_DIFF_PROMPT, SAFETY_SUMMARY_PROMPT,
     )
 
 logger = logging.getLogger(__name__)
@@ -39,6 +41,8 @@ PROMPT_REGISTRY: Dict[str, Dict[str, Any]] = {
     "soap": {"description": "SOAP pre-visit summary", "local": SOAP_PROMPT},
     "who_rag": {"description": "WHO-RAG Infrastructure audit", "local": WHO_RAG_AUDIT_PROMPT},
     "evaluation": {"description": "LLM-as-judge rubric", "local": EVALUATION_PROMPT},
+    "guideline_diff": {"description": "Guideline change summarizer (VI)", "local": GUIDELINE_DIFF_PROMPT},
+    "safety_summary": {"description": "Drug safety alert summarizer (VI)", "local": SAFETY_SUMMARY_PROMPT},
 }
 
 try:

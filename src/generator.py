@@ -59,7 +59,24 @@ def format_context(contexts):
             score_str = f"{float(score):.4f}"
         except (ValueError, TypeError):
             score_str = str(score)
-        context_text += f"[Source {src_id} | Score={score_str}]\n{context.content}\n\n"
+        # version citation: try to get version_label/publication_date from context
+        version = getattr(context, 'version_label', None) or (context.model_extra.get('version_label') if hasattr(context, 'model_extra') and context.model_extra else None) or getattr(context, 'version', None)
+        pub_date = getattr(context, 'publication_date', None) or (context.model_extra.get('publication_date') if hasattr(context, 'model_extra') and context.model_extra else None)
+        # also check dataset style extra fields
+        if not version and hasattr(context, 'model_extra'):
+            version = (context.model_extra or {}).get('version_label') or (context.model_extra or {}).get('version')
+        if not pub_date and hasattr(context, 'model_extra'):
+            pub_date = (context.model_extra or {}).get('publication_date')
+        # fallback to metadata dict if stored there
+        header = f"[Source {src_id}"
+        if version:
+            header += f" | {version}"
+            if pub_date:
+                header += f" | {pub_date}"
+        elif pub_date:
+            header += f" | {pub_date}"
+        header += f" | Score={score_str}]"
+        context_text += f"{header}\n{context.content}\n\n"
     return context_text.strip()
 
 def rerank_contexts(query: str, contexts: List[ContextItem], top_n=3):

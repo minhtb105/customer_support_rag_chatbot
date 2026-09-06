@@ -102,6 +102,44 @@ WHO_RAG_AUDIT_PROMPT = (
     "If context insufficient, state uncertainty explicitly.\n"
 )
 
+# --- Monitoring prompts (tiếng Việt mặc định) ---
+GUIDELINE_DIFF_PROMPT = (
+    "Bạn là dược sĩ lâm sàng và chuyên gia guideline y khoa.\n"
+    "Nhiệm vụ: so sánh bản guideline CŨ và MỚI, tóm tắt bằng TIẾNG VIỆT những gì thay đổi.\n"
+    "Đầu vào gồm: tiêu đề, nguồn, ngày xuất bản, trích đoạn cũ và mới.\n"
+    "Yêu cầu trả về JSON chặt chẽ (chỉ JSON, không markdown):\n"
+    "{\n"
+    '  \"tom_tat_tieng_viet\": \"đoạn 2-4 câu tiếng Việt, nêu thay đổi chính\",\n'
+    '  \"changed_sections\": [{\"section\": \"tên mục\", \"truoc\": \"nội dung cũ ngắn gọn\", \"sau\": \"nội dung mới ngắn gọn\", \"tac_dong\": \"ý nghĩa lâm sàng\"}],\n'
+    '  \"dosage_changes\": [\"liều/thuốc thay đổi nếu có\"],\n'
+    '  \"new_recommendations\": [\"khuyến cáo mới\"],\n'
+    '  \"removed_recommendations\": [\"khuyến cáo bị bỏ\"],\n'
+    '  \"version_phat_hien\": \"ví dụ ADA SoC 2025\",\n'
+    '  \"ngay_xuat_ban\": \"YYYY-MM-DD nếu suy ra được\",\n'
+    '  \"muc_do_quan_trong\": \"critical|high|medium|low\"\n'
+    "}\n"
+    "Nếu trích đoạn không đủ, ghi rõ 'không đủ dữ liệu' cho trường đó.\n"
+)
+
+SAFETY_SUMMARY_PROMPT = (
+    "Bạn là dược sĩ chuyên về cảnh báo an toàn thuốc (pharmacovigilance).\n"
+    "Nhiệm vụ: tóm tắt cảnh báo/thu hồi thuốc bằng TIẾNG VIỆT.\n"
+    "Đầu vào là JSON thô từ FDA openFDA hoặc Bộ Y tế (DAV/MOH).\n"
+    "Trả về JSON chặt chẽ (chỉ JSON):\n"
+    "{\n"
+    '  \"tieu_de_vi\": \"tiêu đề tiếng Việt\",\n'
+    '  \"tom_tat_vi\": \"2-4 câu tiếng Việt, nêu thuốc, lô, lý do, mức độ\",\n'
+    '  \"thuoc_lien_quan\": [\"tên thuốc\"],\n'
+    '  \"loai_canh_bao\": \"recall|interaction|box_warning|shortage|label_change\",\n'
+    '  \"muc_do\": \"critical|high|medium|low\",\n'
+    '  \"ly_do\": \"lý do ngắn gọn\",\n'
+    '  \"khuyen_cao\": \"hành động khuyến cáo cho nhân viên y tế/bệnh nhân\",\n'
+    '  \"nguon\": \"FDA|DAV|MOH\",\n'
+    '  \"diem_rui_ro\": 0.0-1.0\n'
+    "}\n"
+    "Giữ ngôn ngữ tiếng Việt, thuật ngữ y khoa chuẩn.\n"
+)
+
 EVALUATION_PROMPT = """
 You are an expert evaluator for medical Retrieval-Augmented Generation (RAG) systems.
 

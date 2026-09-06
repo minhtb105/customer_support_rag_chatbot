@@ -86,7 +86,54 @@ except ImportError:
         prompt_router = None  # type: ignore
         print(f"[admin] disabled: {e}")
 
-app = FastAPI(title=API_TITLE, version=API_VERSION, description="WHO-RAG Infrastructure API — Hướng C: lớp truy vấn y tế đáng tin cậy cho app bên thứ 3. (Auth + HILT + Local Tracing)")
+# Monitors imports
+try:
+    from src.monitors.router import router as monitors_router
+    MONITORS_ENABLED = True
+except ImportError:
+    try:
+        from monitors.router import router as monitors_router  # type: ignore
+        MONITORS_ENABLED = True
+    except Exception as e:
+        MONITORS_ENABLED = False
+        monitors_router = None  # type: ignore
+        print(f"[monitors] disabled: {e}")
+
+# Lifespan: dev thread for monitors (prod uses sidecar python -m src.monitors.scheduler)
+try:
+    from contextlib import asynccontextmanager
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        # Dev: background thread for guideline/safety checks
+        thread = None
+        try:
+            from src.monitors.scheduler import start_background_thread
+
+            # Only start if not disabled via env
+            if os.getenv("MONITOR_SCHEDULER_DISABLE", "false").lower() not in ("true", "1", "yes"):
+                thread = start_background_thread()
+                if thread:
+                    print(f"[monitors] scheduler background thread started: {thread.name}")
+        except Exception as e:
+            print(f"[monitors] scheduler lifespan start failed: {e}")
+        yield
+        # No explicit stop needed (daemon thread)
+
+except Exception as _lifespan_err:
+    # Fallback without lifespan (e.g., import error)
+    lifespan = None  # type: ignore
+    print(f"[monitors] lifespan setup failed: {_lifespan_err}")
+
+if lifespan is not None:
+    app = FastAPI(
+        title=API_TITLE,
+        version=API_VERSION,
+        description="WHO-RAG Infrastructure API — Hướng C: lớp truy vấn y tế đáng tin cậy cho app bên thứ 3. (Auth + HILT + Local Tracing)",
+        lifespan=lifespan,
+    )
+else:
+    app = FastAPI(title=API_TITLE, version=API_VERSION, description="WHO-RAG Infrastructure API — Hướng C: lớp truy vấn y tế đáng tin cậy cho app bên thứ 3. (Auth + HILT + Local Tracing)")
 
 # CORS — env-driven allowlist
 _ALLOWED_ORIGINS = [o.strip() for o in os.getenv("FRONTEND_URL", "http://localhost:3000,http://localhost:8000").split(",") if o.strip()]
@@ -105,6 +152,8 @@ if AUTH_ENABLED and auth_router is not None:
 if ADMIN_ENABLED and tracing_router is not None:
     app.include_router(tracing_router)
     app.include_router(prompt_router)
+if MONITORS_ENABLED and monitors_router is not None:
+    app.include_router(monitors_router)
 
 # ---------- helpers ----------
 def _count_pdfs() -> tuple[int, dict]:
@@ -458,4 +507,5 @@ def root():
         "auth": f"POST {API_PREFIX}/auth/login, /register, /me",
         "reviews": f"GET {API_PREFIX}/reviews (expert/admin), POST {API_PREFIX}/reviews/{{id}}/decide",
         "notifications": f"GET {API_PREFIX}/auth/notifications",
+        "monitors": f"GET {API_PREFIX}/monitors/status (auth), POST {API_PREFIX}/monitors/check/*, GET {API_PREFIX}/monitors/guidelines, GET {API_PREFIX}/monitors/alerts",
     }

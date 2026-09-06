@@ -159,4 +159,76 @@ export async function adminDryRun(tone: string, text: string, queries: string[])
   return res.json();
 }
 
+// Monitors
+export async function getMonitorsStatus() {
+  const res = await authFetch(`${API}/v1/monitors/status`, { method: "GET" });
+  if (!res.ok) throw new Error(`monitors status ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+export async function getMonitorSources() {
+  const res = await authFetch(`${API}/v1/monitors/sources`, { method: "GET" });
+  if (!res.ok) throw new Error(`monitor sources ${res.status}`);
+  return res.json();
+}
+export async function getMonitorRuns(source_key?: string, limit = 20) {
+  const url = new URL(`${API}/v1/monitors/runs`);
+  if (source_key) url.searchParams.set("source_key", source_key);
+  url.searchParams.set("limit", String(limit));
+  const res = await authFetch(url.toString(), { method: "GET" });
+  if (!res.ok) throw new Error(`monitor runs ${res.status}`);
+  return res.json();
+}
+export async function triggerGuidelineCheck(source_key?: string, force = true) {
+  const url = new URL(`${API}/v1/monitors/check/guidelines`);
+  if (source_key) url.searchParams.set("source_key", source_key);
+  url.searchParams.set("force", String(force));
+  const res = await authFetch(url.toString(), { method: "POST" });
+  if (!res.ok) throw new Error(`trigger guideline ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+export async function listGuidelines(params: { status?: string; source?: string; limit?: number; offset?: number } = {}) {
+  const url = new URL(`${API}/v1/monitors/guidelines`);
+  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v)); });
+  const res = await authFetch(url.toString(), { method: "GET" });
+  if (!res.ok) throw new Error(`list guidelines ${res.status}`);
+  return res.json();
+}
+export async function getGuideline(gid: string) {
+  const res = await authFetch(`${API}/v1/monitors/guidelines/${encodeURIComponent(gid)}`, { method: "GET" });
+  if (!res.ok) throw new Error(`get guideline ${res.status}`);
+  return res.json();
+}
+export async function decideGuideline(gid: string, decision: "approved" | "rejected", notes?: string) {
+  const res = await authFetch(`${API}/v1/monitors/guidelines/${encodeURIComponent(gid)}/decision`, { method: "POST", body: JSON.stringify({ decision, notes }) });
+  if (!res.ok) throw new Error(`decide guideline ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+export async function triggerSafetyCheck(source: "fda" | "byt" | "all" = "all") {
+  const res = await authFetch(`${API}/v1/monitors/check/safety?source=${source}`, { method: "POST" });
+  if (!res.ok) throw new Error(`trigger safety ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+export async function listAlerts(params: { status?: string; severity?: string; source?: string; limit?: number; offset?: number } = {}) {
+  const url = new URL(`${API}/v1/monitors/alerts`);
+  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v)); });
+  const res = await authFetch(url.toString(), { method: "GET" });
+  if (!res.ok) throw new Error(`list alerts ${res.status}`);
+  return res.json();
+}
+export async function getAlert(aid: string) {
+  const res = await authFetch(`${API}/v1/monitors/alerts/${encodeURIComponent(aid)}`, { method: "GET" });
+  if (!res.ok) throw new Error(`get alert ${res.status}`);
+  return res.json();
+}
+export async function decideAlert(aid: string, decision: "approved" | "dismissed", notes?: string) {
+  const res = await authFetch(`${API}/v1/monitors/alerts/${encodeURIComponent(aid)}/decision`, { method: "POST", body: JSON.stringify({ decision, notes }) });
+  if (!res.ok) throw new Error(`decide alert ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+export async function getMonitorsStats() {
+  const res = await authFetch(`${API}/v1/monitors/stats`, { method: "GET" });
+  if (!res.ok) throw new Error(`monitors stats ${res.status}`);
+  return res.json();
+}
+
 export const API_BASE = API;

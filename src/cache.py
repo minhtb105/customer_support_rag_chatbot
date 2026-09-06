@@ -52,12 +52,25 @@ class CAGHybridCache:
 
     # ---------- Internal Helpers ----------
 
-    def _normalize_key(self, query: str) -> str:
+     def _normalize_key(self, query: str) -> str:
         query = query.lower().strip()
         query = re.sub(r"[^a-z0-9\s]", "", query)  # remove punctuation
         tokens = query.split()
-        
         return " ".join(tokens)
+
+    def _is_poisoned(self, text: str) -> bool:
+        """LLM03 poison filter — detect instruction injection in query/context."""
+        low = (text or "").lower()
+        poison_markers = [
+            "ignore previous",
+            "ignore all previous",
+            "reveal system prompt",
+            "system: you are now",
+            "### instruction",
+            "### system:",
+            "dan mode",
+        ]
+        return any(m in low for m in poison_markers)
 
     def _compose_key(self, query: str, context_ids: Optional[List[str]] = None) -> str:
         context_ids = context_ids or []
@@ -90,6 +103,10 @@ class CAGHybridCache:
     # ---------- Public API ----------
 
     def get(self, query: str, context_ids: Optional[List[str]] = None) -> Optional[LLMOutput]:
+        # Poisoned queries bypass cache (avoid serving poisoned hits)
+        if self._is_poisoned(query):
+            self.misses += 1
+            return None
         key = self._compose_key(query, context_ids)
 
         # 1) Try exact cache first
@@ -97,11 +114,9 @@ class CAGHybridCache:
         if entry and not self._is_expired(entry):
             self._exact_store.move_to_end(key)
             self.hits += 1
-            
             return entry.output
         elif entry:
             self._exact_store.pop(key, None)  # expired
-            
         # Fallback: semantic search
         if not self._semantic_entries:
             self.misses += 1
@@ -124,6 +139,13 @@ class CAGHybridCache:
         return None
 
     def put(self, query: str, output: LLMOutput):
+        # Do not cache poisoned outputs
+        if self._is_poisoned(query):
+            return
+        # Also check poison in contexts
+        for ctx in output.contexts:
+            if self._is_poisoned(getattr(ctx, "content", "")):
+                return
         context_ids = [ctx.source_id for ctx in output.contexts]
         key = self._compose_key(query, context_ids)
 

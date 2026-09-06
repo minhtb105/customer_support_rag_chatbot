@@ -61,8 +61,17 @@ def compute_file_fingerprint(path: str, sample_size=512 * 512) -> str:
     h.update(str(stat.st_mtime_ns).encode())
 
     with open(path, "rb") as f:
+        # head
         h.update(f.read(sample_size))
         if stat.st_size > sample_size:
+            # middle sample (catches middle-only changes, mitigates LLM09 Vector Weakness)
+            middle = max(0, stat.st_size // 2 - 32768)
+            try:
+                f.seek(middle)
+                h.update(f.read(65536))  # 64KB middle
+            except Exception:
+                pass
+            # tail
             f.seek(max(0, stat.st_size - sample_size))
             h.update(f.read(sample_size))
 
@@ -95,7 +104,7 @@ def get_or_create_vectorstore(db_dir: str):
 # =========================
 # Reindex
 # =========================
-def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter):
+def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter, version_label: str | None = None, publication_date: str | None = None):
     fname = os.path.basename(pdf_path)
     file_key = f"{fname}::{strategy.value}"
 
@@ -146,6 +155,11 @@ def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter):
             "source_id": c.source_id,
             "chunking_strategy": strategy.value
         })
+        if version_label:
+            raw_meta["version_label"] = version_label
+            raw_meta["version"] = version_label
+        if publication_date:
+            raw_meta["publication_date"] = publication_date
 
         meta = serialize_metatdata(raw_meta) 
 

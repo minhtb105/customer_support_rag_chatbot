@@ -39,6 +39,10 @@ export default function Header() {
     nav.push({ href: "/admin/prompts", label: "Prompts" });
     nav.push({ href: "/admin/users", label: "Quản trị" });
   }
+  // Giám sát: admin + specialist/doctor (guidelines) + pharmacist (alerts)
+  if (user && (isAdmin || ["specialist", "doctor", "pharmacist"].includes(user.role))) {
+    nav.push({ href: "/monitor/guidelines", label: "Giám sát" });
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b bg-white/80 backdrop-blur">

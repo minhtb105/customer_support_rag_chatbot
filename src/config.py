@@ -175,6 +175,40 @@ HILT_ROUTING = {
 PHARMACIST_KEYWORDS = ["thuốc", "medication", "drug", "dosage", "liều", "tác dụng phụ", "side effect", "pharmacist", "dược"]
 
 # ==============================
+#  Monitoring — Guideline & Safety Agents
+# ==============================
+MONITORING_DB_PATH = BASE_DIR / "metadata" / "monitoring.db"
+STAGING_DIR = BASE_DIR / "data" / "raw" / "staging"
+# intervals
+MONITOR_GUIDELINE_HEAD_INTERVAL = os.getenv("MONITOR_GUIDELINE_INTERVAL", "monthly")  # monthly HEAD, quarterly deep
+MONITOR_SAFETY_DAILY_AT = os.getenv("MONITOR_SAFETY_DAILY_AT", "02:00")
+MONITOR_SAFETY_WEEKLY_AT = os.getenv("MONITOR_SAFETY_WEEKLY_AT", "monday-03:00")
+MONITOR_BYT_INTERVAL = os.getenv("MONITOR_BYT_INTERVAL", "weekly")
+# FDA anonymous, cache
+FDA_API_BASE = os.getenv("FDA_API_BASE", "https://api.fda.gov")
+FDA_CACHE_TTL_SECONDS = int(os.getenv("FDA_CACHE_TTL_SECONDS", "3600"))  # 1h
+FDA_RATE_LIMIT_PER_MIN = int(os.getenv("FDA_RATE_LIMIT_PER_MIN", "240"))
+# superseded retention
+MONITOR_SUPERSEDED_RETENTION_DAYS = int(os.getenv("MONITOR_SUPERSEDED_RETENTION_DAYS", "30"))
+# Allowed domains for SSRF allowlist (mirrors db.ALLOWED_MONITOR_DOMAINS)
+ALLOWED_MONITOR_DOMAINS = {
+    "iris.who.int",
+    "diabetesjournals.org",
+    "ada-journals.cld.bz",
+    "www.ahajournals.org",
+    "ahajournals.org",
+    "goldcopd.org",
+    "ginasthma.org",
+    "api.fda.gov",
+    "www.fda.gov",
+    "moh.gov.vn",
+    "dav.gov.vn",
+    "thuvienphapluat.vn",
+    "kcb.vn",
+    "www.who.int",
+}
+
+# ==============================
 #  API (Hướng C)
 # ==============================
 API_TITLE = "WHO-RAG Infrastructure API"
