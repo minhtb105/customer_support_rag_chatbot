@@ -35,6 +35,9 @@ try:
     from prompt_templates import (
         BALANCED_SYSTEM_PROMPT,
         DIABETES_STRICT_PROMPT,
+        HYPERTENSION_STRICT_PROMPT,
+        RESPIRATORY_STRICT_PROMPT,
+        MENTAL_HEALTH_STRICT_PROMPT,
         EVALUATION_PROMPT,
         FRIENDLY_SYSTEM_PROMPT,
         SOAP_PROMPT,
@@ -45,6 +48,9 @@ except ImportError:  # pragma: no cover
     from src.prompt_templates import (
         BALANCED_SYSTEM_PROMPT,
         DIABETES_STRICT_PROMPT,
+        HYPERTENSION_STRICT_PROMPT,
+        RESPIRATORY_STRICT_PROMPT,
+        MENTAL_HEALTH_STRICT_PROMPT,
         EVALUATION_PROMPT,
         FRIENDLY_SYSTEM_PROMPT,
         SOAP_PROMPT,
@@ -75,6 +81,21 @@ PROMPT_REGISTRY: Dict[str, Dict[str, Any]] = {
         "repo": f"{PROMPT_HUB_REPO_PREFIX}-diabetes-strict",
         "description": "Diabetes specialist — WHO/ADA/BYT guideline RAG with citations",
         "local": DIABETES_STRICT_PROMPT,
+    },
+    "hypertension": {
+        "repo": f"{PROMPT_HUB_REPO_PREFIX}-hypertension-strict",
+        "description": "Hypertension specialist — AHA/ACC 2025 + WHO HEARTS + MOH with home BP and multi-behavior",
+        "local": HYPERTENSION_STRICT_PROMPT,
+    },
+    "respiratory": {
+        "repo": f"{PROMPT_HUB_REPO_PREFIX}-respiratory-strict",
+        "description": "Asthma/COPD — GOLD 2024 + GINA 2024 + WHO inhaler technique",
+        "local": RESPIRATORY_STRICT_PROMPT,
+    },
+    "mental": {
+        "repo": f"{PROMPT_HUB_REPO_PREFIX}-mental-health-strict",
+        "description": "Mental health safe — WHO mhGAP with crisis hotline, no self-diagnosis",
+        "local": MENTAL_HEALTH_STRICT_PROMPT,
     },
     "soap": {
         "repo": f"{PROMPT_HUB_REPO_PREFIX}-soap",

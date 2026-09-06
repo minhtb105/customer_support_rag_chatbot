@@ -108,6 +108,18 @@ DIABETES_KEYWORDS = [
     "hypoglycemia", "hyperglycemia", "who", "ada", "pen", "hearts-d",
     "chẩn đoán đái tháo đường", "biến chứng đái tháo đường"
 ]
+HYPERTENSION_KEYWORDS = [
+    "hypertension", "tăng huyết áp", "tang huyet ap", "huyết áp", "huyet ap",
+    "blood pressure", "120/80", "140/90", "180/120", "aha/acc", "hearts hypertension"
+]
+RESPIRATORY_KEYWORDS = [
+    "asthma", "hen suyễn", "copd", "phổi tắc nghẽn", "peak flow", "gold", "gina",
+    "inhaler", "thuốc hít", "cat score", "khó thở"
+]
+MENTAL_KEYWORDS = [
+    "depression", "trầm cảm", "tram cam", "anxiety", "lo âu", "phq-9", "phq9", "gad-7", "gad7",
+    "mhgap", "mental health", "sức khỏe tâm thần", "tự tử", "suicide", "tự hại", "self-harm"
+]
 
 def detect_tone_and_temp(query: str):
     """
@@ -116,7 +128,13 @@ def detect_tone_and_temp(query: str):
     """
     query_lower = query.lower()
 
-    # Diabetes-specific strict (ưu tiên cao nhất)
+    # Disease-specific strict (priority: mental crisis first for safety)
+    if any(k in query_lower for k in MENTAL_KEYWORDS):
+        return "mental", 0.1, 512
+    if any(k in query_lower for k in HYPERTENSION_KEYWORDS):
+        return "hypertension", 0.1, 512
+    if any(k in query_lower for k in RESPIRATORY_KEYWORDS):
+        return "respiratory", 0.1, 512
     if any(k in query_lower for k in DIABETES_KEYWORDS):
         return "diabetes", 0.1, 512  # factual + cite
     

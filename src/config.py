@@ -73,6 +73,10 @@ WHO_IRIS_DIR = PDF_DIR / "who_iris"
 ADA_DIR = PDF_DIR / "ada"
 BYT_DIR = PDF_DIR / "byt"
 # Map nguồn -> thư mục (dùng cho crawler + indexer)
+# Hypertension reuses aha_acc (AHA/ACC) + who_iris (HEARTS HTN); keep alias for clarity
+HYPERTENSION_DIR = PDF_DIR / "hypertension"
+RESPIRATORY_DIR = PDF_DIR / "respiratory"
+MENTAL_DIR = PDF_DIR / "mental"
 GUIDELINE_SOURCE_DIRS = {
     "who_iris": WHO_IRIS_DIR,
     "ada": ADA_DIR,
@@ -82,10 +86,13 @@ GUIDELINE_SOURCE_DIRS = {
     "mhgap": PDF_DIR / "mhgap",
     "byt": BYT_DIR,
     "diabetes": DIABETES_PDF_DIR,
+    "hypertension": HYPERTENSION_DIR,
+    "respiratory": RESPIRATORY_DIR,
+    "mental": MENTAL_DIR,
 }
 
 # ==============================
-#  Glucose tracking (Hướng A)
+#  Vitals tracking — Diabetes (A) + Hypertension / Respiratory / Mental (2B) — unified DB
 # ==============================
 GLUCOSE_THRESHOLDS_MGDL = {
     "fasting_normal_max": 100,
@@ -97,7 +104,38 @@ GLUCOSE_THRESHOLDS_MGDL = {
     "random_critical_high": 300,
     "hypoglycemia": 70,
 }
+# AHA/ACC 2025 Hypertension thresholds (mmHg)
+BP_THRESHOLDS_MMHG = {
+    "normal_sys_max": 120,
+    "normal_dia_max": 80,
+    "elevated_sys_min": 120, "elevated_sys_max": 129, "elevated_dia_max": 80,
+    "stage1_sys_min": 130, "stage1_sys_max": 139, "stage1_dia_min": 80, "stage1_dia_max": 89,
+    "stage2_sys_min": 140, "stage2_dia_min": 90,
+    "crisis_sys": 180, "crisis_dia": 120,
+    # Home BP target for treated patients
+    "home_target_sys": 130, "home_target_dia": 80,
+}
+# Asthma/COPD — peak flow zones (% personal best) + GOLD stages
+RESPIRATORY_THRESHOLDS = {
+    "peak_flow_green_min": 80,  # % — Go zone
+    "peak_flow_yellow_min": 50, # % — Caution
+    "peak_flow_red_max": 50,    # % — Medical alert
+    "gold_stages": ["GOLD_1_mild", "GOLD_2_moderate", "GOLD_3_severe", "GOLD_4_very_severe"],
+    "cat_mild_max": 10, "cat_moderate_max": 20, # COPD Assessment Test
+}
+# Mental health — PHQ-9 / GAD-7 + crisis keywords (PII redact)
+MENTAL_HEALTH_THRESHOLDS = {
+    "phq9_minimal_max": 4, "phq9_mild_max": 9, "phq9_moderate_max": 14, "phq9_moderately_severe_max": 19, "phq9_severe_min": 20,
+    "gad7_minimal_max": 4, "gad7_mild_max": 9, "gad7_moderate_max": 14, "gad7_severe_min": 15,
+    "crisis_keywords": ["tự tử", "tu tu", "suicide", "kill myself", "tự hại", "self-harm", "tự làm hại", "muốn chết", "want to die"],
+    "crisis_hotline_vn": "1800-1567 (Bảo vệ trẻ em) / 1900-1267 (Sức khỏe tâm thần) / 115 (Cấp cứu)",
+}
+# Unified vitals DB (stores glucose + bp + respiratory + mood with disease_type column)
+VITALS_DB_PATH = BASE_DIR / "metadata" / "vitals.db"
+# Legacy path kept for backward compatibility (glucose_logs.db → vitals.db migration)
 GLUCOSE_DB_PATH = BASE_DIR / "metadata" / "glucose_logs.db"
+# PII redact — fields to mask before logging/storage
+PII_REDACT_FIELDS = {"name", "phone", "email", "address", "cmnd", "cccd"}
 
 # ==============================
 #  API (Hướng C)
