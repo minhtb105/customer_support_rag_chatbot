@@ -1,7 +1,14 @@
 import re
-from typing import List
+from typing import List, Optional
 from openai import OpenAI
-from sentence_transformers import CrossEncoder
+
+# CrossEncoder (torch) is optional — openai-only deploy skips reranking
+try:
+    from sentence_transformers import CrossEncoder  # type: ignore
+    _CROSS_ENCODER_AVAILABLE = True
+except Exception:  # torch / sentence-transformers not installed (openai-only)
+    CrossEncoder = None  # type: ignore
+    _CROSS_ENCODER_AVAILABLE = False
 
 try:
     from config import (
@@ -46,9 +53,16 @@ def _normalize_model(model: str) -> str:
 
 
 client = _build_llm_client()
-reranker = CrossEncoder(RERANKER_MODEL)
-
-chat_history = []
+# Lazy init reranker — may be None in openai-only (no torch)
+if _CROSS_ENCODER_AVAILABLE:
+    try:
+        reranker = CrossEncoder(RERANKER_MODEL)
+    except Exception as e:
+        print(f"[generator] CrossEncoder init failed ({e}) — reranking disabled (openai-only fallback)")
+        reranker = None
+else:
+    reranker = None
+    print("[generator] sentence-transformers/torch not installed — reranking disabled (pip install .[local] to enable)")
 
 def format_context(contexts):
     context_text = ""
@@ -82,6 +96,12 @@ def format_context(contexts):
 def rerank_contexts(query: str, contexts: List[ContextItem], top_n=3):
     if not contexts:
         return []
+    if reranker is None:
+        # openai-only fallback: keep original order (already hybrid BM25+vector), assign dummy scores
+        for ctx in contexts:
+            if ctx.score is None:
+                ctx.score = 0.0
+        return contexts[:top_n]
     pairs = [(query, ctx.content) for ctx in contexts]
     scores = reranker.predict(pairs)
     for i, ctx in enumerate(contexts):
@@ -134,15 +154,12 @@ def generate_answer(input_data: LLMInput, model=DEFAULT_MODEL) -> LLMOutput:
     tone, temperature, max_tokens = detect_tone_and_temp(query)
     system_prompt = get_system_prompt(tone)
     user_prompt = (f"Context: \n{context_text}\n\n" f"Question: {query}\n\n" "Answer clearly and concisely")
-    messages = [{"role": "system", "content": system_prompt}]
-    for past in chat_history[-5:]:
-        messages.append({"role": "user", "content": past["user"]})
-        messages.append({"role": "assistant", "content": past["assistant"]})
-    messages.append({"role": "user", "content": user_prompt})
+    # Per-user memory is injected via LLMInput.contexts by rag_pipeline._build_memory_context
+    # (short/episodic/long-term) — no global history to avoid cross-user leak
+    messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
     resolved_model = _normalize_model(model)
     response = client.chat.completions.create(model=resolved_model, messages=messages, temperature=temperature, max_tokens=max_tokens)
     answer = response.choices[0].message.content.strip()
-    chat_history.append({"user": query, "assistant": answer})
     usage = getattr(response, "usage", None)
     token_usage = {
         "prompt_tokens": getattr(usage, "prompt_tokens", None),
@@ -161,6 +178,58 @@ def generate_answer(input_data: LLMInput, model=DEFAULT_MODEL) -> LLMOutput:
     except Exception:
         pass
     return LLMOutput(answer=answer, cited_sources=cited_sources, contexts=input_data.contexts)
+
+
+def generate_answer_stream(input_data: LLMInput, model=DEFAULT_MODEL):
+    """
+    SSE streaming variant of generate_answer — yields token deltas via OpenAI stream=True.
+    Caller accumulates deltas to reconstruct full answer and LLMOutput.
+    Sets generate_answer_stream.last_* attributes for tracing after iteration completes.
+    Yields: str (delta content)
+    """
+    from typing import Generator  # local import to avoid circular
+    query = input_data.query
+    context_text = format_context(input_data.contexts)
+    tone, temperature, max_tokens = detect_tone_and_temp(query)
+    system_prompt = get_system_prompt(tone)
+    user_prompt = (f"Context: \n{context_text}\n\n" f"Question: {query}\n\n" "Answer clearly and concisely")
+    messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
+    resolved_model = _normalize_model(model)
+    prompt_version = short_hash(system_prompt)
+
+    # OpenAI-compatible streaming
+    stream = client.chat.completions.create(
+        model=resolved_model, messages=messages, temperature=temperature, max_tokens=max_tokens, stream=True
+    )
+    full_answer = ""
+    try:
+        for chunk in stream:
+            try:
+                delta = None
+                if chunk.choices and len(chunk.choices) > 0:
+                    delta = getattr(chunk.choices[0].delta, "content", None)
+                if delta:
+                    full_answer += delta
+                    yield delta
+            except Exception:
+                continue
+    finally:
+        # store metadata for caller/tracing after stream ends
+        try:
+            cited_sources = sorted({int(m) for m in re.findall(r"\[Source\s+(\d+)\]", full_answer)})
+        except Exception:
+            cited_sources = []
+        # token usage is not available in streaming chunks for most providers; leave empty
+        token_usage: dict = {}
+        try:
+            generate_answer_stream.last_full_answer = full_answer  # type: ignore
+            generate_answer_stream.last_cited_sources = cited_sources  # type: ignore
+            generate_answer_stream.last_token_usage = token_usage  # type: ignore
+            generate_answer_stream.last_prompt_version = prompt_version  # type: ignore
+            generate_answer_stream.last_tone = tone  # type: ignore
+            generate_answer_stream.last_system_prompt = system_prompt  # type: ignore
+        except Exception:
+            pass
 
 def format_answer_for_ui(answer_data: LLMOutput) -> str:
     formatted_answer = (answer_data.answer.replace("\n\n", "<br><br>").replace("\n", "<br>"))

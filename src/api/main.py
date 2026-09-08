@@ -9,7 +9,8 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, Query, Depends, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, StreamingResponse
+import json as _json
 
 try:
     from src.config import API_TITLE, API_VERSION, API_PREFIX, EMBEDDING_PROVIDER, EMBEDDING_MODEL, PDF_DIR, BASE_DIR
@@ -343,6 +344,52 @@ def rag_query(req: QueryRequest, current_user=Depends(get_current_user)):
     out["trace_id"] = result.get("trace_id")
     return out
 
+
+@app.post(f"{API_PREFIX}/query/stream", tags=["rag"])
+def rag_query_stream(req: QueryRequest, current_user=Depends(get_current_user)):
+    """
+    SSE streaming variant of /v1/query — POST with auth, streams via text/event-stream.
+    Events:
+      - event: metadata  data: {trace_id, prompt_version, tone, contexts, cache_hit}
+      - event: token     data: {delta: str}  (multiple)
+      - event: done      data: {answer, formatted_answer, cited_sources, contexts, trace_id, evaluation, status, ...}
+      - event: error     data: {error: str}
+    Frontend should use fetch + ReadableStream to parse SSE (EventSource cannot POST).
+    """
+    effective_user_id = current_user["id"] if AUTH_ENABLED and current_user else req.user_id
+    if AUTH_ENABLED and current_user:
+        if req.user_id and req.user_id not in ("default_user", effective_user_id) and current_user["role"] == "user":
+            raise HTTPException(status_code=403, detail="user_id mismatch with authenticated user")
+    if not req.query or not req.query.strip():
+        raise HTTPException(status_code=422, detail="query must be non-empty")
+    try:
+        from src.rag_pipeline import rag_chat_stream  # type: ignore
+    except ImportError:
+        from rag_pipeline import rag_chat_stream  # type: ignore
+
+    username = current_user.get("username") if isinstance(current_user, dict) else None
+
+    def event_generator():
+        try:
+            for evt in rag_chat_stream(req.query, top_k=req.top_k, user_id=effective_user_id, username=username):
+                ev = evt.get("event", "message")
+                data = evt.get("data", {})
+                # SSE wire format
+                yield f"event: {ev}\ndata: {_json.dumps(data, ensure_ascii=False)}\n\n"
+        except Exception as e:
+            err = _json.dumps({"error": str(e)}, ensure_ascii=False)
+            yield f"event: error\ndata: {err}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
 # ---------- Glucose (Hướng A) ----------
 @app.post(f"{API_PREFIX}/glucose", response_model=GlucoseLogOut, tags=["glucose"])
 def create_glucose_log(payload: GlucoseLogCreate, current_user=Depends(get_current_user)):
@@ -498,6 +545,7 @@ def root():
         "docs": "/docs",
         "health": f"{API_PREFIX}/health",
         "query": f"POST {API_PREFIX}/query (auth required)",
+        "query_stream": f"POST {API_PREFIX}/query/stream SSE (auth required) — events: metadata, token, done, error",
         "glucose": f"POST {API_PREFIX}/glucose (auth)",
         "bp": f"POST {API_PREFIX}/bp (auth)",
         "respiratory": f"POST {API_PREFIX}/respiratory (auth)",

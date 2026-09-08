@@ -25,6 +25,58 @@ export async function queryRag(query: string, top_k = 5, user_id = "default_user
   return res.json();
 }
 
+// SSE streaming for POST /v1/query/stream — yields {event, data} via callback
+export async function queryRagStream(
+  query: string,
+  opts: { top_k?: number; user_id?: string; onEvent?: (ev: string, data: any) => void; onToken?: (delta: string) => void; signal?: AbortSignal } = {}
+) {
+  const { top_k = 5, user_id = "default_user", onEvent, onToken, signal } = opts;
+  const res = await authFetch(`${API}/v1/query/stream`, {
+    method: "POST",
+    body: JSON.stringify({ query, top_k, user_id, include_audit: true }),
+    headers: { Accept: "text/event-stream" },
+    signal,
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`query/stream failed ${res.status}: ${txt.slice(0,300)}`);
+  }
+  if (!res.body) throw new Error("No response body for SSE stream");
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  const parseAndEmit = (chunk: string) => {
+    buffer += chunk;
+    // SSE frames are separated by \n\n
+    let idx: number;
+    while ((idx = buffer.indexOf("\n\n")) !== -1) {
+      const raw = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 2);
+      if (!raw.trim()) continue;
+      let ev = "message";
+      let dataStr = "";
+      for (const line of raw.split("\n")) {
+        if (line.startsWith("event:")) ev = line.slice(6).trim();
+        else if (line.startsWith("data:")) dataStr += line.slice(5).trim();
+      }
+      let data: any = dataStr;
+      try {
+        data = JSON.parse(dataStr);
+      } catch {}
+      onEvent?.(ev, data);
+      if (ev === "token" && data?.delta) onToken?.(data.delta);
+    }
+  };
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    parseAndEmit(decoder.decode(value, { stream: true }));
+  }
+  // flush remaining
+  if (buffer.trim()) parseAndEmit("\n\n");
+  return;
+}
+
 export async function logGlucose(payload: { user_id: string; value_mgdl: number; context: string; notes?: string; measured_at?: string }) {
   const res = await authFetch(`${API}/v1/glucose`, { method: "POST", body: JSON.stringify(payload) });
   if (!res.ok) throw new Error(`glucose log failed ${res.status}: ${await res.text()}`);
