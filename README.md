@@ -108,11 +108,10 @@ An advanced Retrieval-Augmented Generation (RAG) pipeline designed for productio
 **Overall Architecture:**
 
 ```
-[Next.js Frontend] ──┐
-[Streamlit (legacy)] ├──► [FastAPI /v1/*  — Track C] ─► [RAG Pipeline v2]
-                     │         │                       ├─ retrieve_context (WHO diabetes corpus)
-                     │         └─ audit logs           ├─ rerank + faithfulness scorer
-[Track B — SOAP] ────┘                                 └─ generator (tone=diabetes strict)
+[Next.js Frontend] ──► [FastAPI /v1/*  — Track C] ─► [RAG Pipeline v2]
+                     │                       ├─ retrieve_context (WHO diabetes corpus)
+                     └─ audit logs           ├─ rerank + faithfulness scorer
+[Track B — SOAP] ────┘                       └─ generator (tone=diabetes strict)
 [Track A — Glucose] ──► SQLite `glucose_logs` + thresholds engine
 ```
 
@@ -126,7 +125,18 @@ An advanced Retrieval-Augmented Generation (RAG) pipeline designed for productio
 - `WHO_Classification_Diabetes_2019.pdf` (990 KB) — IRIS 10665/325182
 - `WHO_HEARTS_D_Diabetes_2020.pdf` (1.2 MB) — IRIS 10665/331710
 - `WHO_PEN_2020_NCD.pdf` (2.5 MB) — IRIS 10665/334186 (contains diabetes chapter)
-- `ADA_Standards_of_Care_2024_Abridged.pdf` — *optional, paywall 403; manual download instructions in `scripts/crawl_guidelines.py`*.
+- `ADA_Standards_of_Care_2024_Abridged.pdf` (~68 MB, đã có bản hợp lệ tại `data/raw/pdfs/diabetes/`) — chuẩn lâm sàng ADA 2024 (file `.DOWNLOAD_FAILED.txt` stale trước đây đã được xóa).
+
+`data/raw/pdfs/byt/` (3 files): `QD3192_HuongDan_TangHuyetAp_2010.pdf` (tăng huyết áp) + `BYT_QD3319_HD_ChanDoan_DTD_Type2_2017.pdf` (0.9 MB) + `BYT_QD5481_HD_ChanDoan_DTD_Type2_2020.pdf` (2.2 MB, thay thế 3319) — cả 2 đã index (3319 full 4 strategies; 5481 structure).
+
+### 4.1b Mục đích sử dụng từng bộ dữ liệu trong chatbot
+
+| # | Nguồn | Mục đích trong RAG chatbot | Vai trò khi trả lời | Hiện trạng / Ghi chú |
+|---|-------|---------------------------|---------------------|----------------------|
+| 1 | **WHO IRIS** (kho guideline mở) | Grounding chính cho RAG: guideline tĩnh có trích dẫn `[Source X]`, ngưỡng chẩn đoán quốc tế (FPG ≥126 mg/dL, HbA1c ≥6.5%, OGTT 2h ≥200) | Track A giải thích trend đường huyết; Track C trả `{answer, citations, faithfulness}` | Đã có 3 PDFs đái tháo đường tại `data/raw/pdfs/diabetes/` (IRIS `10665/325182`, `10665/331710`, `10665/334186`); resolve qua DSpace 7 API trong `scripts/crawl_guidelines.py`. Thư mục `who_iris/` riêng chưa có — hiện dùng subset diabetes |
+| 2 | **WHO GHO OData API** (số liệu dịch tễ trực tiếp) | Số liệu động bổ trợ ngữ cảnh: tỷ lệ hiện mắc đái tháo đường, độ bao phủ điều trị, so sánh Việt Nam vs toàn cầu theo tuổi/giới/năm | Bổ sung số liệu cho TL;DR và market evidence (§0–§2); làm ngữ cảnh nền, không thay thế guideline | **Dual-Storage đã triển khai:** snapshot quarterly (`scripts/fetch_gho_snapshot.py` → `data/raw/gho/<INDICATOR>/`, 4 chỉ số prevalence/treatment × VNM) → SQLite `data/processed/gho_stats.db` (tool SQL readonly) + câu textualized indexed vào Chroma. API công cộng `https://ghoapi.azureedge.net/api/` (không cần auth) |
+| 3 | **ADA Standards of Care in Diabetes** | Chuẩn lâm sàng chi tiết: phân loại, bậc thang thuốc, mục tiêu HbA1c, quản lý biến chứng — bổ sung cho WHO-PEN/HEARTS-D (thiên về y tế cơ sở) | Track B tổng hợp SOAP/ADA trước khám; Track A quyết định ngưỡng escalate | Đã có `ADA_Standards_of_Care_2024_Abridged.pdf` (~68 MB) tại `data/raw/pdfs/diabetes/` |
+| 4 | **Bộ Y tế (Quyết định — văn bản nội địa bắt buộc)** | **Ưu tiên pháp lý cao nhất tại Việt Nam**: hướng dẫn phải áp dụng ở mọi cơ sở KCB; khi xung đột với WHO/ADA thì BYT được ưu tiên cho bệnh nhân VN | Mọi câu trả lời lâm sàng phải đối chiếu BYT trước (chẩn đoán 2 lần FPG ≥126, OGTT 75g, HbA1c chuẩn hóa; đánh giá toàn diện + bậc thang metformin/insulin) | **Đính chính:** `QĐ 3192/QĐ-BYT 31/08/2010` là **Tăng huyết áp** (file hiện có tại `data/raw/pdfs/byt/` + `hypertension/`). Đái tháo đường: `QĐ 3319/QĐ-BYT 2017` + `QĐ 5481/QĐ-BYT 2020` (thay thế 3319) **đã có file và đã index**; `QĐ 3798/QĐ-BYT 2017` (quy trình lâm sàng) dùng chung file với 3319 trên kcb.vn nên không lưu duplicate |
 
 ### 4.2 Guideline Crawler Pipeline
 
@@ -258,7 +268,6 @@ src/
 ├── features/
 │   ├── glucose_tracker.py   # Track A: glucose logs + thresholds
 │   └── soap_summary.py      # Track B: SOAP generator
-├── app.py                   # Streamlit demo (legacy)
 ├── cache.py                 # Hybrid CAG
 ├── config.py                # Models, thresholds, guideline sources
 ├── generator.py             # LLM generation + diabetes tone detection
@@ -313,8 +322,13 @@ metadata/
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# Deploy openai-only (mặc định, nhẹ ~400MB, KHÔNG cần torch):
+pip install -e .
+# Deploy local embeddings/reranker (cần torch, ~2GB):
+pip install -e .[local]
+# Hoặc full legacy (tương đương requirements.txt):
 pip install -r requirements.txt
-# or
+# Dev/test:
 pip install -e .[test]
 
 # .env
@@ -364,13 +378,6 @@ npm install
 npm run dev  # http://localhost:3000
 # .env.local
 NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-### Streamlit (legacy)
-
-```bash
-streamlit run src/app.py
-python -m src.rag_pipeline  # CLI demo
 ```
 
 ### LangSmith Prompt Sync
@@ -441,7 +448,58 @@ Every `rag_chat()` call creates one root trace with `retrieve_context`, `rerank_
 
 ---
 
+## 8b. Chronic Time-Series (Diabetes) -- Patient FQG + Doctor SOAP (Local Demo)
+
+Disclaimer y khoa: Demo phuc vu minh hoa ky thuat. Moi nhan dinh AI chi mang tinh ho tro, khong thay the chan doan/dieu tri cua bac si. Nguong an toan: ha duong huyet <70, critical >=300, fasting >=126, sau an 2h >=200. Khi vuot nguong, xu tri an toan truoc, tham van bac si ngay.
+
+ARCHITECTURE (ASCII):
+
+[Patient] --POST /v1/glucose--> [add_log (SQLite)]
+                                     |
+                              [anomaly_detector] --spike >250/<70--> [safety message + FQG spike]
+                                     | --trend fasting +10-15pct/day x3d--> [FQG trend]
+                                     |
+                              [tracker UI: banner anomaly + FQG list]
+                                     |
+                              [memory 3 tang: short/episodic/long-term Chroma]
+                                     |  weekly rollup: episodic -> 1 fact/tuan (rollup.py, key weekly-<monday>)
+                                     v
+[Doctor] <--previsit UI-- [GET glucose 90d + sparkline Recharts (cham do anomaly) 30pct]
+           [POST /v1/soap/generate] --> [SOAP text 70pct: S (FQG notes) / O (so cung) / A (chi HbA1c<7pct BYT5481/ADA) / P = rong (BS chi dinh)]
+                                          moi nhan dinh kem [Xem log id] -> /tracker?highlight=id
+
+Ground truth: QD 5481/QD-BYT 2020 (DTD type 2 VN) + ADA Standards of Care 2024, muc tieu HbA1c < 7pct. QD 3192 la huong dan tang huyet ap -- khong dung cho DTD.
+
+RISK ROUTING (phan luong kiem soat rui ro):
+
+- Spike low <70 / critical >=300: message an toan glucose_tracker uu tien tren FQG; banner do; khuyen nghi lien he bac si ngay.
+- Spike >250 (non-critical): canh bao + FQG dao ngu canh (an ngot/quen thuoc) truoc khi escalate.
+- Trend cascade: fasting +10-15pct/ngay x 3 ngay lien tiep; FQG trend; khong chan doan, chi goi y theo doi.
+- Out-of-scope (khang sinh, tim mach...): early-return mau safeguard cung TRUOC moi goi RAG/LLM; khong goi guideline RAG de tra loi.
+- SOAP Assessment: chi doi chieu dat/khong dat HbA1c<7pct; P luon rong + placeholder mo "Danh cho bac si chi dinh".
+- Audit: moi nhan dinh S/O/A kem [Xem log id] click ve log tho (/tracker?highlight=id).
+
+EDGE CASES:
+
+- Trend: group fasting theo ngay -> trung binh/ngay; bo qua ngay thieu (dut chuoi), tranh chia 0, log non-fasting bi loai; tang <10pct hoac >15pct khong trigger (test no-false-positive).
+- POST /v1/glucose fail-open: detector loi -> anomaly type none, log chinh khong vo.
+- rollup_weekly idempotent: key weekly-<monday>; goi lai cung tuan -> skipped true, dung 1 fact/tuan.
+- Safeguard la keyword gate (demo); LLM intent classifier la future-work.
+
+PRODUCTION SERVING BOX (DOC-ONLY -- khong ap dung cho demo local):
+
+Demo chay gpt-4o-mini qua OpenAI API (TTFT thap, khong can GPU). Lo trinh production (tai lieu, chua implement): Llama-3-8B-AWQ + vLLM/SGLang voi PagedAttention + continuous batching de ha TTFT cho FQG multi-turn, benchmark tren GPU Kaggle (cache). Cam them dependency GPU vao pip install cua demo.
+
+FUTURE WORK:
+
+- FQG multi-turn that (hien la template + gpt-4o-mini phrasing).
+- LLM intent classifier thay keyword gate.
+- HbA1c lab import de Assessment doi chieu truc tiep thay vi proxy tu self-monitoring.
+
+---
+
 ## 9. Purpose
+
 
 This project demonstrates:
 * Production-style **RAG system design** (hybrid retrieval + reranking + CAG)
@@ -486,3 +544,10 @@ This project demonstrates:
 [^who-class]: WHO Classification of Diabetes Mellitus 2019 (IRIS 10665/325182): https://iris.who.int/handle/10665/325182
 [^who-hearts]: WHO HEARTS-D Diagnosis & Management of Type 2 Diabetes 2020 (IRIS 10665/331710): https://iris.who.int/handle/10665/331710
 [^who-pen]: WHO PEN 2020 (IRIS 10665/334186): https://iris.who.int/handle/10665/334186
+[^gho-api]: WHO GHO OData API (số liệu dịch tễ trực tiếp, không cần auth): https://www.who.int/data/gho/info/gho-odata-api — endpoint `https://ghoapi.azureedge.net/api/` (ví dụ `/api/Indicator`, `/api/DIMENSION/COUNTRY/DimensionValues`)
+[^gho-diabetes]: WHO GHO — Diabetes prevalence indicator (FPG ≥7 mmol/L hoặc HbA1c ≥6.5%): https://www.who.int/data/gho/data/indicators/indicator-details/GHO/prevalence-of-diabetes-age-standardized
+[^ada-soc]: ADA Standards of Care in Diabetes 2024 (Supplement 1): https://diabetesjournals.org/care/issue/47/Supplement_1
+[^byt-3319]: BYT QĐ 3319/QĐ-BYT 19/07/2017 — Hướng dẫn chẩn đoán và điều trị ĐTĐ típ 2: https://daithaoduong.kcb.vn/huong-dan-chan-doan-va-dieu-tri
+[^byt-3798]: BYT QĐ 3798/QĐ-BYT 21/08/2017 — Quy trình lâm sàng chẩn đoán và điều trị ĐTĐ típ 2: https://daithaoduong.kcb.vn/quy-trinh-lam-sang-dieu-tri-dai-thao-duong
+[^byt-5481]: BYT QĐ 5481/QĐ-BYT 30/12/2020 — Cập nhật Hướng dẫn chẩn đoán và điều trị ĐTĐ típ 2: https://thuvienphapluat.vn/van-ban/The-thao-Y-te/Quyet-dinh-5481-QD-BYT-2020-tai-lieu-chuyen-mon-Huong-dan-chan-doan-dieu-tri-dai-thao-duong-tip-2-460925.aspx
+[^byt-3192]: BYT QĐ 3192/QĐ-BYT 31/08/2010 — Hướng dẫn chẩn đoán và điều trị **Tăng huyết áp** (đính chính: không phải đái tháo đường): https://kcb.vn/upload/2005611/20210723/huong_dan_chan_doan_dieu_tri_tha.pdf

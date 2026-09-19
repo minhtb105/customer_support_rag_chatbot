@@ -16,22 +16,62 @@ try:
     from chunk_strategies import (
         chunk_document,
         extract_full_text_from_doc,
-        serialize_metatdata
+        serialize_metatdata,
+        semantic_chunk,
     )
     from embedding.adapter import EmbeddingAdapter
-    from models.chunk import Chunk
+    from models.chunk import Chunk, ChunkMetadata
     from metadata_store import *
     from config import *
 except ImportError:
     from src.chunk_strategies import (
         chunk_document,
         extract_full_text_from_doc,
-        serialize_metatdata
+        serialize_metatdata,
+        semantic_chunk,
     )
     from src.embedding.adapter import EmbeddingAdapter
-    from src.models.chunk import Chunk
+    from src.models.chunk import Chunk, ChunkMetadata
     from src.metadata_store import *
     from src.config import *
+
+
+def _pymupdf_pages(pdf_path: str):
+    """Fallback text theo trang khi docling chet (VD: bad_alloc)."""
+    import fitz
+    doc = fitz.open(pdf_path)
+    try:
+        return [p.get_text() or "" for p in doc]
+    finally:
+        doc.close()
+
+
+def _hybrid_fallback_pages(pages, source_id: str, embed_fn):
+    """Mimic hybrid_section_semantic theo tung trang (section=[page N])."""
+    try:
+        from chunk_strategies import tokenizer as _tok
+    except ImportError:
+        from src.chunk_strategies import tokenizer as _tok  # type: ignore
+    chunks, idx = [], 0
+    for n, text in enumerate(pages, start=1):
+        text = (text or "").strip()
+        if not text:
+            continue
+        if len(_tok.tokenizer.tokenize(text)) <= MAX_TOKENS:
+            chunks.append(Chunk(source_id=source_id, chunk_id=f"{source_id}_{idx}",
+                               text=text, metadata=ChunkMetadata(
+                                   section_path=[f"page {n}"], page_numbers=[n], chunk_index=idx)))
+            idx += 1
+            continue
+        for sub in semantic_chunk(text, source_id, embed_fn=embed_fn,
+                                  atomic_tokenizer=_tok.tokenizer, atomic_size=120):
+            sub.metadata.section_path = [f"page {n}"]
+            sub.metadata.page_numbers = [n]
+            sub.metadata.chunk_index = idx
+            sub.chunk_id = f"{source_id}_{idx}"
+            chunks.append(sub)
+            idx += 1
+    return chunks
 
 
 logging.basicConfig(level=logging.INFO)
@@ -84,7 +124,10 @@ def _make_embeddings():
             return OpenAIEmbeddings(model=OPENAI_EMBEDDING_MODEL)
         except Exception as e:
             logging.warning(f"[indexer] OpenAIEmbeddings fail ({e}), fallback HuggingFace")
-    return HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+    # Fallback LUÔN dùng model local (EMBEDDING_MODEL có thể là tên model OpenAI)
+    from src.config import EMBEDDING_DIMENSIONS_MAP
+    local_model = EMBEDDING_MODEL if EMBEDDING_MODEL in ("all-MiniLM-L6-v2",) or EMBEDDING_DIMENSIONS_MAP.get(EMBEDDING_MODEL) == 384 else "all-MiniLM-L6-v2"
+    return HuggingFaceEmbeddings(model_name=local_model)
 
 
 def _resolve_index_db_dir(strategy_value: str) -> str:
@@ -119,16 +162,38 @@ def hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter, versio
             InputFormat.PDF: PdfFormatOption(pipeline_options=pdf_options)
         }
     )
-    doc = converter.convert(pdf_path).document
-    raw_text = extract_full_text_from_doc(doc)
-
-    chunks = chunk_document(
-        doc,
-        pdf_path,
-        strategy,
-        raw_text=raw_text,
-        embed_fn=embedding_adapter.embed_texts,
-    )
+    try:
+        doc = converter.convert(pdf_path).document
+        raw_text = extract_full_text_from_doc(doc)
+        chunks = chunk_document(
+            doc,
+            pdf_path,
+            strategy,
+            raw_text=raw_text,
+            embed_fn=embedding_adapter.embed_texts,
+        )
+    except Exception as e:
+        # Docling chet (VD: std::bad_alloc tren PDF nang) -> fallback pymupdf.
+        # SLIDING/SEMANTIC dung chung code path (chi can raw_text); HYBRID mimic theo trang.
+        # STRUCTURE bat buoc docling (can headings) -> khong fallback duoc.
+        from src.chunk_strategies import ChunkingStrategy as _CS
+        if strategy == _CS.STRUCTURE:
+            raise
+        logging.warning(f"[indexer] docling that bai ({e}), fallback pymupdf: {fname}")
+        from src.chunk_strategies import ChunkingStrategy as _CS
+        pages = _pymupdf_pages(pdf_path)
+        raw_text = "\n".join(pages)
+        if not raw_text.strip():
+            raise
+        if strategy == _CS.HYBRID_SECTION_SEMANTIC:
+            from src.chunk_strategies import normalize_source_id
+            chunks = _hybrid_fallback_pages(pages, normalize_source_id(pdf_path),
+                                            embedding_adapter.embed_texts)
+        else:
+            chunks = chunk_document(
+                None, pdf_path, strategy,
+                raw_text=raw_text, embed_fn=embedding_adapter.embed_texts,
+            )
 
     logging.info(
         f"[DEBUG] {fname} | {strategy.value} | chunked: {len(chunks)}")

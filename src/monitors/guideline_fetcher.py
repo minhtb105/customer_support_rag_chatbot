@@ -77,6 +77,21 @@ GUIDELINE_SOURCE_CONFIGS: Dict[str, Dict[str, Any]] = {
         "check_url": "https://thuvienphapluat.vn/van-ban/The-thao-Y-te/Quyet-dinh-3319-QD-BYT-2017-huong-dan-chan-doan-dieu-tri-dai-thao-duong-356066.aspx",
         "is_byt_scrape": True,
     },
+    "byt_3798": {
+        "source": "byt",
+        "title": "BYT — Quy trình lâm sàng ĐTĐ típ 2 (QĐ 3798/2017)",
+        "url": "https://daithaoduong.kcb.vn/quy-trinh-lam-sang-dieu-tri-dai-thao-duong",
+        "check_url": "https://daithaoduong.kcb.vn/quy-trinh-lam-sang-dieu-tri-dai-thao-duong",
+        "is_byt_scrape": True,
+        "note": "kcb.vn phục vụ chung 1 file PDF cho cả QĐ 3319 và 3798 — corpus lưu 1 bản, không duplicate.",
+    },
+    "byt_5481": {
+        "source": "byt",
+        "title": "BYT — HD chẩn đoán & điều trị ĐTĐ típ 2 (QĐ 5481/2020, thay thế 3319)",
+        "url": "https://bvcdn.org.vn/quyet-dinh-so-5481-qd-byt-ngay-30-thang-12-nam-2020-cua-bo-y-te-ve-viec-ban-hanh-tai-lieu-chuyen-mon-huong-dan-chan-doan-va-dieu-tri-dai-thao-duong-tip-2",
+        "check_url": "https://bvcdn.org.vn/quyet-dinh-so-5481-qd-byt-ngay-30-thang-12-nam-2020-cua-bo-y-te-ve-viec-ban-hanh-tai-lieu-chuyen-mon-huong-dan-chan-doan-va-dieu-tri-dai-thao-duong-tip-2",
+        "is_byt_scrape": True,
+    },
 }
 
 def _slugify(text: str) -> str:

@@ -205,8 +205,26 @@ ALLOWED_MONITOR_DOMAINS = {
     "dav.gov.vn",
     "thuvienphapluat.vn",
     "kcb.vn",
+    "daithaoduong.kcb.vn",
+    "bvcdn.org.vn",
+    "ghoapi.azureedge.net",
     "www.who.int",
 }
+
+# ==============================
+#  WHO GHO OData snapshot — Dual-Storage (textualized RAG + SQLite tool)
+# ==============================
+GHO_API_BASE = os.getenv("GHO_API_BASE", "https://ghoapi.azureedge.net/api")
+GHO_INDICATORS = {
+    "NCD_DIABETES_PREVALENCE_CRUDE": {"vi": "tỷ lệ lưu hành bệnh đái tháo đường (ước tính thô)", "unit": "%"},
+    "NCD_DIABETES_PREVALENCE_AGESTD": {"vi": "tỷ lệ lưu hành bệnh đái tháo đường (chuẩn hóa tuổi)", "unit": "%"},
+    "NCD_DIABETES_TREATMENT_CRUDE": {"vi": "độ bao phủ điều trị đái tháo đường (ước tính thô)", "unit": "%"},
+    "NCD_DIABETES_TREATMENT_AGESTD": {"vi": "độ bao phủ điều trị đái tháo đường (chuẩn hóa tuổi)", "unit": "%"},
+}
+GHO_SNAPSHOT_DIR = BASE_DIR / "data" / "raw" / "gho"
+GHO_TEXT_DIR = BASE_DIR / "data" / "raw" / "gho_text"
+GHO_DB_PATH = BASE_DIR / "data" / "processed" / "gho_stats.db"
+
 
 # ==============================
 #  API (Hướng C)

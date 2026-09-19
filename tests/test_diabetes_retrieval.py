@@ -1,7 +1,10 @@
-"""Diabetes-specific retrieval evaluation — replaces generic Q1-Q20.
+"""Retrieval evaluation for 4 diseases — diabetes + hypertension + respiratory + mental.
 
-Uses data/evaluation/diabetes_retrieval_evaluation.json (15 diabetes Qs).
-Falls back to legacy with pytest.mark.legacy if diabetes dataset missing.
+- diabetes: data/evaluation/diabetes_retrieval_evaluation.json (15 Qs)
+- hypertension: data/evaluation/hypertension_retrieval_evaluation.json (10 Qs)
+- respiratory: data/evaluation/respiratory_retrieval_evaluation.json (10 Qs)
+- mental: data/evaluation/mental_retrieval_evaluation.json (10 Qs)
+Legacy generic Q1-Q20 kept as `benchmark_questions.json` (skip via `pytest.mark.legacy`).
 """
 
 import json
@@ -12,7 +15,11 @@ from src.evaluation import recall_at_k, hit_at_k, mean_reciprocal_rank
 
 
 DIABETES_DATASET = Path("data/evaluation/diabetes_retrieval_evaluation.json")
+HYPERTENSION_DATASET = Path("data/evaluation/hypertension_retrieval_evaluation.json")
+RESPIRATORY_DATASET = Path("data/evaluation/respiratory_retrieval_evaluation.json")
+MENTAL_DATASET = Path("data/evaluation/mental_retrieval_evaluation.json")
 LEGACY_DATASET = Path("data/evaluation/retrieval_evaluation.json")
+BENCHMARK_LEGACY = Path("data/evaluation/benchmark_questions.json")
 
 
 def load_dataset(path: Path):
@@ -42,6 +49,48 @@ def test_diabetes_topics_are_diabetes_only():
         assert item.get("topic") in allowed or "diabetes" in item.get("topic", ""), f"Unexpected topic {item.get('topic')} in {item['question_id']}"
 
 
+def test_hypertension_retrieval_files_exist():
+    assert HYPERTENSION_DATASET.exists(), f"Missing {HYPERTENSION_DATASET}"
+    data = load_dataset(HYPERTENSION_DATASET)
+    assert len(data) >= 8
+    for item in data:
+        assert "question_id" in item and item["question_id"].startswith("HQ")
+        assert "relevant_documents" in item
+        assert any("hypertension" in d.lower() or "aha" in d.lower() or "hearts" in d.lower() or "pen" in d.lower() or "3192" in d.lower() for d in item["relevant_documents"]), f"Non-hypertension doc in {item['question_id']}"
+    topics = {i["topic"] for i in data}
+    assert any("hypertension" in t for t in topics)
+
+
+def test_respiratory_retrieval_files_exist():
+    assert RESPIRATORY_DATASET.exists(), f"Missing {RESPIRATORY_DATASET}"
+    data = load_dataset(RESPIRATORY_DATASET)
+    assert len(data) >= 8
+    for item in data:
+        assert "question_id" in item and item["question_id"].startswith("RQ")
+        assert any("gold" in d.lower() or "gina" in d.lower() or "copd" in d.lower() or "pen" in d.lower() for d in item["relevant_documents"]), f"Non-respiratory doc in {item['question_id']}"
+    assert any("respiratory" in i["topic"] or "gold" in i["topic"] or "gina" in i["topic"] for i in data)
+
+
+def test_mental_retrieval_files_exist():
+    assert MENTAL_DATASET.exists(), f"Missing {MENTAL_DATASET}"
+    data = load_dataset(MENTAL_DATASET)
+    assert len(data) >= 8
+    for item in data:
+        assert "question_id" in item and item["question_id"].startswith("MQ")
+        assert any("mhgap" in d.lower() or "mental" in d.lower() or "pen" in d.lower() for d in item["relevant_documents"]), f"Non-mental doc in {item['question_id']}"
+    assert any("mental" in i["topic"] for i in data)
+
+
+def test_all_four_diseases_covered():
+    """Coverage gate: 4 diseases must have retrieval sets."""
+    for path in [DIABETES_DATASET, HYPERTENSION_DATASET, RESPIRATORY_DATASET, MENTAL_DATASET]:
+        assert path.exists(), f"Missing {path}"
+        data = load_dataset(path)
+        assert len(data) >= 8, f"{path} too small: {len(data)}"
+    total = sum(len(load_dataset(p)) for p in [DIABETES_DATASET, HYPERTENSION_DATASET, RESPIRATORY_DATASET, MENTAL_DATASET])
+    assert total >= 40, f"Expected >=40 Qs across 4 diseases, got {total}"
+
+
 def test_recall_metrics_sanity():
     # Synthetic sanity: perfect retrieval should give 1.0 (requires ContextItem list)
     from src.models.llm_io import ContextItem
@@ -57,3 +106,15 @@ def test_legacy_generic_metrics_still_importable():
         pytest.skip("Legacy dataset not present")
     data = load_dataset(LEGACY_DATASET)
     assert len(data) == 20
+
+
+@pytest.mark.legacy
+def test_benchmark_questions_legacy_kept_skipped():
+    """P0 decision: benchmark_questions.json 5 Qs generic kept as legacy (skip unless explicitly run)."""
+    if not BENCHMARK_LEGACY.exists():
+        pytest.skip("Legacy benchmark not present")
+    data = load_dataset(BENCHMARK_LEGACY)
+    assert len(data) == 5
+    # ensure legacy topics are not in new 4-disease allowlist
+    for item in data:
+        assert item.get("id", "").startswith("q")

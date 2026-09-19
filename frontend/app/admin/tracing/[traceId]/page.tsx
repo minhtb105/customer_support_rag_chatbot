@@ -19,6 +19,9 @@ export default function TraceDetailPage(){
   };
   if(!data) return <div className="p-6 text-sm">{msg || "Đang tải trace..."}</div>;
   const { trace, spans, chunks, ragas, review } = data;
+  const MEMORY_DATASETS = ["short_term_memory", "episodic_memory", "long_term_memory"];
+  const memoryRows = (chunks || []).filter((c: any) => MEMORY_DATASETS.includes(c.dataset));
+  const hasBuildSpan = (spans || []).some((s: any) => s.name === "build_llm_input");
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border bg-white p-4 shadow-sm">
@@ -59,6 +62,31 @@ export default function TraceDetailPage(){
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <h2 className="text-sm font-semibold">Memory context <span className="font-normal text-slate-500">(truncated 500)</span></h2>
+        {!hasBuildSpan ? (
+          <div className="mt-2 text-xs text-slate-500">— (cache hit)</div>
+        ) : memoryRows.length === 0 ? (
+          <div className="mt-2 text-xs text-slate-500">không có memory context</div>
+        ) : (
+          <div className="mt-3 overflow-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-slate-50 border-b text-left"><tr><th className="p-2">Dataset</th><th className="p-2">Source</th><th className="p-2">Score</th><th className="p-2">Snippet (truncated 500)</th></tr></thead>
+              <tbody>
+                {memoryRows.map((c: any) => (
+                  <tr key={c.id} className="border-b">
+                    <td className="p-2"><span className="rounded-full bg-violet-50 border border-violet-200 px-2 py-0.5">{c.dataset}</span></td>
+                    <td className="p-2 font-mono">{c.source_id}</td>
+                    <td className="p-2">{c.score ? Number(c.score).toFixed(3) : "—"}</td>
+                    <td className="p-2 max-w-[480px] whitespace-pre-wrap">{c.content_snippet?.slice(0, 500)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <div className="rounded-2xl border bg-white p-4 shadow-sm">

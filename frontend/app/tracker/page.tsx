@@ -4,6 +4,7 @@ import { logGlucose, getGlucose, queryRag } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from "recharts";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 const contexts = [
   { value: "fasting", label: "Đói (fasting)" },
@@ -22,8 +23,12 @@ export default function TrackerPage(){
   const [data,setData]=useState<any>(null);
   const [msg,setMsg]=useState("");
   const [trend,setTrend]=useState("");
+  const [anomaly,setAnomaly]=useState<any>(null);
+  const [fqg,setFqg]=useState<string[]>([]);
 
   const effectiveId = user?.id || "";
+  const searchParams = useSearchParams();
+  const highlightId = searchParams?.get("highlight");
   const refresh = async ()=>{
     if(!effectiveId) return;
     try{ const d=await getGlucose(effectiveId,50); setData(d);}catch(e:any){ setMsg(e.message); }
@@ -32,10 +37,12 @@ export default function TrackerPage(){
 
   const submit = async ()=>{
     if(!user){ setMsg("Cần đăng nhập"); return; }
-    setMsg(""); setTrend("");
+    setMsg(""); setTrend(""); setAnomaly(null); setFqg([]);
     try{
       const rec:any=await logGlucose({ user_id: effectiveId, value_mgdl:Number(value), context, notes: notes||undefined });
       setMsg(`${rec.classification.toUpperCase()}: ${rec.message}`);
+      if(rec.anomaly && rec.anomaly.type && rec.anomaly.type!=="none") setAnomaly(rec.anomaly);
+      if(Array.isArray(rec.follow_up_questions) && rec.follow_up_questions.length) setFqg(rec.follow_up_questions);
       await refresh();
     }catch(e:any){ setMsg(e.message); }
   };
@@ -65,6 +72,18 @@ export default function TrackerPage(){
             <div><label className="text-xs text-slate-600">Ghi chú</label><input value={notes} onChange={(e)=>setNotes(e.target.value)} placeholder="vd: sau ăn phở" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" /></div>
             <button onClick={submit} className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-700">Lưu chỉ số</button>
             {msg && <div className="rounded-lg border bg-slate-50 p-3 text-xs">{msg}</div>}
+            {anomaly && (
+              <div className={`rounded-lg border p-3 text-xs ${anomaly.type==="spike"?"bg-red-50 border-red-200 text-red-800":"bg-amber-50 border-amber-200 text-amber-800"}`}>
+                <div className="font-bold">{anomaly.type==="spike"?"⚠️ Spike bất thường":"📈 Trend cascade"} — {anomaly.direction||""}</div>
+                <div className="mt-1">{anomaly.reason}</div>
+              </div>
+            )}
+            {fqg.length>0 && (
+              <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs text-blue-900">
+                <div className="font-bold">Câu hỏi follow-up (FQG)</div>
+                <ul className="mt-1 list-disc pl-4 space-y-1">{fqg.map((q,i)=><li key={i}>{q}</li>)}</ul>
+              </div>
+            )}
             <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100">Ngưỡng WHO/ADA: Đói &lt;100, 100–125, ≥126 · Sau ăn &lt;140, 140–199, ≥200 · Hạ &lt;70 · Critical ≥300</div>
           </div>
         </div>
@@ -88,7 +107,7 @@ export default function TrackerPage(){
           <div className="rounded-2xl border bg-white p-5 shadow-sm">
             <h3 className="text-sm font-semibold">Lịch sử</h3>
             <div className="mt-3 max-h-72 overflow-auto divide-y rounded-lg border">
-              {data?.logs?.length? data.logs.map((l:any)=><div key={l.id} className="flex items-center justify-between px-3 py-2 text-xs"><div><div className="font-mono">{l.measured_at.slice(0,16).replace("T"," ")} · {l.value_mgdl} mg/dL</div><div className="text-slate-500">{l.context} {l.notes? `· ${l.notes}`:""}</div></div><span className={`rounded-full border px-2 py-1 text-[11px] font-medium ${classColor(l.classification)}`}>{l.classification}</span></div>): <div className="p-6 text-center text-sm text-slate-500">Chưa có log</div>}
+              {data?.logs?.length? data.logs.map((l:any)=><div key={l.id} id={`log-${l.id}`} className={`flex items-center justify-between px-3 py-2 text-xs ${String(l.id)===String(highlightId)?"bg-yellow-100 ring-2 ring-yellow-400":""}`}><div><div className="font-mono">#{l.id} · {l.measured_at.slice(0,16).replace("T"," ")} · {l.value_mgdl} mg/dL</div><div className="text-slate-500">{l.context} {l.notes? `· ${l.notes}`:""}</div></div><span className={`rounded-full border px-2 py-1 text-[11px] font-medium ${classColor(l.classification)}`}>{l.classification}</span></div>): <div className="p-6 text-center text-sm text-slate-500">Chưa có log</div>}
             </div>
           </div>
         </div>

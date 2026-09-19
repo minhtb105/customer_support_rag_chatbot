@@ -14,16 +14,8 @@ dependencies = [
     "langchain-chroma>=0.2.6",
     "langchain-community>=0.3.31",
     "langchain-openai>=0.3.0",
-    "sentence-transformers>=5.1.1",
-    "transformers>=4.57.1",
     "chromadb>=1.2.0",
-    "scikit-learn>=1.7.2",
-    "pandas>=2.3.3",
     "numpy>=2.2.6",
-    "matplotlib>=3.10.7",
-    "seaborn>=0.13.2",
-    "tqdm>=4.67.1",
-    "torch>=2.9.0",
     # FastAPI backend (Hướng C — WHO-RAG Infrastructure API)
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.34.0",
@@ -66,4 +58,25 @@ test = [
 ]
 security = [
     "safety>=3.0",
+]
+# Local embeddings + reranking + semantic cache (requires torch) — dùng khi EMBEDDING_PROVIDER=local
+# Deploy openai-only (mặc định) KHÔNG cần cài nhóm này: pip install .  (≈400MB, không cần torch)
+# Deploy local embeddings/reranker: pip install .[local]  (≈2GB, có torch + faiss)
+local = [
+    "torch>=2.9.0",
+    "sentence-transformers>=5.1.1",
+    "transformers>=4.57.1",
+    "scikit-learn>=1.7.2",
+    "faiss-cpu>=1.12.0",
+]
+# Chỉ torch (nếu đã có sentence-transformers từ cache)
+torch = [
+    "torch>=2.9.0",
+]
+# Notebook / evaluation (không cần cho API runtime)
+notebooks = [
+    "pandas>=2.3.3",
+    "matplotlib>=3.10.7",
+    "seaborn>=0.13.2",
+    "tqdm>=4.67.1",
 ]

@@ -205,7 +205,35 @@ def health():
 
 # ---------- RAG query (Hướng C) — bắt buộc login ----------
 @app.post(f"{API_PREFIX}/query", tags=["rag"])
-def rag_query(req: QueryRequest, current_user=Depends(get_current_user)):
+def rag_query(req: QueryRequest, current_user=Depends(get_current_user)):  # noqa: C901
+    # Safeguard gate (diabetes scope): hard early-return BEFORE any RAG/LLM call.
+    try:
+        try:
+            from src.features.scope_guard import is_out_of_scope, safeguard_response
+        except ImportError:
+            from features.scope_guard import is_out_of_scope, safeguard_response  # type: ignore
+        if req.query and is_out_of_scope(req.query):
+            _safeguard = safeguard_response(req.query)
+            return {
+                "answer": _safeguard,
+                "cited_sources": [],
+                "contexts": [],
+                "audit": None,
+                "langsmith": None,
+                "cache_hit": False,
+                "timings": {},
+                "status": "answered",
+                "review_id": None,
+                "evaluation": None,
+                "is_low_confidence": False,
+                "effective_user_id": (current_user["id"] if AUTH_ENABLED and current_user else req.user_id),
+                "trace_id": None,
+                "safeguard": True,
+            }
+    except HTTPException:
+        raise
+    except Exception:
+        pass
     """
     Truy vấn RAG với audit trail + HILT.
     - Retrieval hybrid BM25 + vector
@@ -400,7 +428,21 @@ def create_glucose_log(payload: GlucoseLogCreate, current_user=Depends(get_curre
         rec = add_log(user_id=user_id, value_mgdl=payload.value_mgdl, measured_at=payload.measured_at, context=payload.context, notes=payload.notes)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
-    return GlucoseLogOut(id=rec["id"], user_id=rec["user_id"], value_mgdl=rec["value_mgdl"], measured_at=rec["measured_at"], context=rec["context"], notes=rec["notes"], classification=rec["classification"], message=rec["message"])
+    # Anomaly middleware (fail-open: never break the primary log write)
+    _anomaly: dict = {"type": "none", "reason": ""}
+    _fqg: list = []
+    try:
+        try:
+            from src.features.anomaly_detector import analyze_glucose_log
+        except ImportError:
+            from features.anomaly_detector import analyze_glucose_log  # type: ignore
+        _recent = get_logs(user_id, limit=30)
+        _res = analyze_glucose_log(payload.value_mgdl, _recent)
+        _anomaly = _res.get("anomaly", _anomaly)
+        _fqg = _res.get("follow_up_questions", [])
+    except Exception:
+        pass
+    return GlucoseLogOut(id=rec["id"], user_id=rec["user_id"], value_mgdl=rec["value_mgdl"], measured_at=rec["measured_at"], context=rec["context"], notes=rec["notes"], classification=rec["classification"], message=rec["message"], anomaly=_anomaly, follow_up_questions=_fqg)
 
 @app.get(f"{API_PREFIX}/glucose/{{user_id}}", tags=["glucose"])
 def list_glucose_logs(user_id: str, limit: int = Query(50, ge=1, le=200), days: Optional[int] = Query(None), current_user=Depends(get_current_user)):

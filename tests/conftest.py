@@ -8,20 +8,39 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture(scope="session")
 def client():
-    """FastAPI TestClient with temp DB isolation for glucose + auth."""
+    """FastAPI TestClient with temp DB isolation for glucose + vitals + auth (4 diseases)."""
     import src.config as cfg
     tmp_glucose = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
     tmp_glucose.close()
     tmp_auth = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
     tmp_auth.close()
+    tmp_vitals = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+    tmp_vitals.close()
     original_glucose = cfg.GLUCOSE_DB_PATH
     original_auth = cfg.AUTH_DB_PATH
+    original_vitals = cfg.VITALS_DB_PATH
     cfg.GLUCOSE_DB_PATH = Path(tmp_glucose.name)
     cfg.AUTH_DB_PATH = Path(tmp_auth.name)
-    # Re-init DBs
+    cfg.VITALS_DB_PATH = Path(tmp_vitals.name)
+    # Re-init DBs (glucose legacy + unified vitals + auth)
     try:
         from src.features.glucose_tracker import init_glucose_db
         init_glucose_db()
+    except Exception:
+        pass
+    try:
+        from src.features.bp_tracker import init_bp_db
+        init_bp_db()
+    except Exception:
+        pass
+    try:
+        from src.features.respiratory_tracker import init_respiratory_db
+        init_respiratory_db()
+    except Exception:
+        pass
+    try:
+        from src.features.mood_tracker import init_mood_db
+        init_mood_db()
     except Exception:
         pass
     try:
@@ -34,9 +53,11 @@ def client():
         yield c
     cfg.GLUCOSE_DB_PATH = original_glucose
     cfg.AUTH_DB_PATH = original_auth
+    cfg.VITALS_DB_PATH = original_vitals
     try:
         os.unlink(tmp_glucose.name)
         os.unlink(tmp_auth.name)
+        os.unlink(tmp_vitals.name)
     except Exception:
         pass
 

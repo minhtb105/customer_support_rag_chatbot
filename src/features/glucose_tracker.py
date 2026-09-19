@@ -1,7 +1,7 @@
 """
 Hướng A — Trợ lý tuân thủ tự theo dõi đường huyết.
 
-- Lưu log vào SQLite (metadata/glucose_logs.db)
+- Lưu log vào SQLite (metadata/glucose_logs.db — legacy) / vitals.db via BaseTracker helpers
 - Phân loại ngưỡng WHO/ADA (fasting, postprandial)
 - Thống kê, streak, logs_per_week (KPI: ≥3 lần/tuần)
 - Gợi ý RAG: chỉ escalate khi critical / 3 lần high liên tiếp
@@ -9,29 +9,26 @@ Hướng A — Trợ lý tuân thủ tự theo dõi đường huyết.
 
 from __future__ import annotations
 
-import sqlite3
-import time
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import List, Optional, Dict, Any, Tuple
+from typing import Dict, Any, List, Optional, Tuple
 
 try:
     from src.config import GLUCOSE_THRESHOLDS_MGDL, GLUCOSE_DB_PATH
-except ImportError:
+    from src.features.base_tracker import get_conn as _base_get_conn, init_table, fetch_logs, classification_counts, calc_streak, calc_logs_per_week
+except ImportError:  # pragma: no cover
     from config import GLUCOSE_THRESHOLDS_MGDL, GLUCOSE_DB_PATH  # type: ignore
+    from features.base_tracker import get_conn as _base_get_conn, init_table, fetch_logs, classification_counts, calc_streak, calc_logs_per_week  # type: ignore
 
 # ---------- DB ----------
 
-def _get_conn() -> sqlite3.Connection:
-    GLUCOSE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(GLUCOSE_DB_PATH), check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
+def _get_conn():
+    return _base_get_conn(GLUCOSE_DB_PATH)
 
 
 def init_glucose_db():
-    conn = _get_conn()
-    conn.execute("""
+    init_table(
+        GLUCOSE_DB_PATH,
+        """
         CREATE TABLE IF NOT EXISTS glucose_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL,
@@ -42,10 +39,9 @@ def init_glucose_db():
             classification TEXT,
             created_at TEXT NOT NULL
         )
-    """)
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_glucose_user_time ON glucose_logs(user_id, measured_at)")
-    conn.commit()
-    conn.close()
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_glucose_user_time ON glucose_logs(user_id, measured_at)",
+    )
 
 
 # ---------- Classification ----------
@@ -125,17 +121,8 @@ def add_log(user_id: str, value_mgdl: float, measured_at: Optional[datetime] = N
 
 def get_logs(user_id: str, limit: int = 50, days: Optional[int] = None) -> List[Dict[str, Any]]:
     init_glucose_db()
-    conn = _get_conn()
-    q = "SELECT * FROM glucose_logs WHERE user_id=? "
-    params: List[Any] = [user_id]
-    if days is not None:
-        since = (datetime.utcnow() - timedelta(days=days)).isoformat()
-        q += "AND measured_at >= ? "
-        params.append(since)
-    q += "ORDER BY measured_at DESC LIMIT ?"
-    params.append(limit)
-    rows = conn.execute(q, params).fetchall()
-    conn.close()
+    rows = fetch_logs(GLUCOSE_DB_PATH, "glucose_logs", user_id, limit, days)
+    # Keep original projection for backward compat (tests expect these 7 keys)
     out = []
     for r in rows:
         out.append({
@@ -165,32 +152,18 @@ def get_stats(user_id: str) -> Dict[str, Any]:
         }
     vals = [l["value_mgdl"] for l in logs]
     avg = sum(vals) / len(vals)
-    # last 7 days
     seven = [l for l in logs if l["measured_at"] >= (datetime.utcnow() - timedelta(days=7)).isoformat()]
     last7_avg = sum(l["value_mgdl"] for l in seven) / len(seven) if seven else None
-    # classification counts
-    counts: Dict[str, int] = {}
-    for l in logs:
-        c = l.get("classification", "unknown")
-        counts[c] = counts.get(c, 0) + 1
-    # streak_days: số ngày liên tiếp có ít nhất 1 log (tính từ hôm nay ngược lại)
-    dates = sorted({l["measured_at"][:10] for l in logs}, reverse=True)
-    streak = 0
-    cur = datetime.utcnow().date()
-    date_set = set(dates)
-    while cur.isoformat() in date_set:
-        streak += 1
-        cur -= timedelta(days=1)
-    # logs_per_week: trung bình 4 tuần gần nhất
-    last28 = [l for l in logs if l["measured_at"] >= (datetime.utcnow() - timedelta(days=28)).isoformat()]
-    logs_per_week = len(last28) / 4.0 if last28 else (total / max(1, (datetime.utcnow() - datetime.fromisoformat(logs[-1]["measured_at"])).days / 7))
+    counts = classification_counts(logs)
+    streak = calc_streak(logs)
+    logs_per_week = calc_logs_per_week(logs)
     return {
         "user_id": user_id,
         "total_logs": total,
         "avg_mgdl": round(avg, 1),
         "last_7_days_avg": round(last7_avg, 1) if last7_avg else None,
         "streak_days": streak,
-        "logs_per_week": round(logs_per_week, 2),
+        "logs_per_week": logs_per_week,
         "classification_counts": counts,
     }
 

@@ -33,7 +33,7 @@ export default function TracingListPage(){
       <div>
         <h1 className="text-xl font-bold">Admin — Tracing</h1>
         <p className="text-xs text-slate-600">Truy vết user query → chunks retrieved → final answer + RAGAS. Lưu 30 ngày, 10 trace/trang. Chỉ admin.</p>
-        <div className="text-xs text-slate-500">{API_BASE} · Tổng {total} traces</div>
+        <div className="text-xs text-slate-500">{API_BASE} · Tổng {total} traces · <Link href="/admin/tracing/chunks" className="text-blue-700 hover:underline font-medium">Chunks →</Link> · <Link href="/admin/tracing/memory" className="text-blue-700 hover:underline font-medium">Memory →</Link></div>
       </div>
       <div className="rounded-2xl border bg-white p-4 shadow-sm flex flex-wrap gap-2 items-end">
         <div><label className="text-xs">Tìm kiếm</label><input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="query/answer" className="ml-2 rounded border px-2 py-1 text-xs" /></div>

@@ -1,48 +1,41 @@
 """
 Mental health tracker — 15M people, 29% treated, 1k psychiatrists. Largest treatment gap.
 Full CRUD with PII redact + crisis safety (hotline, no self-diagnosis).
-
-Stores PHQ-9, GAD-7, crisis flags. PII redact before storage.
+Stores PHQ-9, GAD-7, crisis flags via BaseTracker.
 """
 
 from __future__ import annotations
 
 import re
-import sqlite3
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any, Tuple
+from typing import Dict, Any, List, Optional, Tuple
 
 try:
     from src.config import MENTAL_HEALTH_THRESHOLDS, VITALS_DB_PATH, PII_REDACT_FIELDS
-except ImportError:
+    from src.features.base_tracker import get_conn as _base_get_conn, init_table, fetch_logs, classification_counts
+except ImportError:  # pragma: no cover
     from config import MENTAL_HEALTH_THRESHOLDS, VITALS_DB_PATH, PII_REDACT_FIELDS  # type: ignore
+    from features.base_tracker import get_conn as _base_get_conn, init_table, fetch_logs, classification_counts  # type: ignore
 
 # ---------- PII redact ----------
 def redact_pii(text: Optional[str]) -> Optional[str]:
     if not text:
         return text
     redacted = text
-    # phone VN: 09..., +84...
     redacted = re.sub(r"(\+84|0)\d{9,10}", "[REDACTED_PHONE]", redacted)
-    # email
     redacted = re.sub(r"[\w\.-]+@[\w\.-]+\.\w+", "[REDACTED_EMAIL]", redacted)
-    # simple name pattern: not perfect, but catch explicit PII fields
     for field in PII_REDACT_FIELDS:
-        # if user writes "name: Nguyen Van A", redact value
         redacted = re.sub(rf"{field}\s*[:=]\s*\S+", f"{field}:[REDACTED]", redacted, flags=re.IGNORECASE)
-    # CMND/CCCD 9-12 digits
     redacted = re.sub(r"\b\d{9,12}\b", "[REDACTED_ID]", redacted)
     return redacted
 
-def _get_conn() -> sqlite3.Connection:
-    VITALS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(VITALS_DB_PATH), check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
+def _get_conn():
+    return _base_get_conn(VITALS_DB_PATH)
 
 def init_mood_db():
-    conn = _get_conn()
-    conn.execute("""
+    init_table(
+        VITALS_DB_PATH,
+        """
         CREATE TABLE IF NOT EXISTS mood_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL,
@@ -56,10 +49,9 @@ def init_mood_db():
             classification TEXT,
             created_at TEXT NOT NULL
         )
-    """)
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_mood_user_time ON mood_logs(user_id, measured_at)")
-    conn.commit()
-    conn.close()
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_mood_user_time ON mood_logs(user_id, measured_at)",
+    )
 
 def classify_phq9(score: Optional[int]) -> Tuple[str,str]:
     if score is None:
@@ -101,7 +93,6 @@ def classify_mood(phq9: Optional[int], gad7: Optional[int], notes: Optional[str]
     phq_cls,_ = classify_phq9(phq9)
     gad_cls,_ = classify_gad7(gad7)
     crisis, kws = contains_crisis_keywords(notes)
-    # crisis overrides
     if crisis:
         return "crisis", f"Crisis keywords detected {kws} — Provide hotline {MENTAL_HEALTH_THRESHOLDS['crisis_hotline_vn']} and refer to human professional immediately. Do not self-diagnose.", True, kws
     if phq_cls in ("severe","moderately_severe") or gad_cls=="severe":
@@ -119,12 +110,9 @@ def add_mood_log(user_id: str, phq9_score: Optional[int] = None, gad7_score: Opt
                  context: str = "random") -> Dict[str, Any]:
     init_mood_db()
     measured_at = measured_at or datetime.utcnow()
-    # PII redact before storage
     redacted_notes = redact_pii(mood_notes)
-    crisis, kws = contains_crisis_keywords(mood_notes)  # detect before redact to catch keywords
-    # Also check redacted? keep original detection
+    crisis, kws = contains_crisis_keywords(mood_notes)
     classification, message, is_crisis, found = classify_mood(phq9_score, gad7_score, mood_notes)
-    # validate scores
     if phq9_score is not None and not (0 <= phq9_score <= 27):
         raise ValueError("PHQ-9 must be 0-27")
     if gad7_score is not None and not (0 <= gad7_score <= 21):
@@ -144,18 +132,7 @@ def add_mood_log(user_id: str, phq9_score: Optional[int] = None, gad7_score: Opt
 
 def get_mood_logs(user_id: str, limit: int = 50, days: Optional[int] = None) -> List[Dict[str, Any]]:
     init_mood_db()
-    conn=_get_conn()
-    q="SELECT * FROM mood_logs WHERE user_id=? "
-    params: List[Any]=[user_id]
-    if days is not None:
-        since=(datetime.utcnow()-timedelta(days=days)).isoformat()
-        q+="AND measured_at >= ? "
-        params.append(since)
-    q+="ORDER BY measured_at DESC LIMIT ?"
-    params.append(limit)
-    rows=conn.execute(q, params).fetchall()
-    conn.close()
-    return [{k:r[k] for k in r.keys()} for r in rows]
+    return fetch_logs(VITALS_DB_PATH, "mood_logs", user_id, limit, days)
 
 def get_mood_stats(user_id: str) -> Dict[str, Any]:
     logs=get_mood_logs(user_id, limit=1000)
@@ -167,9 +144,7 @@ def get_mood_stats(user_id: str) -> Dict[str, Any]:
     avg_phq=round(sum(phqs)/len(phqs),1) if phqs else None
     avg_gad=round(sum(gads)/len(gads),1) if gads else None
     crisis=sum(1 for l in logs if l["crisis_flag"])
-    counts={}
-    for l in logs:
-        counts[l["classification"]]=counts.get(l["classification"],0)+1
+    counts=classification_counts(logs)
     return {"user_id": user_id, "total_logs": total, "avg_phq9": avg_phq, "avg_gad7": avg_gad, "crisis_count": crisis, "classification_counts": counts}
 
 def should_escalate_mood(user_id: str) -> bool:

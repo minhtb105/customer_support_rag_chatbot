@@ -70,6 +70,15 @@ def job_guideline_quarterly_deep():
     except Exception as e:
         log.exception(f"[scheduler] Guideline quarterly failed: {e}")
 
+def job_gho_quarterly():
+    log.info("[scheduler] GHO quarterly snapshot start")
+    try:
+        from src.monitors.gho_snapshot import run_snapshot
+        res = run_snapshot(countries=("VNM",))
+        log.info(f"[scheduler] GHO done: snapshots={len(res.get('snapshots', []))} sqlite_rows={res.get('sqlite_rows', 0)}")
+    except Exception as e:
+        log.exception(f"[scheduler] GHO failed: {e}")
+
 def job_cleanup_superseded():
     log.info("[scheduler] Cleanup superseded start")
     try:
@@ -90,9 +99,11 @@ def setup_schedule():
     schedule.every().day.at("04:00").do(lambda: job_guideline_monthly_head() if datetime.utcnow().day == 1 else None)
     # Quarterly deep: 01 Jan/Apr/Jul/Oct 05:00
     schedule.every().day.at("05:00").do(lambda: job_guideline_quarterly_deep() if datetime.utcnow().day == 1 and datetime.utcnow().month in (1,4,7,10) else None)
+    # GHO snapshot quarterly: 01 Jan/Apr/Jul/Oct 06:30 (no human review — audit via monitor_runs)
+    schedule.every().day.at("06:30").do(lambda: job_gho_quarterly() if datetime.utcnow().day == 1 and datetime.utcnow().month in (1,4,7,10) else None)
     # Cleanup weekly Sunday 06:00
     schedule.every().sunday.at("06:00").do(job_cleanup_superseded)
-    log.info("Scheduler jobs registered: FDA daily 02:00, BYT weekly Mon 03:00, guideline monthly 04:00 (day1), quarterly deep, cleanup Sunday 06:00")
+    log.info("Scheduler jobs registered: FDA daily 02:00, BYT weekly Mon 03:00, guideline monthly 04:00 (day1), quarterly deep, GHO quarterly 06:30, cleanup Sunday 06:00")
 
 def run_loop(poll_seconds: int = 60):
     setup_schedule()

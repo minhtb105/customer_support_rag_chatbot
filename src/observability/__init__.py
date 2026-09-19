@@ -1,28 +1,16 @@
 """
-Observability utilities for LangSmith: tracing, feedback, evaluation logging.
+Observability package — re-exports canonical local_tracing engine.
+Legacy LangSmith shim (tracing.py / feedback.py) removed 2026-09-07.
+Use `from src.observability.local_tracing import ...` directly.
 """
-from .tracing import (
-    add_trace_metadata,
-    add_trace_outputs,
-    get_client,
-    get_current_trace_info,
-    is_tracing_enabled,
-    log_evaluation_summary,
-    resolve_trace_url,
-    setup_langsmith,
-)
-from .feedback import submit_feedback, submit_thumbs_down, submit_thumbs_up
+from .local_tracing import short_hash, get_current_trace_id, start_trace, end_trace, start_span, finish_span, trace_span
 
 __all__ = [
-    "add_trace_metadata",
-    "add_trace_outputs",
-    "get_client",
-    "get_current_trace_info",
-    "is_tracing_enabled",
-    "log_evaluation_summary",
-    "resolve_trace_url",
-    "setup_langsmith",
-    "submit_feedback",
-    "submit_thumbs_down",
-    "submit_thumbs_up",
+    "short_hash",
+    "get_current_trace_id",
+    "start_trace",
+    "end_trace",
+    "start_span",
+    "finish_span",
+    "trace_span",
 ]

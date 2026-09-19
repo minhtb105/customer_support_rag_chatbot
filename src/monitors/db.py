@@ -156,6 +156,20 @@ def init_monitoring_db():
                 (uuid.uuid4().hex, key, name, url, interval, tier, 1, now),
             )
         conn.commit()
+    # Đợt bổ sung 2026-09: upsert các nguồn mới nếu DB đã seed từ trước (idempotent)
+    extra_seeds = [
+        ("byt_3798", "BYT — Quy trình lâm sàng ĐTĐ típ 2 (QĐ 3798/2017)", "https://daithaoduong.kcb.vn/quy-trinh-lam-sang-dieu-tri-dai-thao-duong", "weekly", "high"),
+        ("byt_5481", "BYT — HD chẩn đoán & điều trị ĐTĐ típ 2 (QĐ 5481/2020, thay thế 3319)", "https://bvcdn.org.vn/quyet-dinh-so-5481-qd-byt-ngay-30-thang-12-nam-2020-cua-bo-y-te-ve-viec-ban-hanh-tai-lieu-chuyen-mon-huong-dan-chan-doan-va-dieu-tri-dai-thao-duong-tip-2", "weekly", "high"),
+        ("gho_diabetes_snapshot", "WHO GHO — Diabetes indicators snapshot (VNM/SEARO)", "https://ghoapi.azureedge.net/api/Indicator", "quarterly", "medium"),
+    ]
+    for key, name, url, interval, tier in extra_seeds:
+        exists = conn.execute("SELECT 1 FROM monitored_sources WHERE source_key=?", (key,)).fetchone()
+        if not exists:
+            conn.execute(
+                "INSERT INTO monitored_sources (id, source_key, display_name, base_url, check_interval, risk_tier, enabled, created_at) VALUES (?,?,?,?,?,?,?,?)",
+                (uuid.uuid4().hex, key, name, url, interval, tier, 1, datetime.utcnow().isoformat()),
+            )
+    conn.commit()
     conn.close()
 
 # ---------- monitored_sources helpers ----------

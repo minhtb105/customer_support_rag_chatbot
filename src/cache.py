@@ -1,8 +1,17 @@
-import time, hashlib, json, numpy as np, faiss, re
+import time, hashlib, json, numpy as np, re
 from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Optional, List
-from sentence_transformers import SentenceTransformer
+
+# Semantic cache (torch + faiss) is optional — openai-only deploy uses exact cache only
+try:
+    from sentence_transformers import SentenceTransformer  # type: ignore
+    import faiss  # type: ignore
+    _SEMANTIC_AVAILABLE = True
+except Exception:  # torch / sentence-transformers / faiss not installed
+    SentenceTransformer = None  # type: ignore
+    faiss = None  # type: ignore
+    _SEMANTIC_AVAILABLE = False
 try:
     from models.llm_io import LLMOutput
 except ImportError:
@@ -39,10 +48,24 @@ class CAGHybridCache:
         # Exact cache (LRU)
         self._exact_store: "OrderedDict[str, CacheEntry]" = OrderedDict()
 
-        # Semantic cache
-        self._embedder = SentenceTransformer(semantic_model_name)
-        self._dim = self._embedder.get_sentence_embedding_dimension()
-        self._faiss_index = faiss.IndexFlatIP(self._dim)
+        # Semantic cache (optional — requires torch)
+        self._semantic_available = _SEMANTIC_AVAILABLE
+        if self._semantic_available:
+            try:
+                self._embedder = SentenceTransformer(semantic_model_name)
+                self._dim = self._embedder.get_sentence_embedding_dimension()
+                self._faiss_index = faiss.IndexFlatIP(self._dim)
+            except Exception as e:
+                print(f"[cache] semantic init failed ({e}) — fallback to exact cache only")
+                self._semantic_available = False
+                self._embedder = None  # type: ignore
+                self._faiss_index = None  # type: ignore  # noqa
+                self._dim = 0
+        else:
+            print("[cache] sentence-transformers/torch/faiss not installed — semantic cache disabled (pip install .[local] to enable)")
+            self._embedder = None  # type: ignore
+            self._faiss_index = None  # type: ignore
+            self._dim = 0
         self._semantic_entries: List[CacheEntry] = []
         self._semantic_matrix: List[np.ndarray] = []
 
@@ -52,7 +75,7 @@ class CAGHybridCache:
 
     # ---------- Internal Helpers ----------
 
-     def _normalize_key(self, query: str) -> str:
+    def _normalize_key(self, query: str) -> str:
         query = query.lower().strip()
         query = re.sub(r"[^a-z0-9\s]", "", query)  # remove punctuation
         tokens = query.split()
@@ -95,6 +118,8 @@ class CAGHybridCache:
 
     def _rebuild_faiss(self):
         """Rebuild FAISS index from stored embeddings."""
+        if not self._semantic_available or self._faiss_index is None:
+            return
         self._faiss_index.reset()
         if self._semantic_matrix:
             mat = np.vstack(self._semantic_matrix).astype("float32")
@@ -117,23 +142,25 @@ class CAGHybridCache:
             return entry.output
         elif entry:
             self._exact_store.pop(key, None)  # expired
-        # Fallback: semantic search
-        if not self._semantic_entries:
+        # Fallback: semantic search (only if available)
+        if not self._semantic_available or not self._semantic_entries:
             self.misses += 1
             return None
 
-        q_emb = self._normalize_emb(
-            self._embedder.encode([query], convert_to_numpy=True).astype("float32")
-        )
-        D, I = self._faiss_index.search(q_emb, 1)
-        best_score = float(D[0][0])
-        best_idx = int(I[0][0])
-
-        if best_score >= self.semantic_threshold:
-            candidate = self._semantic_entries[best_idx]
-            if not self._is_expired(candidate):
-                self.hits += 1
-                return candidate.output
+        try:
+            q_emb = self._normalize_emb(
+                self._embedder.encode([query], convert_to_numpy=True).astype("float32")  # type: ignore
+            )
+            D, I = self._faiss_index.search(q_emb, 1)  # type: ignore
+            best_score = float(D[0][0])
+            best_idx = int(I[0][0])
+            if best_score >= self.semantic_threshold:
+                candidate = self._semantic_entries[best_idx]
+                if not self._is_expired(candidate):
+                    self.hits += 1
+                    return candidate.output
+        except Exception:
+            pass
 
         self.misses += 1
         return None
@@ -158,22 +185,26 @@ class CAGHybridCache:
         self._exact_store[key] = exact_entry
         self._exact_store.move_to_end(key)
 
-        # Semantic cache insert
-        emb = self._normalize_emb(
-            self._embedder.encode([query], convert_to_numpy=True).astype("float32")
-        )
-        sem_entry = CacheEntry(
-            key=key,
-            output=output,
-            timestamp=time.time(),
-            embedding=emb,
-            context_hash=hashlib.md5(
-                json.dumps(context_ids, sort_keys=True).encode()
-            ).hexdigest(),
-        )
-        self._semantic_entries.append(sem_entry)
-        self._semantic_matrix.append(emb)
-        self._rebuild_faiss()
+        # Semantic cache insert (only if available)
+        if self._semantic_available:
+            try:
+                emb = self._normalize_emb(
+                    self._embedder.encode([query], convert_to_numpy=True).astype("float32")  # type: ignore
+                )
+                sem_entry = CacheEntry(
+                    key=key,
+                    output=output,
+                    timestamp=time.time(),
+                    embedding=emb,
+                    context_hash=hashlib.md5(
+                        json.dumps(context_ids, sort_keys=True).encode()
+                    ).hexdigest(),
+                )
+                self._semantic_entries.append(sem_entry)
+                self._semantic_matrix.append(emb)
+                self._rebuild_faiss()
+            except Exception:
+                pass
         self._evict_if_needed()
 
     def stats(self) -> dict:
@@ -188,7 +219,8 @@ class CAGHybridCache:
         self._exact_store.clear()
         self._semantic_entries.clear()
         self._semantic_matrix.clear()
-        self._faiss_index.reset()
+        if self._semantic_available and self._faiss_index is not None:
+            self._faiss_index.reset()
         self.hits = 0
         self.misses = 0
         

@@ -77,7 +77,9 @@ export async function queryRagStream(
   return;
 }
 
-export async function logGlucose(payload: { user_id: string; value_mgdl: number; context: string; notes?: string; measured_at?: string }) {
+export interface GlucoseAnomaly { type: "spike" | "trend" | "none"; direction?: string; reason: string; }
+export interface GlucoseLogOut { id: number; user_id: string; value_mgdl: number; measured_at: string; context: string; notes?: string; classification: string; message: string; anomaly?: GlucoseAnomaly | null; follow_up_questions?: string[]; }
+export async function logGlucose(payload: { user_id: string; value_mgdl: number; context: string; notes?: string; measured_at?: string }): Promise<GlucoseLogOut> {
   const res = await authFetch(`${API}/v1/glucose`, { method: "POST", body: JSON.stringify(payload) });
   if (!res.ok) throw new Error(`glucose log failed ${res.status}: ${await res.text()}`);
   return res.json();
@@ -176,6 +178,26 @@ export async function adminGetTrace(id: string) {
 export async function adminTriggerRagas(id: string) {
   const res = await authFetch(`${API}/v1/admin/traces/${id}/ragas`, { method: "POST" });
   if (!res.ok) throw new Error(`ragas ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+export async function adminListCollections() {
+  const res = await authFetch(`${API}/v1/admin/collections`, { method: "GET" });
+  if (!res.ok) throw new Error(`collections ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+export async function adminListCollectionChunks(strategy: string, params: { page?: number; limit?: number; dataset?: string; q?: string } = {}) {
+  const url = new URL(`${API}/v1/admin/collections/${encodeURIComponent(strategy)}/chunks`);
+  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v)); });
+  const res = await authFetch(url.toString(), { method: "GET" });
+  if (!res.ok) throw new Error(`chunks ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+export async function adminListUserFacts(user_id: string, params: { page?: number; limit?: number; fact_type?: string; q?: string } = {}) {
+  const url = new URL(`${API}/v1/admin/memory/facts`);
+  url.searchParams.set("user_id", user_id);
+  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v)); });
+  const res = await authFetch(url.toString(), { method: "GET" });
+  if (!res.ok) throw new Error(`memory facts ${res.status}: ${await res.text()}`);
   return res.json();
 }
 export async function adminListPrompts(tone?: string) {

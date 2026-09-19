@@ -6,7 +6,10 @@
 
 | Thành phần | Đường dẫn | Kích thước / Số lượng (2026-09-06) | Ghi chú |
 |---|---|---|---|
-| Corpus gốc | `data/raw/pdfs/` | 18 file gốc + subfolders: `byt 1`, `diabetes 4`, `hypertension 5`, `mental 3`, `respiratory 3` = **34 PDFs** | Quét đệ quy `src/indexer.py:177 _iter_pdf_files`** |
+| Corpus gốc | `data/raw/pdfs/` | 18 file gốc + subfolders: `byt 3` (QD3192 THA + QD3319/QD5481 ĐTĐ), `diabetes 4`, `hypertension 5`, `mental 3`, `respiratory 3` + 11 thư mục nguồn đã tạo (`who_iris/ada/aha_acc/gold/gina/mhgap/...`) | Quét đệ quy `src/indexer.py:177 _iter_pdf_files`** |
+| GHO snapshot (số liệu) | `data/raw/gho/<INDICATOR>/<YYYYMMDD_HHMM>.json` | 4 indicators (prevalence/treatment × crude/agestd, VNM) — fetch quarterly | `src/monitors/gho_snapshot.py:run_snapshot`, audit `monitor_runs` (không human-review) |
+| GHO textualized | `data/raw/gho_text/gho_VNM.md` | ~8 câu tiếng Việt/snapshot | Index vào cả 4 strategy DB (`file_key=gho_text_VNM::<strategy>`) |
+| GHO structured | `data/processed/gho_stats.db` | `gho_stats` (indicator, country, year, sex, value, low/high) | Tool SQL readonly (`query_gho_stats`), PK dedup |
 | Staging (chờ duyệt) | `data/raw/staging/<source>/<version>/` | 0 bản chờ (đã promote xong) | Chỉ agent giám sát ghi, expert duyệt mới move |
 | Đã xử lý | `data/processed/docling_chunks/` | rỗng (output trung gian docling) | Không dùng làm source RAG |
 | Vector DB — local 384d | `embeddings/pdf_db/{structure,sliding,semantic,hybrid_section_semantic}/` | `structure 33.6 MB`, `sliding 37.7 MB`, `semantic 39.4 MB`, `hybrid 33.7 MB` | Mỗi chiến lược 6 files Chroma (`chroma.sqlite3`, `data_level0.bin`, `header.bin`, `link_lists.bin`…) |
@@ -182,6 +185,12 @@ src/monitors/safety_fetcher.py
 
 src/monitors/service.py promote
   move staging→corpus → supersede cũ → reindex_single_pdf → update indexed_at → clear CAGHybridCache._exact
+
+scripts/fetch_gho_snapshot.py (quarterly, Dual-Storage — bypass staging/human-review, audit monitor_runs)
+  GHO OData https://ghoapi.azureedge.net/api/<INDICATOR>?$filter=SpatialDim eq 'VNM'
+  → ETL (giữ code/country/year/sex/value/low/high, dedup) → data/raw/gho/<CODE>/<stamp>.json
+  → upsert data/processed/gho_stats.db (PK dedup) + textualize VI → data/raw/gho_text/gho_VNM.md
+  → index 8 câu vào 4 strategy DB + query_gho_stats() chen context ở rag_pipeline (buoc 1b)
 ```
 
 ## 10. Kiểm chứng nhanh

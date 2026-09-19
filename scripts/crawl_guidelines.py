@@ -136,15 +136,33 @@ CURATED_SEEDS: List[dict] = [
         "tags": ["cardiology", "aha_acc"],
         "direct_pdf": None,
     },
-    # --- BYT (Quyết định / Hướng dẫn) ---
+    # --- BYT (Quyết định / Hướng dẫn — Đái tháo đường) ---
     {
         "source": "byt",
-        "title": "BYT — Hướng dẫn chẩn đoán và điều trị Đái tháo đường type 2 (QĐ 3319/QĐ-BYT 2017, cập nhật 2020)",
-        "url": "https://kcb.vn/van-ban-quy-pham-phap-luat/",
-        "year": 2020,
+        "title": "BYT QĐ 3319/QĐ-BYT 2017 — Hướng dẫn chẩn đoán và điều trị ĐTĐ típ 2",
+        "url": "https://daithaoduong.kcb.vn/huong-dan-chan-doan-va-dieu-tri",
+        "year": 2017,
+        "tags": ["diabetes", "byt", "vietnam"],
+        "direct_pdf": "https://daithaoduong.kcb.vn/upload/files/HD-chan-doan-dieu-tri-DTD-2017_07_19-Approved.pdf",
+        "local_file": "data/raw/pdfs/byt/BYT_QD3319_HD_ChanDoan_DTD_Type2_2017.pdf",
+    },
+    {
+        "source": "byt",
+        "title": "BYT QĐ 3798/QĐ-BYT 2017 — Quy trình lâm sàng ĐTĐ típ 2",
+        "url": "https://daithaoduong.kcb.vn/quy-trinh-lam-sang-dieu-tri-dai-thao-duong",
+        "year": 2017,
         "tags": ["diabetes", "byt", "vietnam"],
         "direct_pdf": None,
-        "note": "Cần crawl từ moh.gov.vn hoặc thuvienphapluat.vn; nếu không truy cập được, giữ chỗ để bổ sung thủ công.",
+        "note": "kcb.vn phục vụ chung 1 file PDF cho cả QĐ 3319 và 3798 — corpus chỉ lưu 1 bản (BYT_QD3319...), không duplicate.",
+    },
+    {
+        "source": "byt",
+        "title": "BYT QĐ 5481/QĐ-BYT 2020 — HD chẩn đoán và điều trị ĐTĐ típ 2 (thay thế 3319)",
+        "url": "https://bvcdn.org.vn/quyet-dinh-so-5481-qd-byt-ngay-30-thang-12-nam-2020-cua-bo-y-te-ve-viec-ban-hanh-tai-lieu-chuyen-mon-huong-dan-chan-doan-va-dieu-tri-dai-thao-duong-tip-2",
+        "year": 2020,
+        "tags": ["diabetes", "byt", "vietnam"],
+        "direct_pdf": "https://bvcdn.org.vn/wp-content/uploads/2024/12/5481-qd-byt-huong-dan-chan-doan-va-dieu-tri-dai-thao-duong-tip-2_11120219.pdf",
+        "local_file": "data/raw/pdfs/byt/BYT_QD5481_HD_ChanDoan_DTD_Type2_2020.pdf",
     },
     # --- Diabetes curated (3 file public yêu cầu) ---
     {
@@ -540,6 +558,14 @@ def execute_download(manifest_path: Path = MANIFEST_PATH, dry_run: bool = False)
                 pdf_url = candidates[0]
                 e["direct_pdf"] = pdf_url
                 log.info(f"  discovered PDF: {pdf_url}")
+
+        # Legacy bitstream URL thường đã chết (trả stub ~755 bytes) → resolve lại qua DSpace 7 API
+        if pdf_url and "/bitstream/handle/" in pdf_url and "iris.who.int/handle" in e["url"]:
+            fresh = discover_pdfs_from_iris_handle(e["url"])
+            if fresh:
+                log.info(f"  refreshed legacy bitstream URL via DSpace API")
+                pdf_url = fresh[0]
+                e["direct_pdf"] = pdf_url
 
         # fallback cho ADA
         if not pdf_url and e["source"] in ("ada", "diabetes") and "ada" in e["source"]:

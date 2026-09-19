@@ -8,7 +8,6 @@ Follows the same pattern as memory and retrieval modules for consistency.
 # Import core data models
 from .chunk import Chunk, ChunkMetadata
 from .llm_io import LLMInput, LLMOutput, ContextItem
-from .evaluation import EvaluationScore
 
 # Import utility functions and enums
 from .enums import ChunkingStrategy, RetrievalStrategy, MemoryType
@@ -20,8 +19,6 @@ __all__ = [
     'LLMInput',
     'LLMOutput',
     'ContextItem',
-    'EvaluationScore',
-    
     # Enums
     'ChunkingStrategy',
     'RetrievalStrategy',

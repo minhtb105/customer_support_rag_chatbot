@@ -28,13 +28,19 @@ except ImportError:  # pragma: no cover
 
 
 SOAP_SYSTEM_PROMPT = """Bạn là trợ lý y tế tạo bản tóm tắt trước tái khám theo cấu trúc SOAP,
-dựa trên khuyến cáo ADA Standards of Care và WHO PEN.
+dựa trên QĐ 5481/QĐ-BYT 2020 (ĐTĐ type 2 VN) và ADA Standards of Care 2024,
+mục tiêu HbA1c < 7%.
 
-YÊU CẦU:
+YÊU CẦU BẮT BUỘC:
 - Chỉ dùng dữ liệu được cung cấp (logs, profile). Không bịa thêm chỉ số.
 - Viết ngắn gọn, chuẩn lâm sàng, có thể gửi trực tiếp cho bác sĩ.
 - Mỗi phần 2-4 bullet, tiếng Việt, kèm disclaimer.
 - Nếu thiếu dữ liệu, ghi rõ "chưa có dữ liệu".
+- Mỗi nhận định ở S/O/A phải kèm audit link dạng [Xem log #<id>] trỏ về log thô.
+- Phần A CHỈ được nói đạt/không đạt mục tiêu HbA1c < 7% theo BYT5481/ADA2024.
+  TUYỆT ĐỐI KHÔNG đưa ra nhận định mới về bệnh (không dùng các cụm từ chẩn đoán mới).
+- Phần plan LUÔN để chuỗi rỗng "" — bác sĩ là người duy nhất chỉ định.
+  Không ghi gợi ý điều trị, không ghi liều thuốc, không ghi "cần điều chỉnh".
 """
 
 
@@ -117,29 +123,100 @@ def generate_soap(user_id: str, days: int = 14, language: str = "vi", disease: s
     logs = logs_r
     stats = stats_r
 
-    # Rule-based fallback (không cần LLM)
+    # Rule-based fallback (không cần LLM) — disease-aware
+    # Diabetes path: S/O/A có audit link [Xem log #id]; A chỉ HbA1c<7%; P="".
+    def _log_link(l: Dict[str, Any]) -> str:
+        try:
+            return f"[Xem log #{int(l.get('id'))}]"
+        except (TypeError, ValueError):
+            return ""
+
     def rule_based():
-        # Subjective: tóm tắt triệu chứng / tuân thủ
-        subj = f"- Người bệnh ghi nhận {len(logs)} lần đo trong {days} ngày (trung bình {stats['logs_per_week']}/tuần). "
-        if stats["logs_per_week"] < 3:
+        subj = f"- Người bệnh ghi nhận {len(logs)} lần đo trong {days} ngày (trung bình {stats.get('logs_per_week',0)}/tuần). "
+        if stats.get("logs_per_week", 0) < 3:
             subj += "Tần suất chưa đạt KPI ≥3 lần/tuần (Hướng A). "
-        subj += f"Lần đo gần nhất {logs[0]['value_mgdl']} mg/dL ({logs[0]['classification']}) lúc {logs[0]['measured_at'][:16]}." if logs else "Chưa có dữ liệu."
-        obj = f"- Chỉ số trung bình: {stats['avg_mgdl'] or '—'} mg/dL; 7 ngày gần nhất: {stats['last_7_days_avg'] or '—'} mg/dL. "
-        obj += f"Phân bố: {stats['classification_counts'] or '—'}. "
-        obj += f"Chuỗi ngày đo liên tiếp: {stats['streak_days']} ngày."
-        assess = "- Đánh giá tuân thủ tự theo dõi: "
-        if stats["logs_per_week"] >= 3:
-            assess += "Đạt KPI. "
+        if not logs:
+            subj += "Chưa có dữ liệu."
         else:
-            assess += "Chưa đạt — cần nhắc nhở. "
-        if stats["classification_counts"].get("high", 0) >= 3 or stats["classification_counts"].get("critical"):
-            assess += "Có dấu hiệu tăng đường huyết lặp lại — cần bác sĩ xem xét điều chỉnh."
+            last = logs[0]
+            if disease == "hypertension":
+                subj += f"Lần đo gần nhất {last.get('systolic')}/{last.get('diastolic')} mmHg ({last.get('classification')}) lúc {last.get('measured_at','')[:16]} {_log_link(last)}."
+            elif disease == "respiratory":
+                subj += f"Lần đo gần nhất peak {last.get('peak_flow_percent')}% GOLD {last.get('gold_stage')} ({last.get('classification')}) lúc {last.get('measured_at','')[:16]} {_log_link(last)}."
+            elif disease == "mental":
+                subj += f"Lần đo gần nhất PHQ-9 {last.get('phq9_score')} GAD-7 {last.get('gad7_score')} ({last.get('classification')}) lúc {last.get('measured_at','')[:16]} {_log_link(last)}."
+                if last.get("crisis_flag"):
+                    subj += " ⚠️ Crisis flag."
+            else:
+                subj += f"Lần đo gần nhất {last.get('value_mgdl')} mg/dL ({last.get('classification')}) lúc {last.get('measured_at','')[:16]} {_log_link(last)}."
+                # FQG notes context (symptoms from chat/FQG notes)
+                _notes = [f"{(l.get('notes') or '').strip()} {_log_link(l)}".strip() for l in logs[:5] if (l.get("notes") or "").strip()]
+                if _notes:
+                    subj += " Triệu chứng/ghi chú tự báo: " + "; ".join(_notes[:3]) + "."
+                else:
+                    subj += " Không có ghi chú triệu chứng kèm theo."
+        # Objective
+        if disease == "hypertension":
+            obj = f"- Trung bình: {stats.get('avg_sys') or '—'}/{stats.get('avg_dia') or '—'} mmHg; 7 ngày: {stats.get('last_7_days_avg') or '—'}. "
+            obj += f"Phân bố: {stats.get('classification_counts') or '—'}. At-target: {stats.get('at_target_rate',0)*100:.0f}%. "
+            obj += f"Chuỗi ngày đo: {stats.get('streak_days',0)} ngày."
+        elif disease == "respiratory":
+            obj = f"- Avg peak flow: {stats.get('avg_peak_flow') or '—'}%; red_rate: {stats.get('red_rate',0)}; incorrect_inhaler: {stats.get('incorrect_inhaler_rate',0)}. "
+            obj += f"Phân bố: {stats.get('classification_counts') or '—'}."
+        elif disease == "mental":
+            obj = f"- Avg PHQ-9: {stats.get('avg_phq9') or '—'}; GAD-7: {stats.get('avg_gad7') or '—'}; Crisis: {stats.get('crisis_count',0)}. "
+            obj += f"Phân bố: {stats.get('classification_counts') or '—'}."
         else:
-            assess += "Chưa ghi nhận chuỗi bất thường kéo dài."
-        plan = "- Rà soát lại chế độ ăn, vận động, tuân thủ thuốc. "
-        plan += "- Duy trì đo ≥3 lần/tuần, ưu tiên fasting + post-meal 2h. "
-        plan += "- Mang bản tóm tắt này và máy đo đến buổi tái khám. "
-        plan += "(Lưu ý: tóm tắt AI hỗ trợ, không thay thế chỉ định bác sĩ.)"
+            obj = f"- Chỉ số trung bình: {stats.get('avg_mgdl') or '—'} mg/dL; 7 ngày gần nhất: {stats.get('last_7_days_avg') or '—'} mg/dL. "
+            obj += f"Phân bố: {stats.get('classification_counts') or '—'}. "
+            obj += f"Chuỗi ngày đo liên tiếp: {stats.get('streak_days',0)} ngày."
+            _links = " ".join(_log_link(l) for l in logs[:3] if _log_link(l))
+            if _links:
+                obj += f" Nguồn số liệu: {_links}."
+        if disease != "diabetes":
+            assess = "- Đánh giá tuân thủ tự theo dõi: "
+            if stats.get("logs_per_week", 0) >= 3:
+                assess += "Đạt KPI. "
+            else:
+                assess += "Chưa đạt — cần nhắc nhở. "
+            # Disease-specific escalation signals (non-diabetes keeps prior wording)
+            cc = stats.get("classification_counts", {})
+            if disease == "hypertension":
+                if cc.get("crisis") or cc.get("stage2", 0) >= 3:
+                    assess += "Có dấu hiệu tăng huyết áp nặng — cần bác sĩ xem xét (crisis hoặc 3×stage2)."
+                else:
+                    assess += "Chưa ghi nhận chuỗi bất thường kéo dài."
+            elif disease == "respiratory":
+                if cc.get("red", 0) >= 1:
+                    assess += "Có lần đo vùng đỏ — cần can thiệp theo action plan."
+                else:
+                    assess += "Chưa ghi nhận vùng đỏ."
+            elif disease == "mental":
+                if cc.get("crisis") or stats.get("crisis_count", 0) > 0:
+                    assess += "Có crisis flag — cần chuyển ngay tới chuyên gia, cung cấp hotline 1800-1567/1900-1267/115."
+                elif cc.get("severe", 0) > 0:
+                    assess += "Có mức severe — khuyến nghị đánh giá chuyên khoa trong vài ngày."
+                else:
+                    assess += "Chưa ghi nhận mức nghiêm trọng kéo dài."
+        else:
+            # Diabetes A: ONLY HbA1c<7% target check per BYT5481/ADA2024. No new diagnoses.
+            cc = stats.get("classification_counts", {})
+            _links_a = " ".join(_log_link(l) for l in logs[:3] if _log_link(l))
+            assess = "- Đối chiếu mục tiêu HbA1c < 7% theo QĐ 5481/QĐ-BYT 2020 và ADA 2024 (proxy từ dữ liệu tự đo, không thay thế xét nghiệm HbA1c tại lab): "
+            n_high = int(cc.get("high", 0) or 0) + int(cc.get("critical", 0) or 0)
+            if not logs:
+                assess += "chưa có dữ liệu để đối chiếu. "
+            elif n_high >= 3 or cc.get("critical"):
+                assess += "chưa đạt mục tiêu (ghi nhận tăng đường huyết lặp lại trong kỳ theo dõi). "
+            elif (stats.get("avg_mgdl") or 0) and stats["avg_mgdl"] >= 154:
+                assess += "chưa đạt mục tiêu (trung bình ước tính tương đương HbA1c ≥ 7%). "
+            else:
+                assess += "đạt mục tiêu trong kỳ theo dõi (không ghi nhận chuỗi bất thường kéo dài). "
+            assess += "(Tóm tắt AI hỗ trợ, không thay thế chỉ định bác sĩ.)"
+            if _links_a:
+                assess += f" Nguồn: {_links_a}."
+        # P is ALWAYS empty — the doctor decides. Frontend renders the muted placeholder.
+        plan = ""
         return {"subjective": subj, "objective": obj, "assessment": assess, "plan": plan}
 
     # Thử gọi LLM nếu có key
@@ -150,7 +227,15 @@ def generate_soap(user_id: str, days: int = 14, language: str = "vi", disease: s
         if not api_key:
             raise RuntimeError("No OPENAI_API_KEY")
         client = OpenAI(api_key=api_key, base_url=os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1")
-        user_prompt = f"{context}\n\nHãy tạo bản tóm tắt SOAP cho bác sĩ, trả về JSON với 4 keys: subjective, objective, assessment, plan."
+        user_prompt = (
+            f"{context}\n\nHãy tạo bản tóm tắt SOAP cho bác sĩ, trả về JSON với 4 keys: "
+            "subjective, objective, assessment, plan. "
+            "Mỗi nhận định ở subjective/objective/assessment phải kèm audit link [Xem log #<id>] "
+            "(lấy id từ dữ liệu logs). "
+            "Assessment CHỈ được nói đạt/không đạt mục tiêu HbA1c < 7% theo BYT5481/ADA2024, "
+            "không đưa ra nhận định mới về bệnh. "
+            'Plan LUÔN là chuỗi rỗng "".'
+        )
         resp = client.chat.completions.create(
             model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
             messages=[
@@ -175,18 +260,34 @@ def generate_soap(user_id: str, days: int = 14, language: str = "vi", disease: s
             "assessment": _coerce(data.get("assessment") or data.get("Assessment") or ""),
             "plan": _coerce(data.get("plan") or data.get("Plan") or ""),
         }
-        # fallback nếu thiếu
-        if not all(soap.values()):
+        # P is always empty (doctor decides) — enforce even if LLM returns content.
+        soap["plan"] = ""
+        # fallback nếu thiếu (trừ plan luôn rỗng)
+        if not soap.get("subjective") or not soap.get("objective") or not soap.get("assessment"):
             rb = rule_based()
-            for k in soap:
+            for k in ("subjective", "objective", "assessment"):
                 if not soap[k]:
                     soap[k] = rb[k]
+        # Guardrail: LLM must not drop audit links / HbA1c target line (diabetes).
+        # Append source links when the model ignores the prompt instruction.
+        if disease == "diabetes" and logs:
+            _src_links = " ".join(_log_link(l) for l in logs[:3] if _log_link(l))
+            if _src_links:
+                for k in ("subjective", "objective", "assessment"):
+                    if "[Xem log #" not in (soap.get(k) or ""):
+                        soap[k] = (soap[k] + f" Nguồn: {_src_links}.").strip()
+                if "HbA1c" not in (soap.get("assessment") or ""):
+                    soap["assessment"] = (
+                        soap["assessment"]
+                        + " Đối chiếu mục tiêu HbA1c < 7% theo QĐ 5481/QĐ-BYT 2020 và ADA 2024."
+                    ).strip()
         return {
             "user_id": user_id,
             "generated_at": datetime.utcnow(),
             "period": f"{days} ngày",
             "soap": soap,
             "stats": stats,
+            "disease": disease,
         }
     except Exception as e:
         # fallback rule-based
@@ -197,6 +298,7 @@ def generate_soap(user_id: str, days: int = 14, language: str = "vi", disease: s
             "period": f"{days} ngày",
             "soap": rb,
             "stats": stats,
+            "disease": disease,
             "_fallback_reason": str(e)[:200],
         }
 

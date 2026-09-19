@@ -1,28 +1,27 @@
 """
 Asthma & COPD tracker — inhaler technique is the differentiator (Bach Mai 2016).
-Stores peak flow, GOLD, CAT, inhaler steps.
+Stores peak flow, GOLD, CAT, inhaler steps via BaseTracker.
 """
 
 from __future__ import annotations
 
-import sqlite3
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any, Tuple
+from typing import Dict, Any, List, Optional, Tuple
 
 try:
     from src.config import RESPIRATORY_THRESHOLDS, VITALS_DB_PATH
-except ImportError:
+    from src.features.base_tracker import get_conn as _base_get_conn, init_table, fetch_logs, classification_counts
+except ImportError:  # pragma: no cover
     from config import RESPIRATORY_THRESHOLDS, VITALS_DB_PATH  # type: ignore
+    from features.base_tracker import get_conn as _base_get_conn, init_table, fetch_logs, classification_counts  # type: ignore
 
-def _get_conn() -> sqlite3.Connection:
-    VITALS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(VITALS_DB_PATH), check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
+def _get_conn():
+    return _base_get_conn(VITALS_DB_PATH)
 
 def init_respiratory_db():
-    conn = _get_conn()
-    conn.execute("""
+    init_table(
+        VITALS_DB_PATH,
+        """
         CREATE TABLE IF NOT EXISTS respiratory_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id TEXT NOT NULL,
@@ -39,10 +38,9 @@ def init_respiratory_db():
             classification TEXT,
             created_at TEXT NOT NULL
         )
-    """)
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_resp_user_time ON respiratory_logs(user_id, measured_at)")
-    conn.commit()
-    conn.close()
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_resp_user_time ON respiratory_logs(user_id, measured_at)",
+    )
 
 def classify_peak_flow(percent: Optional[int]) -> Tuple[str,str]:
     if percent is None:
@@ -90,7 +88,6 @@ def add_respiratory_log(user_id: str, peak_flow_percent: Optional[int] = None, p
     peak_zone, peak_msg = classify_peak_flow(peak_flow_percent)
     gold = classify_gold(cat_score)
     inhaler_cls, inhaler_msg = _classify_inhaler(inhaler_correct, inhaler_steps_correct, inhaler_steps_total)
-    # overall classification: worst of peak and inhaler
     if peak_zone == "red" or inhaler_cls == "incorrect":
         classification = "red"
         message = f"{peak_msg} {inhaler_msg} — Action needed."
@@ -116,18 +113,7 @@ def add_respiratory_log(user_id: str, peak_flow_percent: Optional[int] = None, p
 
 def get_respiratory_logs(user_id: str, limit: int = 50, days: Optional[int] = None) -> List[Dict[str, Any]]:
     init_respiratory_db()
-    conn = _get_conn()
-    q = "SELECT * FROM respiratory_logs WHERE user_id=? "
-    params: List[Any] = [user_id]
-    if days is not None:
-        since = (datetime.utcnow() - timedelta(days=days)).isoformat()
-        q += "AND measured_at >= ? "
-        params.append(since)
-    q += "ORDER BY measured_at DESC LIMIT ?"
-    params.append(limit)
-    rows = conn.execute(q, params).fetchall()
-    conn.close()
-    return [{k:r[k] for k in r.keys()} for r in rows]
+    return fetch_logs(VITALS_DB_PATH, "respiratory_logs", user_id, limit, days)
 
 def get_respiratory_stats(user_id: str) -> Dict[str, Any]:
     logs = get_respiratory_logs(user_id, limit=1000)
@@ -136,9 +122,7 @@ def get_respiratory_stats(user_id: str) -> Dict[str, Any]:
         return {"user_id": user_id, "total_logs":0, "avg_peak_flow":None, "red_rate":0.0, "incorrect_inhaler_rate":0.0, "classification_counts":{}}
     vals=[l["peak_flow_percent"] for l in logs if l["peak_flow_percent"] is not None]
     avg = round(sum(vals)/len(vals),1) if vals else None
-    counts={}
-    for l in logs:
-        counts[l["classification"]] = counts.get(l["classification"],0)+1
+    counts=classification_counts(logs)
     red_rate = counts.get("red",0)/total
     incorrect = sum(1 for l in logs if l["classification"]=="red" or l["inhaler_correct"]==0)
     return {"user_id": user_id, "total_logs": total, "avg_peak_flow": avg, "red_rate": round(red_rate,2),

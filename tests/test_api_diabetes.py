@@ -17,6 +17,9 @@ class TestDiabetesAPI:
         assert "evaluation" in data
 
     def test_query_requires_auth(self, client: TestClient):
+        # Session-scoped client keeps login cookie from prior tests — clear it
+        # so this request is truly unauthenticated (same pattern as test_admin_memory).
+        client.cookies.clear()
         resp = client.post("/v1/query", json={"query": "hello", "top_k": 3})
         assert resp.status_code == 401
 
@@ -53,6 +56,44 @@ class TestDiabetesAPI:
         assert "soap" in data
         for k in ("subjective", "objective", "assessment", "plan"):
             assert k in data["soap"]
+        # P is ALWAYS empty — the doctor decides
+        assert data["soap"]["plan"] == ""
+        # A only states HbA1c<7% target check + audit links on S/O/A
+        assert "HbA1c" in data["soap"]["assessment"]
+        assert "[Xem log #" in data["soap"]["subjective"]
+        assert "[Xem log #" in data["soap"]["objective"]
+        assert "[Xem log #" in data["soap"]["assessment"]
+
+    def test_glucose_returns_anomaly_and_fqg(self, client: TestClient, auth_header):
+        hdr = {"Authorization": f"Bearer {auth_header['token']}"}
+        uid = auth_header["user"]["id"]
+        r = client.post("/v1/glucose", json={"user_id": uid, "value_mgdl": 260, "context": "random"}, headers=hdr)
+        assert r.status_code == 200, r.text
+        data = r.json()
+        assert "anomaly" in data and data["anomaly"]["type"] == "spike"
+        assert "follow_up_questions" in data and len(data["follow_up_questions"]) > 0
+        r2 = client.post("/v1/glucose", json={"user_id": uid, "value_mgdl": 110, "context": "fasting"}, headers=hdr)
+        assert r2.status_code == 200, r2.text
+        assert r2.json()["anomaly"]["type"] == "none"
+        assert r2.json()["follow_up_questions"] == []
+
+    def test_safeguard_out_of_scope_no_rag(self, client: TestClient, auth_header, monkeypatch):
+        import src.api.main as api_main
+        called = {"rag": False}
+        hdr = {"Authorization": f"Bearer {auth_header['token']}"}
+        uid = auth_header["user"]["id"]
+        # If RAG were invoked it would go through rag_chat — guard must return before it
+        try:
+            import src.rag_pipeline as rp
+            monkeypatch.setattr(rp, "rag_chat", lambda *a, **k: (_ for _ in ()).throw(AssertionError("RAG must not be called")))
+        except Exception:
+            pass
+        resp = client.post("/v1/query", json={"query": "Tôi nên uống kháng sinh nào?", "top_k": 3, "user_id": uid}, headers=hdr)
+        assert resp.status_code == 200, resp.text
+        data = resp.json()
+        assert "được thiết kế riêng để theo dõi đường huyết" in data["answer"]
+        assert "nằm ngoài phạm vi hỗ trợ" in data["answer"]
+        assert data.get("safeguard") is True
 
     def test_soap_markdown(self, client: TestClient, auth_header):
         hdr = {"Authorization": f"Bearer {auth_header['token']}"}

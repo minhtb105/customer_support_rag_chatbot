@@ -33,6 +33,34 @@ short_term_memory = get_short_term_memory()
 episodic_memory = get_episodic_memory()
 long_term_memory = get_long_term_memory()
 
+try:
+    from src.monitors.gho_snapshot import looks_like_stats_question, query_gho_stats
+except ImportError:
+    try:
+        from monitors.gho_snapshot import looks_like_stats_question, query_gho_stats  # type: ignore
+    except ImportError:
+        looks_like_stats_question = query_gho_stats = None  # type: ignore
+
+
+def maybe_inject_gho_stats(question: str, contexts: List[ContextItem]) -> List[ContextItem]:
+    """Buoc 1b Dual-Storage (dung chung non-stream + stream): cau hoi so lieu
+    -> chen context tu SQLite readonly, khong RAG so. Fail-open (khong bao gio crash)."""
+    if not (looks_like_stats_question and query_gho_stats):
+        return contexts
+    try:
+        if looks_like_stats_question(question):
+            s_gho = start_span("gho_stats_tool", inputs={"query": question[:200]})
+            gho_text = query_gho_stats(question)
+            finish_span(s_gho, outputs={"hit": bool(gho_text)})
+            if gho_text:
+                return [ContextItem(source_id="gho_stats", content=gho_text,
+                                    section_path=["gho", "VNM"], dataset="gho",
+                                    file_name="gho_stats.db")] + contexts
+    except Exception:
+        pass
+    return contexts
+
+
 def rag_chat(question: str, top_k: int = TOP_K, user_id: str = "default_user", username: str | None = None, model: str = DEFAULT_MODEL, **kwargs) -> Dict[str, Any]:
     timings = {}
     # tone detection early for tracing
@@ -101,6 +129,9 @@ def rag_chat(question: str, top_k: int = TOP_K, user_id: str = "default_user", u
         pass
     finish_span(s_ret, outputs={"num_contexts": len(contexts)}, metadata={"vector_hits": len(contexts)})
 
+    # 1b) GHO stats tool (Luong B Dual-Storage)
+    contexts = maybe_inject_gho_stats(question, contexts)
+
     # 2) Rerank
     s_rer = start_span("rerank_contexts", inputs={"num_candidates": len(contexts)})
     t3 = time.perf_counter()
@@ -119,6 +150,10 @@ def rag_chat(question: str, top_k: int = TOP_K, user_id: str = "default_user", u
     memory_context = _build_memory_context(question, user_id)
     llm_input = LLMInput(query=question, contexts=[c.model_dump() for c in reranked] + [m.model_dump() for m in memory_context])
     timings['build_llm_input'] = time.perf_counter() - t4
+    try:
+        add_span_chunks(s_build, trace_id, [m.model_dump() for m in memory_context])
+    except Exception:
+        pass
     finish_span(s_build, outputs={"num_contexts": len(llm_input.contexts)})
 
     # 4) Generate
@@ -299,6 +334,9 @@ def rag_chat_stream(question: str, top_k: int = TOP_K, user_id: str = "default_u
         pass
     finish_span(s_ret, outputs={"num_contexts": len(contexts)}, metadata={"vector_hits": len(contexts)})
 
+    # 1b) GHO stats tool (Luong B Dual-Storage) — mirror non-stream
+    contexts = maybe_inject_gho_stats(question, contexts)
+
     # 2) Rerank
     s_rer = start_span("rerank_contexts", inputs={"num_candidates": len(contexts)})
     t3 = time.perf_counter()
@@ -316,6 +354,10 @@ def rag_chat_stream(question: str, top_k: int = TOP_K, user_id: str = "default_u
     memory_context = _build_memory_context(question, user_id)
     llm_input = LLMInput(query=question, contexts=[c.model_dump() for c in reranked] + [m.model_dump() for m in memory_context])
     timings['build_llm_input'] = time.perf_counter() - t4
+    try:
+        add_span_chunks(s_build, trace_id, [m.model_dump() for m in memory_context])
+    except Exception:
+        pass
     finish_span(s_build, outputs={"num_contexts": len(llm_input.contexts)})
 
     # Emit metadata before streaming so frontend can show citations early
