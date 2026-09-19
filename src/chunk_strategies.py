@@ -7,16 +7,28 @@ from transformers import AutoTokenizer
 from docling.chunking import HybridChunker
 from docling_core.transforms.chunker.tokenizer.huggingface import HuggingFaceTokenizer
 
-from models.chunk import Chunk, ChunkMetadata
-from config import (
-    TOKENIZER_MODEL,
-    MAX_TOKENS,
-    SLIDING_WINDOW_TOKENS,
-    SLIDING_OVERLAP,
-    SENTENCE_GROUP,
-    SEMANTIC_SIM_THRESHOLD,
-    ATOMIC_TOKEN_SIZE
-)
+try:
+    from models.chunk import Chunk, ChunkMetadata
+    from config import (
+        TOKENIZER_MODEL,
+        MAX_TOKENS,
+        SLIDING_WINDOW_TOKENS,
+        SLIDING_OVERLAP,
+        SENTENCE_GROUP,
+        SEMANTIC_SIM_THRESHOLD,
+        ATOMIC_TOKEN_SIZE
+    )
+except ImportError:
+    from src.models.chunk import Chunk, ChunkMetadata
+    from src.config import (
+        TOKENIZER_MODEL,
+        MAX_TOKENS,
+        SLIDING_WINDOW_TOKENS,
+        SLIDING_OVERLAP,
+        SENTENCE_GROUP,
+        SEMANTIC_SIM_THRESHOLD,
+        ATOMIC_TOKEN_SIZE
+    )
 
 
 # =========================

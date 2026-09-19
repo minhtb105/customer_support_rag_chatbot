@@ -14,7 +14,18 @@ from datetime import datetime, timedelta
 from sentence_transformers import SentenceTransformer
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from config import EMBEDDING_MODEL, PDF_DB_DIR
+try:
+    from config import EMBEDDING_MODEL, PDF_DB_DIR
+except ImportError:
+    from src.config import EMBEDDING_MODEL, PDF_DB_DIR
+try:
+    from src.config import EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL
+except ImportError:
+    try:
+        from config import EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL  # type: ignore
+    except ImportError:
+        EMBEDDING_PROVIDER = "local"
+        OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
 
 
 @dataclass
@@ -122,16 +133,32 @@ class LongTermMemory:
         self,
         user_id: str = "default_user",
         embedding_model: str = EMBEDDING_MODEL,
-        memory_db_dir: str = "embeddings/memory_db",
+        memory_db_dir: str = None,
         half_life_days: int = 90
     ):
         self.user_id = user_id
         self.embedding_model = embedding_model
+        # Separate DB for OpenAI (1536d) vs local (384d) to avoid dimension mismatch
+        if memory_db_dir is None:
+            if EMBEDDING_PROVIDER == "openai":
+                memory_db_dir = "embeddings/memory_db_openai"
+            else:
+                memory_db_dir = "embeddings/memory_db"
         self.memory_db_dir = memory_db_dir
         self.temporal_weighting = TemporalWeighting(half_life_days)
         
-        # Initialize vector store
-        self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+        # Initialize vector store — OpenAI nếu cấu hình, fallback HuggingFace
+        if EMBEDDING_PROVIDER == "openai":
+            try:
+                from langchain_openai import OpenAIEmbeddings
+                self.embeddings = OpenAIEmbeddings(model=OPENAI_EMBEDDING_MODEL)
+            except Exception:
+                self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+        else:
+            self.embeddings = HuggingFaceEmbeddings(model_name=embedding_model)
+        # Ensure directory exists
+        import os
+        os.makedirs(self.memory_db_dir, exist_ok=True)
         self.vector_store = Chroma(
             persist_directory=memory_db_dir,
             embedding_function=self.embeddings
@@ -328,7 +355,7 @@ class LongTermMemory:
     def clear_user_memory(self):
         """Clear all memory for the current user."""
         self.vector_store.delete(
-            filter={"user_id": self.user_id}
+            where={"user_id": self.user_id}
         )
         self.total_facts = 0
         self.extracted_facts = 0
@@ -337,7 +364,7 @@ class LongTermMemory:
     def get_stats(self) -> Dict[str, Any]:
         """Get statistics about long-term memory."""
         all_docs = self.vector_store.get(
-            filter={"user_id": self.user_id}
+            where={"user_id": self.user_id}
         )
         
         fact_types = {}

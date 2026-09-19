@@ -12,7 +12,10 @@ from dataclasses import dataclass, asdict
 from collections import defaultdict
 from transformers import AutoTokenizer, pipeline
 from sentence_transformers import SentenceTransformer
-from config import TOKENIZER_MODEL, MAX_TOKENS
+try:
+    from config import TOKENIZER_MODEL, MAX_TOKENS
+except ImportError:
+    from src.config import TOKENIZER_MODEL, MAX_TOKENS
 
 
 @dataclass

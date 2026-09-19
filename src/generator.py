@@ -1,21 +1,68 @@
 import re
-from typing import List
-from openai import OpenAI 
-from sentence_transformers import CrossEncoder
-from config import GROQ_API_KEY, DEFAULT_MODEL, RERANKER_MODEL
-from prompt_templates import (
-    STRICT_SYSTEM_PROMPT, FRIENDLY_SYSTEM_PROMPT, BALANCED_SYSTEM_PROMPT)
-from models.llm_io import LLMInput, LLMOutput, ContextItem
+from typing import List, Optional
+from openai import OpenAI
+
+# CrossEncoder (torch) is optional — openai-only deploy skips reranking
+try:
+    from sentence_transformers import CrossEncoder  # type: ignore
+    _CROSS_ENCODER_AVAILABLE = True
+except Exception:  # torch / sentence-transformers not installed (openai-only)
+    CrossEncoder = None  # type: ignore
+    _CROSS_ENCODER_AVAILABLE = False
+
+try:
+    from config import (
+        GROQ_API_KEY, GROQ_BASE_URL,
+        OPENAI_API_KEY, OPENAI_BASE_URL,
+        LLM_PROVIDER, DEFAULT_MODEL, RERANKER_MODEL,
+    )
+except ImportError:  # pragma: no cover - allows running as "src." package too
+    from src.config import (
+        GROQ_API_KEY, GROQ_BASE_URL,
+        OPENAI_API_KEY, OPENAI_BASE_URL,
+        LLM_PROVIDER, DEFAULT_MODEL, RERANKER_MODEL,
+    )
+
+try:
+    from prompt_manager import get_prompt_version, get_system_prompt
+except ImportError:
+    from src.prompt_manager import get_prompt_version, get_system_prompt
+
+try:
+    from observability.local_tracing import short_hash
+except ImportError:
+    from src.observability.local_tracing import short_hash  # type: ignore
+
+try:
+    from models.llm_io import LLMInput, LLMOutput, ContextItem
+except ImportError:
+    from src.models.llm_io import LLMInput, LLMOutput, ContextItem
 
 
-client = OpenAI(
-    api_key=GROQ_API_KEY,
-    base_url="https://api.groq.com/openai/v1"
-)
-reranker = CrossEncoder(RERANKER_MODEL)
+def _build_llm_client():
+    if LLM_PROVIDER == "groq":
+        return OpenAI(api_key=GROQ_API_KEY, base_url=GROQ_BASE_URL)
+    return OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
 
-# In-memory conversation history
-chat_history = []
+
+def _normalize_model(model: str) -> str:
+    m = (model or DEFAULT_MODEL).strip()
+    if LLM_PROVIDER != "groq" and m.startswith("openai/"):
+        return m.split("/", 1)[1]
+    return m
+
+
+client = _build_llm_client()
+# Lazy init reranker — may be None in openai-only (no torch)
+if _CROSS_ENCODER_AVAILABLE:
+    try:
+        reranker = CrossEncoder(RERANKER_MODEL)
+    except Exception as e:
+        print(f"[generator] CrossEncoder init failed ({e}) — reranking disabled (openai-only fallback)")
+        reranker = None
+else:
+    reranker = None
+    print("[generator] sentence-transformers/torch not installed — reranking disabled (pip install .[local] to enable)")
 
 def format_context(contexts):
     context_text = ""
@@ -26,108 +73,166 @@ def format_context(contexts):
             score_str = f"{float(score):.4f}"
         except (ValueError, TypeError):
             score_str = str(score)
-        context_text += f"[Source {src_id} | Score={score_str}]\n{context.content}\n\n"
-    
+        # version citation: try to get version_label/publication_date from context
+        version = getattr(context, 'version_label', None) or (context.model_extra.get('version_label') if hasattr(context, 'model_extra') and context.model_extra else None) or getattr(context, 'version', None)
+        pub_date = getattr(context, 'publication_date', None) or (context.model_extra.get('publication_date') if hasattr(context, 'model_extra') and context.model_extra else None)
+        # also check dataset style extra fields
+        if not version and hasattr(context, 'model_extra'):
+            version = (context.model_extra or {}).get('version_label') or (context.model_extra or {}).get('version')
+        if not pub_date and hasattr(context, 'model_extra'):
+            pub_date = (context.model_extra or {}).get('publication_date')
+        # fallback to metadata dict if stored there
+        header = f"[Source {src_id}"
+        if version:
+            header += f" | {version}"
+            if pub_date:
+                header += f" | {pub_date}"
+        elif pub_date:
+            header += f" | {pub_date}"
+        header += f" | Score={score_str}]"
+        context_text += f"{header}\n{context.content}\n\n"
     return context_text.strip()
 
 def rerank_contexts(query: str, contexts: List[ContextItem], top_n=3):
     if not contexts:
         return []
-    
+    if reranker is None:
+        # openai-only fallback: keep original order (already hybrid BM25+vector), assign dummy scores
+        for ctx in contexts:
+            if ctx.score is None:
+                ctx.score = 0.0
+        return contexts[:top_n]
     pairs = [(query, ctx.content) for ctx in contexts]
     scores = reranker.predict(pairs)
-    
     for i, ctx in enumerate(contexts):
         ctx.score = float(scores[i])
-        
     ranked = sorted(contexts, key=lambda x: x.score, reverse=True)
-    
     return ranked[:top_n]
 
+DIABETES_KEYWORDS = [
+    "diabetes", "đái tháo đường", "đai thao duong", "tiểu đường", "tieu duong",
+    "hba1c", "insulin", "glucose", "đường huyết", "duong huyet",
+    "hypoglycemia", "hyperglycemia", "who", "ada", "pen", "hearts-d",
+    "chẩn đoán đái tháo đường", "biến chứng đái tháo đường"
+]
+HYPERTENSION_KEYWORDS = [
+    "hypertension", "tăng huyết áp", "tang huyet ap", "huyết áp", "huyet ap",
+    "blood pressure", "120/80", "140/90", "180/120", "aha/acc", "hearts hypertension"
+]
+RESPIRATORY_KEYWORDS = [
+    "asthma", "hen suyễn", "copd", "phổi tắc nghẽn", "peak flow", "gold", "gina",
+    "inhaler", "thuốc hít", "cat score", "khó thở"
+]
+MENTAL_KEYWORDS = [
+    "depression", "trầm cảm", "tram cam", "anxiety", "lo âu", "phq-9", "phq9", "gad-7", "gad7",
+    "mhgap", "mental health", "sức khỏe tâm thần", "tự tử", "suicide", "tự hại", "self-harm"
+]
+
 def detect_tone_and_temp(query: str):
-    """
-    Heuristics: determine tone + temperature based on the content of the query.
-    Return system_prompt, temperature, max_tokens
-    """
     query_lower = query.lower()
-    
-    strict_keywords = [
-        "diagnosis", "treatment", "symptom", "disease", "side effect",
-        "risk", "medicine", "disorder", "infection", "pain", "safe for"
-    ]
-    friendly_keywords = [
-        "feel", "stress", "diet", "exercise", "well-being", "advice", "sleep", "healthy"
-    ]
-    
-    # Strict tone
+    if any(k in query_lower for k in MENTAL_KEYWORDS):
+        return "mental", 0.1, 512
+    if any(k in query_lower for k in HYPERTENSION_KEYWORDS):
+        return "hypertension", 0.1, 512
+    if any(k in query_lower for k in RESPIRATORY_KEYWORDS):
+        return "respiratory", 0.1, 512
+    if any(k in query_lower for k in DIABETES_KEYWORDS):
+        return "diabetes", 0.1, 512
+    strict_keywords = ["diagnosis", "treatment", "symptom", "disease", "side effect","risk", "medicine", "disorder", "infection", "pain", "safe for"]
+    friendly_keywords = ["feel", "stress", "diet", "exercise", "well-being", "advice", "sleep", "healthy"]
     if any(k in query_lower for k in strict_keywords):
-        return STRICT_SYSTEM_PROMPT, 0.1, 256 # concise factual
-    
-    # Friendly tone
+        return "strict", 0.1, 256
     if any(k in query_lower for k in friendly_keywords):
-        return FRIENDLY_SYSTEM_PROMPT, 0.4, 256 # conversational tone
-
-    # Balanced tone
+        return "friendly", 0.4, 256
     if query.strip().startswith("why "):
-        return BALANCED_SYSTEM_PROMPT, 0.3, 512  # reasoning-heavy answers
-
-    # Default: balanced
-    return BALANCED_SYSTEM_PROMPT, 0.2, 512
+        return "balanced", 0.3, 512
+    return "balanced", 0.2, 512
 
 def generate_answer(input_data: LLMInput, model=DEFAULT_MODEL) -> LLMOutput:
-    """
-    Generate an answer that includes inline citations like [Source 1].
-    """
     query = input_data.query
     context_text = format_context(input_data.contexts)
-    system_prompt, temperature, max_tokens = detect_tone_and_temp(query)
-
-    user_prompt = (
-        f"Context: \n{context_text}\n\n"
-        f"Question: {query}\n\n"
-        "Answer clearly and concisely"
-    )
-
-    # Combine memory + current question
-    messages = [{"role": "system", "content": system_prompt}]
-    for past in chat_history[-5:]:  # keep last 5 exchanges
-        messages.append({"role": "user", "content": past["user"]})
-        messages.append({"role": "assistant", "content": past["assistant"]})
-    messages.append({"role": "user", "content": user_prompt})
-
-    response = client.chat.completions.create(
-        model=model,
-        messages=messages,
-        temperature=temperature,
-        max_tokens=max_tokens
-    )
+    tone, temperature, max_tokens = detect_tone_and_temp(query)
+    system_prompt = get_system_prompt(tone)
+    user_prompt = (f"Context: \n{context_text}\n\n" f"Question: {query}\n\n" "Answer clearly and concisely")
+    # Per-user memory is injected via LLMInput.contexts by rag_pipeline._build_memory_context
+    # (short/episodic/long-term) — no global history to avoid cross-user leak
+    messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
+    resolved_model = _normalize_model(model)
+    response = client.chat.completions.create(model=resolved_model, messages=messages, temperature=temperature, max_tokens=max_tokens)
     answer = response.choices[0].message.content.strip()
-    # Store in conversation memory
-    chat_history.append({"user": query, "assistant": answer})
+    usage = getattr(response, "usage", None)
+    token_usage = {
+        "prompt_tokens": getattr(usage, "prompt_tokens", None),
+        "completion_tokens": getattr(usage, "completion_tokens", None),
+        "total_tokens": getattr(usage, "total_tokens", None),
+    } if usage else {}
+    prompt_version = short_hash(system_prompt)
+    cited_sources = sorted({int(m) for m in re.findall(r"\[Source\s+(\d+)\]", answer)})
+    # attach metadata to local tracing via context if available
+    try:
+        from src.observability.local_tracing import get_current_trace_id
+        # we don't have span here, but caller rag_pipeline will handle; store in a global for rag_pipeline to pick?
+        generate_answer.last_token_usage = token_usage  # type: ignore
+        generate_answer.last_prompt_version = prompt_version  # type: ignore
+        generate_answer.last_tone = tone  # type: ignore
+    except Exception:
+        pass
+    return LLMOutput(answer=answer, cited_sources=cited_sources, contexts=input_data.contexts)
 
-    # Extract which sources were cited
-    cited_sources = sorted(
-        {int(m) for m in re.findall(r"\[Source\s+(\d+)\]", answer)}
-    )
 
-    # Return structured output (auto-validates)
-    return LLMOutput(
-        answer=answer,
-        cited_sources=cited_sources,
-        contexts=input_data.contexts
+def generate_answer_stream(input_data: LLMInput, model=DEFAULT_MODEL):
+    """
+    SSE streaming variant of generate_answer — yields token deltas via OpenAI stream=True.
+    Caller accumulates deltas to reconstruct full answer and LLMOutput.
+    Sets generate_answer_stream.last_* attributes for tracing after iteration completes.
+    Yields: str (delta content)
+    """
+    from typing import Generator  # local import to avoid circular
+    query = input_data.query
+    context_text = format_context(input_data.contexts)
+    tone, temperature, max_tokens = detect_tone_and_temp(query)
+    system_prompt = get_system_prompt(tone)
+    user_prompt = (f"Context: \n{context_text}\n\n" f"Question: {query}\n\n" "Answer clearly and concisely")
+    messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
+    resolved_model = _normalize_model(model)
+    prompt_version = short_hash(system_prompt)
+
+    # OpenAI-compatible streaming
+    stream = client.chat.completions.create(
+        model=resolved_model, messages=messages, temperature=temperature, max_tokens=max_tokens, stream=True
     )
-        
+    full_answer = ""
+    try:
+        for chunk in stream:
+            try:
+                delta = None
+                if chunk.choices and len(chunk.choices) > 0:
+                    delta = getattr(chunk.choices[0].delta, "content", None)
+                if delta:
+                    full_answer += delta
+                    yield delta
+            except Exception:
+                continue
+    finally:
+        # store metadata for caller/tracing after stream ends
+        try:
+            cited_sources = sorted({int(m) for m in re.findall(r"\[Source\s+(\d+)\]", full_answer)})
+        except Exception:
+            cited_sources = []
+        # token usage is not available in streaming chunks for most providers; leave empty
+        token_usage: dict = {}
+        try:
+            generate_answer_stream.last_full_answer = full_answer  # type: ignore
+            generate_answer_stream.last_cited_sources = cited_sources  # type: ignore
+            generate_answer_stream.last_token_usage = token_usage  # type: ignore
+            generate_answer_stream.last_prompt_version = prompt_version  # type: ignore
+            generate_answer_stream.last_tone = tone  # type: ignore
+            generate_answer_stream.last_system_prompt = system_prompt  # type: ignore
+        except Exception:
+            pass
+
 def format_answer_for_ui(answer_data: LLMOutput) -> str:
-    """
-    Format chatbot answer for frontend display.
-    Converts newlines to <br> and appends citation list.
-    """
-    formatted_answer = (
-        answer_data.answer
-        .replace("\n\n", "<br><br>")
-        .replace("\n", "<br>")
-    )
-
+    formatted_answer = (answer_data.answer.replace("\n\n", "<br><br>").replace("\n", "<br>"))
     citation_entries = []
     for src_id in answer_data.cited_sources:
         dataset = None
@@ -135,15 +240,9 @@ def format_answer_for_ui(answer_data: LLMOutput) -> str:
             if ctx.source_id == str(src_id):
                 dataset = ctx.dataset
                 break
-
         if dataset:
             citation_entries.append(f"[{src_id}] {dataset}")
         else:
             citation_entries.append(f"[{src_id}]")
-
-    citations_text = (
-        " — Sources: " + ", ".join(citation_entries)
-        if citation_entries else ""
-    )
-
+    citations_text = (" — Sources: " + ", ".join(citation_entries) if citation_entries else "")
     return f"{formatted_answer}<br><br><i>{citations_text}</i>"

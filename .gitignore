@@ -8,3 +8,9 @@ src/embedding/__pycache__/
 notebooks/models/*
 metadata/*
 customer_support_rag_chatbot.egg-info/
+# Python bytecode (all dirs)
+__pycache__/
+*.pyc
+
+# Runtime vector store created under src/
+src/embeddings/

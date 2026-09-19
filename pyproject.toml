@@ -9,19 +9,27 @@ readme = "README.md"
 requires-python = ">=3.8"
 
 dependencies = [
+    "openai>=2.5.0",
     "langchain>=0.3.27",
     "langchain-chroma>=0.2.6",
     "langchain-community>=0.3.31",
-    "sentence-transformers>=5.1.1",
-    "transformers>=4.57.1",
+    "langchain-openai>=0.3.0",
     "chromadb>=1.2.0",
-    "scikit-learn>=1.7.2",
-    "pandas>=2.3.3",
     "numpy>=2.2.6",
-    "matplotlib>=3.10.7",
-    "seaborn>=0.13.2",
-    "tqdm>=4.67.1",
-    "torch>=2.9.0",
+    # FastAPI backend (Hướng C — WHO-RAG Infrastructure API)
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "pydantic>=2.0.0",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt>=4.0.0",
+    # Data pipeline — guideline crawlers
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
 ]
 
 [build-system]
@@ -30,3 +38,45 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src", "."]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "."]
+addopts = "-v --tb=short"
+markers = [
+    "legacy: legacy generic evaluation (non-diabetes)",
+    "security: OWASP Top 10 security tests",
+    "e2e: end-to-end tests",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+    "anyio>=4.0",
+]
+security = [
+    "safety>=3.0",
+]
+# Local embeddings + reranking + semantic cache (requires torch) — dùng khi EMBEDDING_PROVIDER=local
+# Deploy openai-only (mặc định) KHÔNG cần cài nhóm này: pip install .  (≈400MB, không cần torch)
+# Deploy local embeddings/reranker: pip install .[local]  (≈2GB, có torch + faiss)
+local = [
+    "torch>=2.9.0",
+    "sentence-transformers>=5.1.1",
+    "transformers>=4.57.1",
+    "scikit-learn>=1.7.2",
+    "faiss-cpu>=1.12.0",
+]
+# Chỉ torch (nếu đã có sentence-transformers từ cache)
+torch = [
+    "torch>=2.9.0",
+]
+# Notebook / evaluation (không cần cho API runtime)
+notebooks = [
+    "pandas>=2.3.3",
+    "matplotlib>=3.10.7",
+    "seaborn>=0.13.2",
+    "tqdm>=4.67.1",
+]

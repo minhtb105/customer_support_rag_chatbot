@@ -13,12 +13,22 @@ from datetime import datetime
 from dataclasses import asdict
 from redis import Redis
 from sentence_transformers import SentenceTransformer
-from memory.database_config import SessionLocal, engine, Base
-from memory.models import MemoryFact, SessionSummary, UserProfile, MemoryStats
-from memory.short_term import ShortTermMemory, Message
-from memory.episodic import EpisodicMemory, ConversationSummary
-from memory.long_term import LongTermMemory, MedicalFact
-from config import TOKENIZER_MODEL
+try:
+    from memory.database_config import SessionLocal, engine, Base
+    from memory.models import MemoryFact, SessionSummary, UserProfile, MemoryStats
+    from memory.short_term import ShortTermMemory, Message
+    from memory.episodic import EpisodicMemory, ConversationSummary
+    from memory.long_term import LongTermMemory, MedicalFact
+except ImportError:
+    from src.memory.database_config import SessionLocal, engine, Base
+    from src.memory.models import MemoryFact, SessionSummary, UserProfile, MemoryStats
+    from src.memory.short_term import ShortTermMemory, Message
+    from src.memory.episodic import EpisodicMemory, ConversationSummary
+    from src.memory.long_term import LongTermMemory, MedicalFact
+try:
+    from config import TOKENIZER_MODEL
+except ImportError:
+    from src.config import TOKENIZER_MODEL
 
 
 class RedisShortTermAdapter:
@@ -147,7 +157,7 @@ class SQLAlchemyEpisodicAdapter:
                     fact_type=fact['type'],
                     content=fact['text'],
                     embedding=json.dumps(embedding) if embedding else None,
-                    metadata=fact,
+                    fact_meta=fact,
                     confidence=fact.get('confidence', 0.8),
                     source="episodic_summary"
                 )
@@ -273,7 +283,7 @@ class SQLAlchemyLongTermAdapter:
                 fact_type=fact.fact_type,
                 content=fact.text,
                 embedding=json.dumps(embedding),
-                metadata={
+                fact_meta={
                     'entities': fact.entities,
                     'source': fact.source,
                     'session_id': fact.metadata.get('session_id', ''),
@@ -332,7 +342,7 @@ class SQLAlchemyLongTermAdapter:
                 embedding_data = json.loads(result.embedding) if result.embedding else []
                 
                 # Parse metadata
-                metadata = result.metadata or {}
+                metadata = result.fact_meta or {}
                 
                 fact = MedicalFact(
                     fact_id=result.fact_id,

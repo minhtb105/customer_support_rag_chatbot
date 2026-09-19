@@ -1,7 +1,10 @@
 import sqlite3
 import json
 import time
-from config import META_DB_PATH
+try:
+    from config import META_DB_PATH
+except ImportError:
+    from src.config import META_DB_PATH
 
 
 def init_db(db_path=META_DB_PATH):

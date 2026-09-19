@@ -14,10 +14,18 @@ from dataclasses import dataclass
 from collections import defaultdict
 import numpy as np
 from sentence_transformers import SentenceTransformer
-from memory.short_term import ShortTermMemory
-from memory.episodic import EpisodicMemory
-from memory.long_term import LongTermMemory
-from memory.long_term import MedicalFact
+try:
+    from memory.short_term import ShortTermMemory
+    from memory.episodic import EpisodicMemory
+    from memory.long_term import LongTermMemory
+except ImportError:
+    from src.memory.short_term import ShortTermMemory
+    from src.memory.episodic import EpisodicMemory
+    from src.memory.long_term import LongTermMemory
+try:
+    from memory.long_term import MedicalFact
+except ImportError:
+    from src.memory.long_term import MedicalFact
 
 
 @dataclass
