@@ -2,7 +2,8 @@
 
 An AI assistant that helps people with diabetes stay on track between doctor visits - and gives doctors a 10-second pre-visit brief they can trust.
 
-- **Watch the demo (0 setup):** video link - *TODO: paste YouTube/Loom URL here*
+- **Watch the demo (0 setup):** [demo video](docs/demo/demo.webm) (~1 min, PC1→PC4, Playwright robot draft)
+  (recording script: [docs/demo/script.md](docs/demo/script.md); robot draft: `frontend/e2e/demo_recorder.spec.ts`)
 - **Jump to the story:** [2. What I built](#2-what-i-built--two-stories) - [3. Watch the 3-step demo](#3-live-demo--watch-first-run-if-youre-technical)
 
 <!--
@@ -50,7 +51,7 @@ The pre-visit view is 30% chart + 70% text: a **90-day sparkline** with red dots
 2. **Open the pre-visit page** - see the 90-day sparkline with red dots.
 3. **Read the SOAP note** - check the Assessment ("meets / does not meet HbA1c <7% target"), confirm the Plan is empty and greyed out, click a **[View log #id]** link to verify the source.
 
-Video demo: *TODO: paste link here.*
+Video demo: [docs/demo/demo.webm](docs/demo/demo.webm) (~1 min, PC1→PC4). Full lời thoại + checklist quay: [docs/demo/script.md](docs/demo/script.md).
 
 ### B. Run (for developers - collapsed)
 
