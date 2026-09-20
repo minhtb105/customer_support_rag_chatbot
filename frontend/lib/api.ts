@@ -92,6 +92,11 @@ export async function getGlucose(user_id: string, limit = 50, days?: number) {
   if (!res.ok) throw new Error(`get glucose failed ${res.status}`);
   return res.json();
 }
+export async function saveGlucoseFollowup(payload: { user_id: string; text: string; related_log_id?: number }) {
+  const res = await authFetch(`${API}/v1/glucose/followup`, { method: "POST", body: JSON.stringify(payload) });
+  if (!res.ok) throw new Error(`followup failed ${res.status}: ${await res.text()}`);
+  return res.json();
+}
 export async function generateSoap(user_id: string, days = 14, disease: string = "diabetes") {
   const res = await authFetch(`${API}/v1/soap/generate`, { method: "POST", body: JSON.stringify({ user_id, days, language: "vi", disease }) });
   if (!res.ok) throw new Error(`soap failed ${res.status}`);
@@ -305,4 +310,9 @@ export async function getMonitorsStats() {
   return res.json();
 }
 
+export async function getDoctorPatients() {
+  const res = await authFetch(`${API}/v1/doctor/patients`, { method: "GET" });
+  if (!res.ok) throw new Error(`doctor patients ${res.status}`);
+  return res.json();
+}
 export const API_BASE = API;

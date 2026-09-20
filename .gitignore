@@ -14,3 +14,11 @@ __pycache__/
 
 # Runtime vector store created under src/
 src/embeddings/
+
+# Frontend build + test artifacts (never commit)
+/frontend/.next/
+/frontend/node_modules/
+/frontend/playwright-report/
+/frontend/test-results/
+/frontend/tsconfig.tsbuildinfo
+frontend/tsconfig.tsbuildinfo

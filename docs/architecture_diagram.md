@@ -1,273 +1,108 @@
 # Sơ Đồ Kiến Trúc — WHO-RAG System
 
-> 4 sơ đồ Mermaid + bảng ràng buộc. Nguồn: `src/config.py`, `src/rag_pipeline.py:36`, `src/observability/tracing_db.py:32`, `src/indexer.py:98`, `src/monitors/*`, `frontend/app/**`.
+> Nguồn chính: `src/config.py`, `src/rag_pipeline.py:36`, `src/observability/tracing_db.py:32`, `src/indexer.py:98`, `src/monitors/*`, `frontend/app/**`.
+
+> **Mục tiêu đọc-xong-làm-được:** vẽ lại luồng Patient → Doctor trên giấy, chạy `uvicorn` + `npm run dev`, giải thích được RAG/CAG/HILT/FQG/SOAP cho người mới.
+
+## 0. Glossary canonical (1 dòng/thuật ngữ — các file khác link về đây)
+
+- **RAG (Retrieval-Augmented Generation):** trả lời dựa trên tài liệu WHO/BYT đã lưu, kèm trích dẫn, để không bịa.
+- **CAG (Cache-Augmented Generation):** cache câu trả lời 24h (khớp chính xác + khớp ngữ nghĩa FAISS 0.82), trúng cache thì bỏ qua retrieval.
+- **BM25:** tìm kiếm theo từ khóa (đếm từ khớp), hợp với mã bệnh, tên thuốc.
+- **Rerank:** chấm lại top kết quả bằng mô hình CrossEncoder rồi chỉ giữ top 3 tốt nhất.
+- **Chroma:** kho vector lưu chunks đã embedding, hỏi là tìm đoạn gần nghĩa nhất.
+- **SOAP (Subjective/Objective/Assessment/Plan):** mẫu ghi chú bác sĩ chuẩn 4 phần; ở đây P để trống cho bác sĩ quyết.
+- **FQG (Follow-up Questions):** 2-3 câu hỏi gợi ý ngữ cảnh (ăn ngọt? quên thuốc?) trước khi escalate; hội thoại nhiều vòng là future-work.
+- **HILT (Human-In-The-Loop):** AI chấm điểm câu trả lời, điểm thấp (<3.5/5) thì chuyển cho bác sĩ duyệt, không trả lời liều.
+
+Chi tiết đo lường → xem `docs/evaluation.md`; dữ liệu/corpus → xem `docs/data_contract.md`.
 
 ## 1. Tổng quan hệ thống
 
-```mermaid
-graph TB
-  subgraph Client
-    NextJS[Next.js 14 App Router<br/>frontend/app]
-    Playwright[E2E Playwright]
-  end
-  subgraph API["FastAPI - WHO-RAG Infrastructure API<br/>src/api/main.py:102"]
-    Health[GET /health<br/>pdf_count + vector_ready]
-    Query[POST /v1/query<br/>HILT + Audit]
-    Vitals[POST/GET /v1/glucose|bp|respiratory|mood|vitals]
-    SOAP[POST /v1/soap/generate]
-    Auth[POST /v1/auth/*]
-    Reviews[GET/POST /v1/reviews]
-    Monitors[POST/GET /v1/monitors/*]
-    Admin[GET/POST /v1/admin/traces|prompts]
-  end
-  subgraph RAG["RAG Pipeline v2<br/>src/rag_pipeline.py:36"]
-    Cache[CAGHybridCache<br/>exact + semantic FAISS 0.82<br/>src/cache.py]
-    Retriever[Hybrid Retriever<br/>BM25 + Vector 0.6<br/>src/retriever.py]
-    Rerank[CrossEncoder<br/>ms-marco-MiniLM-L-6-v2]
-    Generator[LLM Generator<br/>OpenAI/Groq + 12 prompts]
-    Memory[Memory<br/>short 500tok + episodic 300tok<br/>+ long-term 3 facts]
-    Evaluator[LLM-as-judge<br/>faithfulness 3.5]
-  end
-  subgraph Storage
-    PDFs[data/raw/pdfs<br/>34 PDFs 18+1+4+5+3+3]
-    Staging[data/raw/staging<br/>pending_review]
-    Chroma[(Chroma<br/>pdf_db 4x33-39MB<br/>pdf_db_openai 1.7MB)]
-    Meta[(metadata_store.db<br/>files 75, chunks 11428)]
-    AuthDB[(auth.db<br/>users/reviews/notifications)]
-    Tracing[(tracing.db<br/>traces/spans/chunks<br/>prompts/ragas)]
-    MonitorDB[(monitoring.db<br/>10 sources)]
-    VitalsDB[(vitals.db)]
-  end
-  subgraph Agents["Monitors Scheduler<br/>src/monitors/scheduler.py"]
-    FDA[FDA daily 02:00<br/>api.fda.gov 240/min]
-    BYT[BYT weekly Mon 03:00<br/>thuvienphapluat.vn]
-    Guideline[Guideline monthly HEAD<br/>+ quarterly deep]
-  end
+Luồng 5 hộp (học thuộc lòng luồng này là đủ onboard):
 
-  NextJS -->|authFetch 401 refresh| API
-  Query --> RAG
-  RAG --> Cache
-  Cache -->|miss| Retriever
-  Retriever --> Chroma
-  Retriever --> Meta
-  Rerank --> Generator
-  Generator --> Evaluator
-  Evaluator -->|low confidence| Reviews
-  API --> Storage
-  Agents --> Staging
-  Staging -->|approve| PDFs
-  PDFs -->|indexer 4 strategies| Chroma
+```
+[Patient log glucose] -> [API + Anomaly check] -> [RAG + Memory] -> [FQG truoc escalate] -> [Doctor: sparkline 90d + SOAP]
 ```
 
-**Điểm nhấn:**
-- 4 chiến lược chunk `structure/sliding/semantic/hybrid` mỗi thứ 1 DB riêng, tách `pdf_db` (384d) vs `pdf_db_openai` (1536d) để tránh mismatch.
-- HILT: `evaluate_rag` ngưỡng `3.5/5` trên 4 metrics, fail → `routed_role` (doctor/specialist/pharmacist) + `pending_review`.
-- CAG 24h TTL, semantic threshold `0.82`, `max_size 1024` — cache hit bypass retrieval.
+- Patient nhập chỉ số → `POST /v1/glucose` kiểm tra spike >250/<70 và trend 3 ngày.
+- Hỏi đáp → `POST /v1/query` chạy RAG (cache → hybrid BM25+vector → rerank → LLM `gpt-4o-mini` demo).
+- Memory 3 tầng (`src/memory/`): short 500 tokens + episodic 300 tokens + long-term 3 facts; cuối tuần gom thành 1 fact/tuần.
+- Doctor xem `previsit`: sparkline 90 ngày chấm đỏ anomaly (30%) + SOAP text (70%), mỗi nhận định có `[Xem log #id]`; bác sĩ còn có hàng đợi `/expert/patients` sort triage critical → trend → watch → safe.
+- Kiến trúc module hóa đa chỉ số (BP/HR/SpO2) nhưng MVP tập trung sâu Glucose làm POC.
+
+<details>
+<summary>Mermaid chi tiết cũ (click để mở, không cần học thuộc)</summary>
+
+Mermaid gốc 4 sơ đồ đã thu gọn. Muốn xem full thì `git log -- docs/architecture_diagram.md`. Tóm tắt: Client (Next.js) → FastAPI (`src/api/main.py:102`) → RAG Pipeline (`src/rag_pipeline.py:36`) → Storage (Chroma + `metadata/*.db`) + Agents giám sát guideline.
+
+</details>
+
+### Tracks A/B/C (mỗi track 1 đoạn, chi tiết code ở file khác)
+
+- **Track A — Hỏi đáp RAG + HILT:** `POST /v1/query` → cache → retrieve → rerank → sinh câu trả lời → `evaluate_rag` chấm 4 tiêu chí, thấp điểm thì `pending_review` cho bác sĩ. Xem contract ở `docs/api_contract.md`.
+- **Track B — Theo dõi đường huyết + Anomaly:** `POST /v1/glucose` → lưu log → `anomaly_detector` (spike cứng + trend heuristic demo) → banner + FQG ở tracker. Ngưỡng cứng giữ ở `GLUCOSE_THRESHOLDS_MGDL`, demo LLM là `gpt-4o-mini`.
+- **Track C — Pre-visit SOAP cho bác sĩ:** `POST /v1/soap/generate` → S gom notes FQG, O số cứng, A chỉ nói đạt/không đạt HbA1c<7% theo BYT QĐ5481 2020 + ADA 2024 (QĐ3192 là tăng huyết áp, không dùng cho ĐTĐ), **P = ""** để trống hoàn toàn.
+
+### Structure condensed (đọc để biết file nào sửa khi nào)
+
+- `src/api/main.py` — mọi endpoint `/v1/*`; `src/api/schemas.py` — request/response.
+- `src/rag_pipeline.py` — luồng RAG; `src/retriever.py`, `src/cache.py`, `src/generator.py` — 3 bước con.
+- `src/features/anomaly_detector.py`, `src/features/scope_guard.py`, `src/features/soap_summary.py` — logic ĐTĐ mới.
+- `src/memory/` — 3 tầng memory + `rollup.py`; `src/observability/tracing_db.py` — traces/spans/chunks.
+- `frontend/app/tracker`, `frontend/app/previsit`, `frontend/app/admin/tracing` — 3 màn hình chính.
 
 ## 2. Luồng dữ liệu — Guideline & Safety (5 bước)
 
-```mermaid
-sequenceDiagram
-  participant Crawler as Crawler<br/>crawl_guidelines.py<br/>+ guideline_fetcher.py
-  participant Staging as Staging<br/>data/raw/staging
-  participant LLM as LLM Summarizer<br/>guideline_diff VI
-  participant DB as monitoring.db<br/>guideline_versions
-  participant Expert as Specialist/Doctor
-  participant Corpus as Corpus<br/>data/raw/pdfs
-  participant Indexer as Indexer<br/>hybrid_hash_reindex
-
-  Crawler->>Crawler: HEAD etag/last-modified<br/>so monitored_sources.last_etag
-  alt etag đổi
-    Crawler->>Staging: download staging/<source>/<version>/file.pdf<br/>sha256 dedup vs approved
-    Crawler->>Crawler: extract docling → diff vs approved text
-    Crawler->>LLM: old_text + new_text → tom_tat_tieng_viet
-    Crawler->>DB: INSERT status=pending_review<br/>change_summary_json
-    Crawler->>Expert: notify in-app monitor_pending<br/>specialist+doctor
-    Expert->>DB: POST /guidelines/{gid}/decision approved
-    Expert->>Staging: move staging→corpus/<source>/file.pdf
-    DB->>DB: supersede cũ → superseded
-    Staging->>Indexer: reindex_single_pdf ×4 strategies<br/>vector_db.delete + add_texts
-    Indexer->>DB: upsert_file_and_chunks + indexed_at
-    Indexer->>Crawler: clear CAGHybridCache._exact
-  else không đổi
-    Crawler->>DB: update last_checked_at
-  end
-
-  Note over Crawler,Indexer: Safety tương tự: FDA openFDA JSON<br/>cached 3600s → safety_alerts pending → pharmacist → approved/dismissed<br/>không index vào vector, chỉ alert
-```
-
-**Tầng an toàn:**
-- SSRF allowlist 10 domains trước mọi `HEAD/GET`.
-- `%PDF` magic + `<1KB` reject.
-- Dedup `sha256` và `alert_url+title 7d`.
+1. Crawler HEAD kiểm tra etag/last-modified của nguồn (ADA, WHO, BYT...).
+2. Có bản mới → tải về `data/raw/staging/`, kiểm tra `%PDF`, dedup sha256.
+3. LLM tóm tắt thay đổi tiếng Việt → ghi `guideline_versions` trạng thái `pending_review`.
+4. Chuyên gia duyệt trên UI → file move sang `data/raw/pdfs/`, bản cũ thành `superseded`.
+5. Reindex 4 chiến lược chunk + xóa cache CAG để câu trả lời mới dùng ngay. FDA alerts tương tự nhưng chỉ cảnh báo, không index.
 
 ## 3. Sequence HILT — RAG Query
 
-```mermaid
-sequenceDiagram
-  participant User as User<br/>Next.js
-  participant API as POST /v1/query<br/>src/api/main.py:172
-  participant RAG as rag_chat<br/>src/rag_pipeline.py:36
-  participant Cache as CAGHybridCache
-  participant Ret as retrieve_context<br/>Hybrid 0.6
-  participant Rer as rerank top3
-  participant LLM as generate_answer<br/>12 prompts
-  participant Eval as evaluate_rag<br/>faithfulness 3.5
-  participant DB as tracing.db + auth.db
+1. API nhận `{query, top_k=5, user_id}` → gọi `rag_chat`.
+2. Cache trúng → trả ngay; trượt → hybrid retrieve (BM25 + vector, alpha 0.6) → rerank top 3.
+3. LLM sinh câu trả lời kèm trích dẫn `[Source X]` + memory ngắn.
+4. `evaluate_rag` chấm, metric nào <3.5 thì tạo review, gán bác sĩ/dược sĩ/chuyên gia, trả `pending_review`.
 
-  User->>API: {query, top_k=5, user_id}
-  API->>RAG: rag_chat(query, top_k, user_id, username)
-  RAG->>DB: start_trace(user_id, tone, top_k)
-  RAG->>Cache: get(query)
-  alt hit
-    Cache-->>RAG: LLMOutput cached
-    RAG->>DB: end_trace(answered)
-    RAG-->>API: {answer, contexts, cache_hit:true}
-  else miss
-    RAG->>Ret: hybrid BM25+vector
-    Ret->>DB: add_span_chunks
-    RAG->>Rer: CrossEncoder rerank top3
-    RAG->>LLM: system_prompt(tone) + Context[Source X|Score] + Question<br/>+ memory short 500tok
-    LLM-->>RAG: {answer, cited_sources}
-    RAG->>Cache: put(query, LLMOutput)
-    RAG->>DB: end_trace(answered)
-    RAG-->>API: {answer, contexts, timings}
-  end
-  API->>Eval: evaluate_rag(query, answer, contexts)
-  alt is_low_confidence (any metric <3.5)
-    API->>DB: create_review_request<br/>status pending + notification routed_role
-    API->>DB: update_trace(pending_review, is_low=1)
-    API-->>User: {status: pending_review, review_id, evaluation}
-  else ok
-    API->>DB: add_query_history(answered)
-    API->>DB: update_trace(answered, is_low=0)
-    API-->>User: {status: answered, audit{ citations 300ch, prompt_version, latency_ms}}
-  end
-```
-
-**Tone auto:**
-`mental > hypertension > respiratory > diabetes > strict|friendly|balanced` theo keyword `src/generator.py:detect_tone_and_temp`.
-
-**Spans:** `cache_check → retrieve_context → rerank_contexts → build_llm_input → generate_answer → cache_put → update_memories → format_answer` (7 spans, `duration_ms` tính từ `start_at`).
+**Spans trace:** `cache_check → retrieve_context → rerank_contexts → build_llm_input → generate_answer → cache_put → update_memories → format_answer` (xem chi tiết ở `docs/evaluation.md`).
 
 ## 4. ERD — 6 DBs
 
-```mermaid
-erDiagram
-  files ||--o{ chunks : "file_name FK CASCADE"
-  files {
-    text file_name PK "fname::strategy"
-    text file_hash "size+mtime+head/tail"
-    real updated_at
-  }
-  chunks {
-    text chunk_hash PK "text+section+page+index"
-    text file_name FK
-    int chunk_index
-    text vector_id "fname_chunk_hash[:12]"
-    text extra_meta "JSON"
-  }
-
-  users ||--o{ review_requests : "requester_id"
-  users ||--o{ notifications : "user_id"
-  users ||--o{ query_history : "user_id"
-  review_requests {
-    text id PK
-    text query
-    text draft_answer
-    text contexts_json
-    real confidence
-    text routed_role "doctor|specialist|pharmacist"
-    text status "pending|approved|rejected|revised"
-    text disease
-  }
-
-  traces ||--o{ spans : "trace_id CASCADE"
-  spans ||--o{ span_chunks : "span_id CASCADE"
-  traces ||--o{ span_chunks : "trace_id"
-  traces ||--o{ ragas_evaluations : "trace_id UNIQUE"
-  traces ||--o{ feedback : "trace_id"
-  traces {
-    text id PK
-    text user_id
-    text query
-    text answer
-    text status "pending_review|answered|failed"
-    text tone "diabetes|hypertension|..."
-    text prompt_version "sha8"
-    real total_latency_ms
-    boolean is_low_confidence
-    text routed_role
-    text review_id
-    text created_at "30d retention"
-  }
-  prompts {
-    text tone
-    text version "sha256(text)[:8] UNIQUE"
-    text status "draft|pending_approval|active|archived"
-    boolean is_active
-  }
-
-  monitored_sources ||--o{ guideline_versions : "source"
-  monitored_sources ||--o{ monitor_runs : "source_key"
-  monitored_sources {
-    text source_key PK "ada_soc"
-    text check_interval "monthly|weekly|daily"
-    text risk_tier "critical|high|medium"
-    text last_etag
-    text last_hash
-  }
-  guideline_versions {
-    text id PK
-    text source
-    text version_label
-    text status "pending_review|approved|superseded"
-    text staging_path
-    text corpus_path
-    text sha256
-    text change_summary_json "VI"
-  }
-  safety_alerts {
-    text id PK
-    text source "FDA|DAV|MOH"
-    text severity "critical|high|medium|low"
-    text alert_type "recall|box_warning"
-    text status "pending_review|approved|dismissed"
-  }
-
-  vitals {
-    text user_id
-    text disease_type "diabetes|hypertension|respiratory|mental"
-    real value_mgdl
-    int systolic_diastolic
-    int phq9_gad7
-    text crisis_flag
-  }
-```
-
-**Retention & Index:**
-- `tracing.db` `list_traces` enforce `created_at >= now-30d` + `delete_expired_traces`.
-- `monitoring.db` `superseded` xóa sau `MONITOR_SUPERSEDED_RETENTION_DAYS=30`.
+| DB | File | Bảng chính để nhớ |
+|---|---|---|
+| Metadata | `metadata/metadata_store.db` | `files (fname::strategy)`, `chunks` 11428 rows |
+| Vector | `embeddings/pdf_db/*` | 4 chiến lược × 33-39MB; `pdf_db_openai` 1.7MB riêng |
+| Auth | `metadata/auth.db` | `users`, `review_requests`, `notifications` |
+| Tracing | `metadata/tracing.db` | `traces/spans/span_chunks/prompts/ragas/feedback`, giữ 30 ngày |
+| Monitoring | `metadata/monitoring.db` | `monitored_sources` 10 rows, `guideline_versions`, `safety_alerts` |
+| Vitals | `metadata/vitals.db` | logs theo `disease_type` |
 
 ## 5. Gaps đã biết (cần xử lý trước prod)
 
-| # | Gap | Ảnh hưởng | Mitigation trong doc |
-|---|---|---|---|
-| 1 | `scheduler` chưa wire vào FastAPI lifespan | Chỉ chạy sidecar, dev không có cron | Ghi trong `monitoring.md#Scheduling` + `dashboard_ui#Roadmap` |
-| 2 | BYT scrape chưa test HTML thật | Có thể parse sai `snapshot.html` | Đã mock trong test, cần integration test với `thuvienphapluat.vn` thật |
-| 3 | FDA `cached_get` chưa backoff 429 | Có thể miss critical recall | Thêm `time.sleep(0.25)` + TTL 1h, đề xuất exponential backoff |
-| 4 | `frontend/app/monitor` chưa tồn tại | API có nhưng không có UI | Tạo stub trong batch cuối (TODO của bạn) |
-| 5 | `reindex_single_pdf` chưa ghi `version` vào Chroma `metas` | Citation chưa hiện `GOLD 2025` | Cần `extra_meta.version_label` khi `add_texts` |
-| 6 | `CAGHybridCache` chưa filter poisoned chunk | Indirect prompt injection via RAG doc | Ghi vào `owasp_llm_top10_gap_analysis#LLM03` |
+| # | Gap | Nói đơn giản |
+|---|---|---|
+| 1 | Scheduler chưa wire vào lifespan | Cron chỉ chạy sidecar, dev không tự chạy |
+| 2 | BYT scrape chưa test HTML thật | Có thể parse sai trang luật |
+| 3 | FDA chưa backoff 429 | Có thể lỡ recall quan trọng |
+| 4 | `frontend/app/monitor` chưa có UI | API có nhưng chưa có màn hình |
+| 5 | Reindex chưa ghi version vào Chroma metas | Citation chưa hiện năm guideline |
+| 6 | CAG chưa lọc poisoned chunk | Tài liệu độc có thể chui vào câu trả lời (xem file OWASP canonical) |
 
 ## 6. Tham chiếu nhanh
 
-- `src/config.py:240` constants, `src/rag_pipeline.py:36` flow, `src/observability/tracing_db.py:32` schema, `src/indexer.py:98` reindex, `src/monitors/scheduler.py: setup_schedule 02:00/03:00/04:00`.
-- Kích thước DB: `metadata_store 6.7 MB 75/11428 chunks`, `pdf_db 33-39 MB ×4`, `monitoring 73 KB`.
+- Code: `src/config.py:240` hằng số, `src/rag_pipeline.py:36` luồng, `src/observability/tracing_db.py:32` schema, `src/indexer.py:98` reindex, `src/monitors/scheduler.py` lịch 02:00/03:00.
+- **Why business (3-5 dòng, chi tiết ở `docs/benchmark.md` phụ lục):** FreeStyle Libre bán 2-4M VND/bộ chứng minh người dân chịu chi cho monitoring; BHYT chi trả telehealth từ 1/7/2025 + VN chỉ 14 bác sĩ/10k người nên AI triage có giá trị; hướng bán B2B2C cho phòng khám thay vì thu phí lẻ từng bệnh nhân.
+- **Run demo 5 phút:**
+  - Backend: `pip install -e .` rồi `uvicorn src.api.main:app --reload --port 8000` (cần `OPENAI_API_KEY`, demo chạy `gpt-4o-mini`, production AWQ/vLLM chỉ doc-only).
+  - Frontend: `cd frontend && npm install && npm run dev`, mở tracker log 260 → xem banner, mở previsit xem sparkline + SOAP.
+- **Lưu ý y khoa:** demo-only, không chẩn đoán mới; A chỉ đối chiếu HbA1c<7% (BYT QĐ5481 + ADA 2024).
 
-```bash
-# Verify
-python -c "from src.api.main import app; print([r.path for r in app.routes if 'monitor' in r.path])"
-ls embeddings/pdf_db/* data/raw/pdfs/* | wc -l
-sqlite3 metadata/tracing.db "select count(*) from traces where created_at >= datetime('now','-30 days')"
-```
+### Checklist tự kiểm tra
+
+- [ ] Vẽ lại 5 hộp không nhìn tài liệu.
+- [ ] Giải thích được RAG vs CAG vs HILT bằng 1 câu mỗi cái.
+- [ ] Chạy được demo và chỉ ra file code của từng bước.
+- [ ] Nói được tại sao P để trống và QĐ3192 không dùng cho ĐTĐ.

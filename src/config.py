@@ -33,6 +33,10 @@ SLIDING_OVERLAP = 64
 SEMANTIC_SIM_THRESHOLD = 0.9128
 ATOMIC_TOKEN_SIZE = 120
 SENTENCE_GROUP = 4
+# Index strategies built by `indexer.main()` — default structure-only POC.
+# Existing sliding/semantic/hybrid collections on disk keep serving reads.
+# Re-enable full rebuild with: INDEX_STRATEGIES=structure,sliding,semantic,hybrid_section_semantic
+INDEX_STRATEGIES = [s.strip() for s in os.getenv("INDEX_STRATEGIES", "structure").split(",") if s.strip()]
 
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # generator model
 # Embedding: ưu tiên OpenAI, fallback về local nếu chưa cấu hình

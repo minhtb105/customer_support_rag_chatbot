@@ -267,12 +267,18 @@ def main():
     except ImportError:
         from src.chunk_strategies import ChunkingStrategy
 
-    for strategy in [
-        ChunkingStrategy.STRUCTURE,
-        ChunkingStrategy.SLIDING,
-        ChunkingStrategy.SEMANTIC,
-        ChunkingStrategy.HYBRID_SECTION_SEMANTIC,
-    ]:
+    try:
+        from config import INDEX_STRATEGIES
+    except ImportError:
+        from src.config import INDEX_STRATEGIES
+    _STRATS = {
+        "structure": ChunkingStrategy.STRUCTURE,
+        "sliding": ChunkingStrategy.SLIDING,
+        "semantic": ChunkingStrategy.SEMANTIC,
+        "hybrid_section_semantic": ChunkingStrategy.HYBRID_SECTION_SEMANTIC,
+    }
+    strategies = [_STRATS[name] for name in INDEX_STRATEGIES if name in _STRATS] or [ChunkingStrategy.STRUCTURE]
+    for strategy in strategies:
         # Tạo thư mục vector DB riêng cho từng strategy (tách theo embedding provider)
         strategy_db_dir = _resolve_index_db_dir(strategy.value)
         os.makedirs(strategy_db_dir, exist_ok=True)

@@ -34,6 +34,7 @@ export default function Header() {
   const nav = [...baseNav];
   if (user) nav.push({ href: "/my/reviews", label: "Lịch sử" });
   if (isExpert || isAdmin) nav.push({ href: "/expert/queue", label: "Duyệt" + (unread ? ` (${unread})` : "") });
+  if (isExpert || isAdmin) nav.push({ href: "/expert/patients", label: "Bệnh nhân" });
   if (isAdmin) {
     nav.push({ href: "/admin/tracing", label: "Tracing" });
     nav.push({ href: "/admin/prompts", label: "Prompts" });
