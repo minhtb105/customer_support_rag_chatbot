@@ -32,6 +32,10 @@ export default function PrevisitView({ patientId, title, subtitle }: { patientId
   const [glucose,setGlucose]=useState<any>(null);
   const [loading,setLoading]=useState(false);
   const [err,setErr]=useState("");
+  const [sEdit,setSEdit]=useState<string | null>(null);
+  const hasTriageSource = Array.isArray((glucose as any)?.logs)
+    ? (glucose as any).logs.some((l: any) => String(l.notes || "").split(" | ").some((s: string) => s.trim() === "[AI Triage]"))
+    : false;
   const gen = async (asMd=false)=>{
     if(!patientId){ setErr("Thiếu patient id"); return; }
     setLoading(true); setErr(""); setData(null); setMd("");
@@ -39,7 +43,7 @@ export default function PrevisitView({ patientId, title, subtitle }: { patientId
       const g = await getGlucose(patientId,200,days).catch(()=>null);
       setGlucose(g);
       if(asMd){ const text=await generateSoapMarkdown(patientId,days); setMd(text); }
-      else { const j=await generateSoap(patientId,days); setData(j); }
+      else { const j=await generateSoap(patientId,days); setData(j); setSEdit(j?.soap?.subjective ?? null); }
     }catch(e:any){ setErr(e.message); } finally{ setLoading(false); }
   };
   const downloadMd=()=>{
@@ -75,7 +79,7 @@ export default function PrevisitView({ patientId, title, subtitle }: { patientId
               <div className="mt-2 text-[11px] text-slate-500">Chấm đỏ = anomaly ({anomalySource === "server" ? "theo server: spike + trend cascade" : "spike >250 / <70"}). Click [Xem log #id] để xem log thô.</div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
-              <div className="rounded-xl bg-slate-50 p-4"><div className="text-xs font-bold">S — Subjective</div><div className="mt-1 text-xs whitespace-pre-wrap">{renderWithLogLinks(data.soap.subjective)}</div></div>
+              <div className="rounded-xl bg-slate-50 p-4"><div className="flex items-center gap-2 text-xs font-bold">S — Subjective{hasTriageSource && <span className="rounded-full border border-violet-300 bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-800">[Nguồn: AI Triage]</span>}</div><div className="mt-1 text-xs whitespace-pre-wrap">{renderWithLogLinks(data.soap.subjective)}</div><textarea aria-label="S-Subjective (chỉnh sửa)" value={sEdit ?? ""} onChange={(e)=>setSEdit(e.target.value)} rows={4} className="mt-2 w-full rounded-lg border bg-white p-2 text-xs whitespace-pre-wrap" /></div>
               <div className="rounded-xl bg-blue-50 p-4 border border-blue-100"><div className="text-xs font-bold text-blue-900">O — Objective</div><div className="mt-1 text-xs whitespace-pre-wrap">{renderWithLogLinks(data.soap.objective)}</div></div>
               <div className="rounded-xl bg-amber-50 p-4 border border-amber-100"><div className="text-xs font-bold">A — Assessment</div><div className="mt-1 text-xs whitespace-pre-wrap">{renderWithLogLinks(data.soap.assessment)}</div></div>
               <div className="rounded-xl bg-emerald-50 p-4 border border-emerald-100"><div className="text-xs font-bold">P — Plan</div>

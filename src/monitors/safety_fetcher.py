@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
@@ -44,7 +44,7 @@ def _fda_alert_type(reason: str) -> str:
 def fetch_fda_recalls(limit: int = 10, days_back: int = 7) -> List[Dict[str, Any]]:
     """Fetch FDA enforcement recalls (openFDA anonymous)."""
     # Search for recent recalls: recall_initiation_date within days_back
-    since = (datetime.utcnow() - timedelta(days=days_back)).strftime("%Y%m%d")
+    since = (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime("%Y%m%d")
     # openFDA search syntax: recall_initiation_date:[20240101+TO+20251231]
     url = f"{FDA_API_BASE}/drug/enforcement.json?search=recall_initiation_date:[{since}+TO+99991231]&limit={limit}&sort=recall_initiation_date:desc"
     try:
@@ -146,7 +146,9 @@ def check_fda_alerts() -> Dict[str, Any]:
         # We'll count if alert's created_at is within last 2 minutes
         try:
             created_at = datetime.fromisoformat(alert["created_at"])
-            if (datetime.utcnow() - created_at).total_seconds() < 120:
+            if created_at.tzinfo is None:  # rows written pre-timezone migration store naive ISO
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            if (datetime.now(timezone.utc) - created_at).total_seconds() < 120:
                 found += 1
                 created_ids.append(alert["id"])
                 # notify
@@ -178,7 +180,9 @@ def check_fda_alerts() -> Dict[str, Any]:
         )
         try:
             created_at = datetime.fromisoformat(alert["created_at"])
-            if (datetime.utcnow() - created_at).total_seconds() < 120:
+            if created_at.tzinfo is None:  # rows written pre-timezone migration store naive ISO
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            if (datetime.now(timezone.utc) - created_at).total_seconds() < 120:
                 found += 1
                 created_ids.append(alert["id"])
                 try:
@@ -196,7 +200,7 @@ def check_fda_alerts() -> Dict[str, Any]:
     except Exception:
         pass
 
-    return {"source": "FDA", "found_new": found, "created_ids": created_ids, "checked_at": datetime.utcnow().isoformat()}
+    return {"source": "FDA", "found_new": found, "created_ids": created_ids, "checked_at": datetime.now(timezone.utc).isoformat()}
 
 # ---------- BYT / DAV scrape (weekly) ----------
 def fetch_byt_dav_alerts() -> Dict[str, Any]:
@@ -251,7 +255,9 @@ def fetch_byt_dav_alerts() -> Dict[str, Any]:
                 )
                 try:
                     created_at = datetime.fromisoformat(alert["created_at"])
-                    if (datetime.utcnow() - created_at).total_seconds() < 120:
+                    if created_at.tzinfo is None:  # rows written pre-timezone migration store naive ISO
+                        created_at = created_at.replace(tzinfo=timezone.utc)
+                    if (datetime.now(timezone.utc) - created_at).total_seconds() < 120:
                         found += 1
                         created_ids.append(alert["id"])
                         try:

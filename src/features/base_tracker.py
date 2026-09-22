@@ -10,7 +10,7 @@ Usage:
 from __future__ import annotations
 
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -44,7 +44,7 @@ def fetch_logs(db_path: Path, table: str, user_id: str, limit: int = 50, days: O
     q = f"SELECT * FROM {table} WHERE user_id=? "
     params: List[Any] = [user_id]
     if days is not None:
-        since = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        since = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
         q += "AND measured_at >= ? "
         params.append(since)
     q += "ORDER BY measured_at DESC LIMIT ?"
@@ -77,7 +77,7 @@ def calc_streak(logs: List[Dict[str, Any]]) -> int:
     dates = sorted({str(l["measured_at"])[:10] for l in logs}, reverse=True)
     date_set = set(dates)
     streak = 0
-    cur = datetime.utcnow().date()
+    cur = datetime.now(timezone.utc).date()
     while cur.isoformat() in date_set:
         streak += 1
         cur -= timedelta(days=1)
@@ -88,13 +88,15 @@ def calc_logs_per_week(logs: List[Dict[str, Any]]) -> float:
     """Trung bình 4 tuần gần nhất; fallback nếu ít dữ liệu."""
     if not logs:
         return 0.0
-    last28 = [l for l in logs if str(l["measured_at"]) >= (datetime.utcnow() - timedelta(days=28)).isoformat()]
+    last28 = [l for l in logs if str(l["measured_at"]) >= (datetime.now(timezone.utc) - timedelta(days=28)).isoformat()]
     if last28:
         return round(len(last28) / 4.0, 2)
     # fallback: total / weeks since earliest log
     try:
         earliest = datetime.fromisoformat(str(logs[-1]["measured_at"]))
-        weeks = max(1, (datetime.utcnow() - earliest).days / 7)
+        if earliest.tzinfo is None:  # rows written pre-timezone migration store naive ISO
+            earliest = earliest.replace(tzinfo=timezone.utc)
+        weeks = max(1, (datetime.now(timezone.utc) - earliest).days / 7)
         return round(len(logs) / weeks, 2)
     except Exception:
         return round(float(len(logs)), 2)

@@ -9,7 +9,7 @@ Hướng A — Trợ lý tuân thủ tự theo dõi đường huyết.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional, Tuple
 
 try:
@@ -97,12 +97,12 @@ def should_escalate_to_doctor(user_id: str, lookback: int = 3) -> bool:
 def add_log(user_id: str, value_mgdl: float, measured_at: Optional[datetime] = None,
             context: str = "random", notes: Optional[str] = None) -> Dict[str, Any]:
     init_glucose_db()
-    measured_at = measured_at or datetime.utcnow()
+    measured_at = measured_at or datetime.now(timezone.utc)
     classification, message = classify_glucose(value_mgdl, context)
     conn = _get_conn()
     cur = conn.execute(
         "INSERT INTO glucose_logs (user_id, value_mgdl, measured_at, context, notes, classification, created_at) VALUES (?,?,?,?,?,?,?)",
-        (user_id, value_mgdl, measured_at.isoformat(), context, notes, classification, datetime.utcnow().isoformat()),
+        (user_id, value_mgdl, measured_at.isoformat(), context, notes, classification, datetime.now(timezone.utc).isoformat()),
     )
     conn.commit()
     row_id = cur.lastrowid
@@ -152,7 +152,7 @@ def get_stats(user_id: str) -> Dict[str, Any]:
         }
     vals = [l["value_mgdl"] for l in logs]
     avg = sum(vals) / len(vals)
-    seven = [l for l in logs if l["measured_at"] >= (datetime.utcnow() - timedelta(days=7)).isoformat()]
+    seven = [l for l in logs if l["measured_at"] >= (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()]
     last7_avg = sum(l["value_mgdl"] for l in seven) / len(seven) if seven else None
     counts = classification_counts(logs)
     streak = calc_streak(logs)

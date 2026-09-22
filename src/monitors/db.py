@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 import uuid
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -137,7 +137,7 @@ def init_monitoring_db():
     # seed monitored_sources if empty
     cnt = conn.execute("SELECT COUNT(*) as c FROM monitored_sources").fetchone()["c"]
     if cnt == 0:
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         seeds = [
             ("ada_soc", "ADA Standards of Care (Diabetes)", "https://diabetesjournals.org/care/issue/47/Supplement_1", "monthly", "high"),
             ("aha_acc_htn", "AHA/ACC Hypertension Guideline", "https://www.ahajournals.org/doi/10.1161/HYP.0000000000000065", "monthly", "high"),
@@ -167,7 +167,7 @@ def init_monitoring_db():
         if not exists:
             conn.execute(
                 "INSERT INTO monitored_sources (id, source_key, display_name, base_url, check_interval, risk_tier, enabled, created_at) VALUES (?,?,?,?,?,?,?,?)",
-                (uuid.uuid4().hex, key, name, url, interval, tier, 1, datetime.utcnow().isoformat()),
+                (uuid.uuid4().hex, key, name, url, interval, tier, 1, datetime.now(timezone.utc).isoformat()),
             )
     conn.commit()
     conn.close()
@@ -190,7 +190,7 @@ def get_source(source_key: str) -> Optional[Dict[str, Any]]:
 
 def update_source_check(source_key: str, etag: Optional[str] = None, last_modified: Optional[str] = None, last_hash: Optional[str] = None):
     conn = _conn()
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     # build dynamic update
     fields = {"last_checked_at": now}
     if etag is not None:
@@ -220,7 +220,7 @@ def create_guideline_version(
     supersedes_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     gid = uuid.uuid4().hex
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn = _conn()
     conn.execute(
         """INSERT INTO guideline_versions
@@ -279,7 +279,7 @@ def list_guideline_versions(
 
 def update_guideline_status(gid: str, status: str, reviewer_id: Optional[str] = None, review_notes: Optional[str] = None, corpus_path: Optional[str] = None, indexed_at: Optional[str] = None):
     conn = _conn()
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     fields: Dict[str, Any] = {"status": status, "reviewed_at": now}
     if reviewer_id:
         fields["reviewer_id"] = reviewer_id
@@ -298,7 +298,7 @@ def update_guideline_status(gid: str, status: str, reviewer_id: Optional[str] = 
 
 def delete_superseded_expired(days: int = 30) -> int:
     """Delete superseded guideline_versions older than days and remove files."""
-    cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     conn = _conn()
     rows = conn.execute("SELECT * FROM guideline_versions WHERE status='superseded' AND reviewed_at < ?", (cutoff,)).fetchall()
     count = 0
@@ -354,7 +354,7 @@ def create_safety_alert(
             conn.close()
             return get_safety_alert(dup["id"])  # type: ignore
     aid = uuid.uuid4().hex
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     published = published_date or now
     conn.execute(
         """INSERT INTO safety_alerts
@@ -399,7 +399,7 @@ def list_safety_alerts(
 
 def update_safety_status(aid: str, status: str, reviewer_id: Optional[str] = None, review_notes: Optional[str] = None):
     conn = _conn()
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     fields: Dict[str, Any] = {"status": status, "reviewed_at": now}
     if reviewer_id:
         fields["reviewer_id"] = reviewer_id
@@ -421,7 +421,7 @@ def mark_safety_notified(aid: str):
 # ---------- monitor_runs ----------
 def create_run(source_key: str, trace_id: Optional[str] = None) -> str:
     rid = uuid.uuid4().hex
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn = _conn()
     conn.execute("INSERT INTO monitor_runs (id, source_key, started_at, status, trace_id) VALUES (?,?,?, ?,?)", (rid, source_key, now, "running", trace_id))
     conn.commit()
@@ -430,7 +430,7 @@ def create_run(source_key: str, trace_id: Optional[str] = None) -> str:
 
 def finish_run(run_id: str, found_new: int = 0, status: str = "success", error: Optional[str] = None):
     conn = _conn()
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn.execute("UPDATE monitor_runs SET finished_at=?, found_new=?, status=?, error=? WHERE id=?", (now, found_new, status, error, run_id))
     conn.commit()
     conn.close()

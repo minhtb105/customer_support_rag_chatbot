@@ -4,7 +4,7 @@ import hashlib
 import json
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
@@ -313,7 +313,7 @@ def _download_and_stage(source_key: str, cfg: Dict[str, Any], etag: Optional[str
             return {"source_key": source_key, "found_new": True, "guideline_version_id": gv["id"], "note": "paywall placeholder"}
     # Download PDF to staging
     # Determine version label from etag or date
-    version_label = (etag or last_modified or datetime.utcnow().strftime("%Y%m%d"))[:32]
+    version_label = (etag or last_modified or datetime.now(timezone.utc).strftime("%Y%m%d"))[:32]
     version_label = re.sub(r"[^\w-]", "_", version_label)[:32]
     staging_dir = STAGING_DIR / cfg["source"] / version_label
     staging_dir.mkdir(parents=True, exist_ok=True)

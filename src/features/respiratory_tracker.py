@@ -5,7 +5,7 @@ Stores peak flow, GOLD, CAT, inhaler steps via BaseTracker.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional, Tuple
 
 try:
@@ -84,7 +84,7 @@ def add_respiratory_log(user_id: str, peak_flow_percent: Optional[int] = None, p
                         inhaler_steps_correct: Optional[int] = None, inhaler_steps_total: Optional[int] = None,
                         measured_at: Optional[datetime] = None, context: str = "random", notes: Optional[str] = None) -> Dict[str, Any]:
     init_respiratory_db()
-    measured_at = measured_at or datetime.utcnow()
+    measured_at = measured_at or datetime.now(timezone.utc)
     peak_zone, peak_msg = classify_peak_flow(peak_flow_percent)
     gold = classify_gold(cat_score)
     inhaler_cls, inhaler_msg = _classify_inhaler(inhaler_correct, inhaler_steps_correct, inhaler_steps_total)
@@ -103,7 +103,7 @@ def add_respiratory_log(user_id: str, peak_flow_percent: Optional[int] = None, p
     conn = _get_conn()
     cur = conn.execute(
         "INSERT INTO respiratory_logs (user_id, peak_flow_percent, personal_best, gold_stage, cat_score, inhaler_correct, inhaler_steps_correct, inhaler_steps_total, measured_at, context, notes, classification, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-        (user_id, peak_flow_percent, personal_best, gold, cat_score, inhaler_correct, inhaler_steps_correct, inhaler_steps_total, measured_at.isoformat(), context, notes, classification, datetime.utcnow().isoformat()),
+        (user_id, peak_flow_percent, personal_best, gold, cat_score, inhaler_correct, inhaler_steps_correct, inhaler_steps_total, measured_at.isoformat(), context, notes, classification, datetime.now(timezone.utc).isoformat()),
     )
     conn.commit()
     row_id = cur.lastrowid

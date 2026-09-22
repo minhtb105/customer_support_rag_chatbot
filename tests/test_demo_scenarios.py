@@ -6,7 +6,7 @@ KB1 spike 280 fasting / KB2 trend cascade 110->125->142 + followup
 """
 import os
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -35,7 +35,7 @@ def iso_glucose(monkeypatch):
 
 
 def _iso_day(offset: int) -> str:
-    base = datetime.utcnow().replace(hour=7, minute=0, second=0, microsecond=0)
+    base = datetime.now(timezone.utc).replace(hour=7, minute=0, second=0, microsecond=0)
     return (base - timedelta(days=offset)).isoformat()
 
 

@@ -30,6 +30,7 @@ dependencies = [
     "lxml>=5.0.0",
     "requests>=2.31.0",
     "python-dotenv>=1.0.0",
+    "faker>=24.0.0",
 ]
 
 [build-system]
@@ -43,6 +44,13 @@ where = ["src", "."]
 testpaths = ["tests"]
 pythonpath = ["src", "."]
 addopts = "-v --tb=short"
+filterwarnings = [
+  # Third-party deprecations only (repo-owned datetime.utcnow() migrated to
+  # datetime.now(timezone.utc), so nothing we own is silenced here):
+  "ignore:.*langchain-community.*:DeprecationWarning",
+  "ignore:Using `httpx` with `starlette\\.testclient`.*:Warning",
+  "ignore:builtin type .* has no __module__ attribute:DeprecationWarning",
+]
 markers = [
     "legacy: legacy generic evaluation (non-diabetes)",
     "security: OWASP Top 10 security tests",

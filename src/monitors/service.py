@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -96,7 +96,7 @@ def promote_guideline_to_corpus(gid: str, reviewer_id: str, approve: bool = True
     # If dest exists, version it
     if dest_path.exists():
         # archive old with timestamp
-        backup_name = dest_path.stem + f"_superseded_{datetime.utcnow().strftime('%Y%m%d')}" + dest_path.suffix
+        backup_name = dest_path.stem + f"_superseded_{datetime.now(timezone.utc).strftime('%Y%m%d')}" + dest_path.suffix
         try:
             shutil.move(str(dest_path), str(dest_dir / backup_name))
         except Exception:
@@ -118,7 +118,7 @@ def promote_guideline_to_corpus(gid: str, reviewer_id: str, approve: bool = True
     for r in rows:
         if r["id"] != gid:
             # mark as superseded
-            update_guideline_status(r["id"], "superseded", reviewer_id=reviewer_id, review_notes=f"Superseded by {gid} on {datetime.utcnow().isoformat()}")
+            update_guideline_status(r["id"], "superseded", reviewer_id=reviewer_id, review_notes=f"Superseded by {gid} on {datetime.now(timezone.utc).isoformat()}")
 
     # Update current as approved with corpus_path and indexed_at after reindex
     update_guideline_status(gid, "approved", reviewer_id=reviewer_id, review_notes=review_notes, corpus_path=str(dest_path))
@@ -137,7 +137,7 @@ def promote_guideline_to_corpus(gid: str, reviewer_id: str, approve: bool = True
         indexed = False
 
     # Final update indexed_at
-    indexed_at = datetime.utcnow().isoformat() if indexed else None
+    indexed_at = datetime.now(timezone.utc).isoformat() if indexed else None
     final = update_guideline_status(gid, "approved", reviewer_id=reviewer_id, review_notes=review_notes, corpus_path=str(dest_path), indexed_at=indexed_at)
     # Also invalidate cache if available
     try:

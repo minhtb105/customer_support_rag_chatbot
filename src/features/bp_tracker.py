@@ -7,7 +7,7 @@ Stores in metadata/vitals.db table bp_logs (unified DB) via BaseTracker.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional, Tuple
 
 try:
@@ -67,14 +67,14 @@ def _should_escalate_bp(logs: List[Dict[str, Any]]) -> bool:
 def add_bp_log(user_id: str, systolic: int, diastolic: int, measured_at: Optional[datetime] = None,
                context: str = "random", notes: Optional[str] = None) -> Dict[str, Any]:
     init_bp_db()
-    measured_at = measured_at or datetime.utcnow()
+    measured_at = measured_at or datetime.now(timezone.utc)
     if not (50 <= systolic <= 300 and 30 <= diastolic <= 200):
         raise ValueError(f"BP out of range: {systolic}/{diastolic}")
     classification, message = classify_bp(systolic, diastolic)
     conn = _get_conn()
     cur = conn.execute(
         "INSERT INTO bp_logs (user_id, systolic, diastolic, measured_at, context, notes, classification, created_at) VALUES (?,?,?,?,?,?,?,?)",
-        (user_id, systolic, diastolic, measured_at.isoformat(), context, notes, classification, datetime.utcnow().isoformat()),
+        (user_id, systolic, diastolic, measured_at.isoformat(), context, notes, classification, datetime.now(timezone.utc).isoformat()),
     )
     conn.commit()
     row_id = cur.lastrowid
@@ -96,7 +96,7 @@ def get_bp_stats(user_id: str) -> Dict[str, Any]:
                 "classification_counts": {}, "at_target_rate": 0.0}
     avg_sys = sum(l["systolic"] for l in logs) / total
     avg_dia = sum(l["diastolic"] for l in logs) / total
-    seven = [l for l in logs if l["measured_at"] >= (datetime.utcnow() - timedelta(days=7)).isoformat()]
+    seven = [l for l in logs if l["measured_at"] >= (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()]
     last7 = None
     if seven:
         last7 = {"sys": round(sum(l["systolic"] for l in seven)/len(seven),1), "dia": round(sum(l["diastolic"] for l in seven)/len(seven),1)}

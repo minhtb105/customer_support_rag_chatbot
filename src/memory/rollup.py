@@ -12,12 +12,12 @@ Rolling weekly summarization: episodic -> long-term (1 fact/week).
 from __future__ import annotations
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 
 def _current_monday() -> str:
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     monday = today - timedelta(days=today.weekday())
     return monday.isoformat()
 

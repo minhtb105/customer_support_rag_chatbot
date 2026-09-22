@@ -7,7 +7,7 @@ Stores PHQ-9, GAD-7, crisis flags via BaseTracker.
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List, Optional, Tuple
 
 try:
@@ -109,7 +109,7 @@ def add_mood_log(user_id: str, phq9_score: Optional[int] = None, gad7_score: Opt
                  mood_notes: Optional[str] = None, measured_at: Optional[datetime] = None,
                  context: str = "random") -> Dict[str, Any]:
     init_mood_db()
-    measured_at = measured_at or datetime.utcnow()
+    measured_at = measured_at or datetime.now(timezone.utc)
     redacted_notes = redact_pii(mood_notes)
     crisis, kws = contains_crisis_keywords(mood_notes)
     classification, message, is_crisis, found = classify_mood(phq9_score, gad7_score, mood_notes)
@@ -120,7 +120,7 @@ def add_mood_log(user_id: str, phq9_score: Optional[int] = None, gad7_score: Opt
     conn=_get_conn()
     cur=conn.execute(
         "INSERT INTO mood_logs (user_id, phq9_score, gad7_score, mood_notes, crisis_flag, crisis_keywords, measured_at, context, classification, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
-        (user_id, phq9_score, gad7_score, redacted_notes, int(is_crisis), ",".join(found), measured_at.isoformat(), context, classification, datetime.utcnow().isoformat()),
+        (user_id, phq9_score, gad7_score, redacted_notes, int(is_crisis), ",".join(found), measured_at.isoformat(), context, classification, datetime.now(timezone.utc).isoformat()),
     )
     conn.commit()
     row_id=cur.lastrowid

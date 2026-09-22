@@ -22,3 +22,5 @@ src/embeddings/
 /frontend/test-results/
 /frontend/tsconfig.tsbuildinfo
 frontend/tsconfig.tsbuildinfo
+# Runtime triage event logs (never commit)
+logs/triage_events.jsonl

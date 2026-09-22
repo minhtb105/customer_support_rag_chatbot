@@ -1,0 +1,82 @@
+{
+  "name": "diabetes_vn",
+  "version": "1.0",
+  "remarks": "Synthea-method-inspired Faker modulation (doc-only Synthea CLI untouched). Phenotype weights keep demo block-thirds for benchmark coverage; VN 7.3% prevalence is context, not a fitted parameter. Weekly drift budget <= +-2 mg/dL/week so pure drift never trips detect_trend (10-15%/day x3).",
+  "initial": "start",
+  "states": {
+    "start": {"kind": "Initial", "remarks": "entry"},
+    "well_base": {"kind": "SetAttribute", "attribute": "baseline_shift", "value": 0, "remarks": "demo anchor for engine modulation"},
+    "dawn_base": {"kind": "SetAttribute", "attribute": "baseline_shift", "value": 0, "remarks": "demo anchor for engine modulation"},
+    "high_base": {"kind": "SetAttribute", "attribute": "baseline_shift", "value": 0, "remarks": "demo anchor for engine modulation"},
+    "well_week": {"kind": "Observation", "code": "fasting-baseline", "remarks": "weekly anchor observation; daily values scatter around it"},
+    "dawn_week": {"kind": "Observation", "code": "fasting-baseline", "remarks": "weekly anchor observation; morning-spike rule stays in gen_value"},
+    "high_week": {"kind": "Observation", "code": "fasting-baseline", "remarks": "weekly anchor observation"},
+    "well_drift": {"kind": "SetAttribute", "attribute": "drift_delta", "sample": {"min": -2.0, "max": 2.0}, "remarks": "weekly drift budget <= +-2 mg/dL/week (assumption: demo modulation, too small to trip trend detector)"},
+    "dawn_drift": {"kind": "SetAttribute", "attribute": "drift_delta", "sample": {"min": -2.0, "max": 2.0}, "remarks": "weekly drift budget <= +-2 mg/dL/week (assumption: demo modulation)"},
+    "high_drift": {"kind": "SetAttribute", "attribute": "drift_delta", "sample": {"min": -2.0, "max": 2.0}, "remarks": "weekly drift budget <= +-2 mg/dL/week (assumption: demo modulation)"},
+    "well_comp": {"kind": "ConditionOnset", "condition": "Thừa cân", "remarks": "static comorbidity pattern carried over from seed v1"},
+    "well_symptom": {"kind": "Symptom", "symptom": "Khát nhiều", "remarks": "occasional symptom for SOAP S color"},
+    "dawn_guard": {"kind": "Guard", "condition": {"attribute": "age", "op": ">=", "value": 60}, "remarks": "age gate for meds escalation"},
+    "high_guard": {"kind": "Guard", "condition": {"attribute": "age", "op": ">=", "value": 60}, "remarks": "age gate for meds escalation"},
+    "dawn_meds": {"kind": "MedicationOrder", "medication": "metformin 500mg sáng", "remarks": "escalation step 2 of lifestyle -> metformin -> insulin"},
+    "high_meds": {"kind": "MedicationOrder", "medication": "insulin glargine tối", "remarks": "escalation step 3 of lifestyle -> metformin -> insulin"},
+    "dawn_comp_early": {"kind": "ConditionOnset", "condition": "Bệnh thần kinh ngoại biên giai đoạn sớm", "remarks": "staged complication (stage 1 of neuropathy)"},
+    "dawn_comp_eye": {"kind": "ConditionOnset", "condition": "Bệnh võng mạc giai đoạn sớm", "remarks": "staged complication (stage 1 of retinopathy)"},
+    "high_comp_kidney": {"kind": "ConditionOnset", "condition": "Bệnh thận giai đoạn sớm", "remarks": "staged complication (stage 1 of nephropathy)"},
+    "high_comp_foot": {"kind": "ConditionOnset", "condition": "Bệnh thần kinh ngoại biên", "remarks": "staged complication (neuropathy flag for foot-care triage)"},
+    "module_exit": {"kind": "Terminal", "remarks": "supported but unreached in the default path; engine halts if ever entered"}
+  },
+  "transitions": [
+    {"from": "start", "kind": "conditional",
+     "branches": [
+       {"when": {"attribute": "archetype", "op": "==", "value": "well_controlled"}, "to": "well_base"},
+       {"when": {"attribute": "archetype", "op": "==", "value": "dawn_phenomenon"}, "to": "dawn_base"},
+       {"when": {"attribute": "archetype", "op": "==", "value": "high_risk_comorbid"}, "to": "high_base"}
+     ], "default": "well_base",
+     "remarks": "phenotype routing keeps demo block-thirds (assumption: benchmark coverage, not epidemiology)"},
+    {"from": "well_base", "kind": "direct", "to": "well_week"},
+    {"from": "dawn_base", "kind": "direct", "to": "dawn_week"},
+    {"from": "high_base", "kind": "direct", "to": "high_week"},
+    {"from": "well_week", "kind": "distributed", "targets": [
+      {"to": "well_week", "p": 0.88, "remarks": {"assumption": "well patients mostly stable week-to-week (demo)"}},
+      {"to": "well_drift", "p": 0.07, "remarks": {"assumption": "small baseline wobble within +-2 budget (demo)"}},
+      {"to": "well_comp", "p": 0.03, "remarks": {"assumption": "occasional weight flag (demo)"}},
+      {"to": "well_symptom", "p": 0.02, "remarks": {"assumption": "occasional thirst symptom (demo)"}}
+    ]},
+    {"from": "well_drift", "kind": "direct", "to": "well_week"},
+    {"from": "well_comp", "kind": "direct", "to": "well_week"},
+    {"from": "well_symptom", "kind": "direct", "to": "well_week"},
+    {"from": "dawn_week", "kind": "distributed", "targets": [
+      {"to": "dawn_week", "p": 0.78, "remarks": {"assumption": "dawn pattern persists most weeks (demo)"}},
+      {"to": "dawn_drift", "p": 0.10, "remarks": {"assumption": "baseline wobble within +-2 budget (demo)"}},
+      {"to": "dawn_comp_early", "p": 0.04, "remarks": {"assumption": "staged neuropathy onset rate (demo, not VN epidemiology)"}},
+      {"to": "dawn_comp_eye", "p": 0.02, "remarks": {"assumption": "staged retinopathy onset rate (demo)"}},
+      {"to": "dawn_meds", "p": 0.03, "remarks": {"assumption": "metformin start rate (demo)"}},
+      {"to": "dawn_guard", "p": 0.03, "remarks": {"assumption": "age-gated review rate (demo)"}}
+    ]},
+    {"from": "dawn_drift", "kind": "direct", "to": "dawn_week"},
+    {"from": "dawn_meds", "kind": "direct", "to": "dawn_week"},
+    {"from": "dawn_comp_early", "kind": "direct", "to": "dawn_week"},
+    {"from": "dawn_comp_eye", "kind": "direct", "to": "dawn_week"},
+    {"from": "dawn_guard", "kind": "conditional",
+     "branches": [{"when": {"attribute": "age", "op": ">=", "value": 60}, "to": "dawn_meds"}],
+     "default": "dawn_week",
+     "remarks": "age >= 60 escalates to metformin review (assumption: demo guard)"},
+    {"from": "high_week", "kind": "distributed", "targets": [
+      {"to": "high_week", "p": 0.73, "remarks": {"assumption": "high-risk stays volatile most weeks (demo)"}},
+      {"to": "high_drift", "p": 0.12, "remarks": {"assumption": "larger wobble, still within +-2 budget (demo)"}},
+      {"to": "high_comp_kidney", "p": 0.05, "remarks": {"assumption": "staged nephropathy onset rate (demo)"}},
+      {"to": "high_comp_foot", "p": 0.04, "remarks": {"assumption": "neuropathy foot-care flag rate (demo)"}},
+      {"to": "high_meds", "p": 0.04, "remarks": {"assumption": "insulin escalation rate (demo)"}},
+      {"to": "high_guard", "p": 0.02, "remarks": {"assumption": "age-gated review rate (demo)"}}
+    ]},
+    {"from": "high_drift", "kind": "direct", "to": "high_week"},
+    {"from": "high_meds", "kind": "direct", "to": "high_week"},
+    {"from": "high_comp_kidney", "kind": "direct", "to": "high_week"},
+    {"from": "high_comp_foot", "kind": "direct", "to": "high_week"},
+    {"from": "high_guard", "kind": "conditional",
+     "branches": [{"when": {"attribute": "age", "op": ">=", "value": 60}, "to": "high_meds"}],
+     "default": "high_week",
+     "remarks": "age >= 60 escalates to insulin review (assumption: demo guard)"}
+  ]
+}

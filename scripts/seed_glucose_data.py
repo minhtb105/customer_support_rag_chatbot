@@ -14,7 +14,7 @@ import argparse
 import random
 import sqlite3
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -44,7 +44,7 @@ def existing_count(user_id: str) -> int:
 def build_plan(days: int, end_offset: int, seed: int):
     """Deterministic daily plan: 1 fasting + 1 post-meal + 30% extra random."""
     rng = random.Random(seed)
-    end = datetime.utcnow().date() - timedelta(days=end_offset)
+    end = datetime.now(timezone.utc).date() - timedelta(days=end_offset)
     start = end - timedelta(days=days - 1)
     plan = []
     for i in range(days):

@@ -4,7 +4,7 @@ import sqlite3
 import uuid
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -145,7 +145,7 @@ def init_tracing_db():
 # ---------- traces ----------
 def create_trace(user_id: str, username: Optional[str], query: str, tone: Optional[str], model: Optional[str], embedding_model: Optional[str], chunking_strategy: Optional[str], top_k: Optional[int]) -> str:
     tid = uuid.uuid4().hex
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn = _conn()
     conn.execute("INSERT INTO traces (id, user_id, username, query, tone, model, embedding_model, chunking_strategy, top_k, created_at, status) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                  (tid, user_id, username, query, tone, model, embedding_model, chunking_strategy, top_k, now, "answered"))
@@ -156,7 +156,7 @@ def create_trace(user_id: str, username: Optional[str], query: str, tone: Option
 def update_trace(trace_id: str, **fields):
     if not fields:
         return
-    fields["updated_at"] = datetime.utcnow().isoformat()
+    fields["updated_at"] = datetime.now(timezone.utc).isoformat()
     sets = ", ".join([f"{k}=?" for k in fields.keys()])
     vals = list(fields.values()) + [trace_id]
     conn = _conn()
@@ -172,7 +172,7 @@ def get_trace(trace_id: str) -> Optional[Dict[str, Any]]:
 
 def list_traces(limit: int = 10, offset: int = 0, user_id: Optional[str] = None, tone: Optional[str] = None, status: Optional[str] = None, q: Optional[str] = None, is_low: Optional[bool] = None) -> List[Dict[str, Any]]:
     # enforce 30 days retention filter
-    cutoff = (datetime.utcnow() - timedelta(days=30)).isoformat()
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
     conn = _conn()
     where = ["created_at >= ?"]
     params: List[Any] = [cutoff]
@@ -200,7 +200,7 @@ def list_traces(limit: int = 10, offset: int = 0, user_id: Optional[str] = None,
     return [dict(r) for r in rows], total
 
 def delete_expired_traces() -> int:
-    cutoff = (datetime.utcnow() - timedelta(days=30)).isoformat()
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
     conn = _conn()
     cur = conn.execute("DELETE FROM traces WHERE created_at < ?", (cutoff,))
     n = cur.rowcount
@@ -211,7 +211,7 @@ def delete_expired_traces() -> int:
 # ---------- spans ----------
 def create_span(trace_id: str, name: str, parent_id: Optional[str] = None, inputs: Optional[Dict]=None) -> str:
     sid = uuid.uuid4().hex
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn = _conn()
     conn.execute("INSERT INTO spans (id, trace_id, parent_id, name, start_at, inputs_json) VALUES (?,?,?,?,?,?)",
                  (sid, trace_id, parent_id, name, now, json.dumps(inputs, ensure_ascii=False) if inputs else None))
@@ -220,7 +220,7 @@ def create_span(trace_id: str, name: str, parent_id: Optional[str] = None, input
     return sid
 
 def end_span(span_id: str, outputs: Optional[Dict]=None, metadata: Optional[Dict]=None):
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn = _conn()
     row = conn.execute("SELECT start_at FROM spans WHERE id=?", (span_id,)).fetchone()
     duration = None
@@ -330,7 +330,7 @@ def create_prompt(tone: str, text: str, description: Optional[str], created_by: 
     import hashlib
     version = hashlib.sha256(text.encode()).hexdigest()[:8]
     pid = uuid.uuid4().hex
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn = _conn()
     # check duplicate version for tone
     existing = conn.execute("SELECT id FROM prompts WHERE tone=? AND version=?", (tone, version)).fetchone()
@@ -365,7 +365,7 @@ def reject_prompt(tone: str, version: str):
 def upsert_ragas(trace_id: str, metrics: Dict[str, Any], raw: Dict[str,Any], evaluator_model: Optional[str]=None):
     import hashlib
     rid = uuid.uuid4().hex
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn = _conn()
     # check existing
     existing = conn.execute("SELECT id FROM ragas_evaluations WHERE trace_id=?", (trace_id,)).fetchone()

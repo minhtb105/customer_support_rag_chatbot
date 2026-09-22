@@ -205,12 +205,12 @@ def test_promote_flow_staging_to_corpus(users):
 
 def test_superseded_cleanup():
     from src.monitors.db import create_guideline_version, update_guideline_status
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
 
     gv = create_guideline_version(source="gold", title="Superseded Test", url="https://goldcopd.org/superseded", version_label="sup-1", sha256="hash-sup")
     # mark superseded with old reviewed_at
     mconn = sqlite3.connect(str(BASE_DIR / "metadata" / "monitoring.db"))
-    old_date = (datetime.utcnow() - timedelta(days=31)).isoformat()
+    old_date = (datetime.now(timezone.utc) - timedelta(days=31)).isoformat()
     mconn.execute("UPDATE guideline_versions SET status='superseded', reviewed_at=? WHERE id=?", (old_date, gv["id"]))
     mconn.commit()
     mconn.close()

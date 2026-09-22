@@ -2,7 +2,7 @@
 from __future__ import annotations
 import sqlite3
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -139,7 +139,7 @@ def list_users(limit: int = 100, offset: int = 0, role: Optional[str] = None) ->
 
 def create_user(username: str, email: Optional[str], hashed_password: str, full_name: Optional[str], role: str, is_verified: bool = True) -> Dict[str, Any]:
     uid = uuid.uuid4().hex
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     # expert created by admin defaults to unverified if caller wants
     conn = _get_conn()
     conn.execute(
@@ -180,7 +180,7 @@ def delete_user(user_id: str) -> bool:
 def store_refresh_token(token: str, user_id: str, expires_at: datetime):
     conn = _get_conn()
     conn.execute("INSERT INTO refresh_tokens (token, user_id, expires_at, revoked, created_at) VALUES (?,?,?,?,?)",
-                 (token, user_id, expires_at.isoformat(), 0, datetime.utcnow().isoformat()))
+                 (token, user_id, expires_at.isoformat(), 0, datetime.now(timezone.utc).isoformat()))
     conn.commit()
     conn.close()
 
@@ -207,7 +207,7 @@ def create_notification(user_id: str, type: str, title: str, body: str = "", rev
     nid = uuid.uuid4().hex
     conn = _get_conn()
     conn.execute("INSERT INTO notifications (id, user_id, type, title, body, review_id, is_read, created_at) VALUES (?,?,?,?,?,?,?,?)",
-                 (nid, user_id, type, title, body, review_id, 0, datetime.utcnow().isoformat()))
+                 (nid, user_id, type, title, body, review_id, 0, datetime.now(timezone.utc).isoformat()))
     conn.commit()
     conn.close()
     return nid
@@ -245,7 +245,7 @@ def add_query_history(user_id: str, query: str, answer: str, status: str = "answ
     qid = uuid.uuid4().hex
     conn = _get_conn()
     conn.execute("INSERT INTO query_history (id, user_id, query, answer, status, review_id, confidence, created_at) VALUES (?,?,?,?,?,?,?,?)",
-                 (qid, user_id, query, answer, status, review_id, confidence, datetime.utcnow().isoformat()))
+                 (qid, user_id, query, answer, status, review_id, confidence, datetime.now(timezone.utc).isoformat()))
     conn.commit()
     conn.close()
     return qid

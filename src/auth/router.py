@@ -1,7 +1,7 @@
 """Auth router — /v1/auth/*  (register, login httpOnly cookie, refresh, me, logout, admin user mgmt)"""
 from __future__ import annotations
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Response, Request, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -133,12 +133,12 @@ def login(response: Response, form: OAuth2PasswordRequestForm = Depends()):
     if user.get("role") in EXPERT_ROLES and not user.get("is_verified"):
         raise HTTPException(status_code=403, detail="Expert account pending admin verification")
     # update last_login
-    update_user(user["id"], last_login=datetime.utcnow().isoformat())
+    update_user(user["id"], last_login=datetime.now(timezone.utc).isoformat())
     # create tokens
     access_token = create_access_token({"sub": user["id"], "role": user["role"], "username": user["username"]})
     refresh_token = create_refresh_token({"sub": user["id"]})
     # store refresh token
-    expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     store_refresh_token(refresh_token, user["id"], expires_at)
     _set_auth_cookies(response, access_token, refresh_token)
     return {
@@ -157,10 +157,10 @@ def login_json(payload: LoginRequest, response: Response):
         raise HTTPException(status_code=403, detail="Account deactivated")
     if user.get("role") in EXPERT_ROLES and not user.get("is_verified"):
         raise HTTPException(status_code=403, detail="Expert account pending admin verification")
-    update_user(user["id"], last_login=datetime.utcnow().isoformat())
+    update_user(user["id"], last_login=datetime.now(timezone.utc).isoformat())
     access_token = create_access_token({"sub": user["id"], "role": user["role"], "username": user["username"]})
     refresh_token = create_refresh_token({"sub": user["id"]})
-    expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     store_refresh_token(refresh_token, user["id"], expires_at)
     _set_auth_cookies(response, access_token, refresh_token)
     return {
@@ -188,7 +188,9 @@ def refresh_token_endpoint(request: Request, response: Response, payload: Option
     # check expiry
     try:
         exp = datetime.fromisoformat(stored["expires_at"])
-        if exp < datetime.utcnow():
+        if exp.tzinfo is None:  # rows written pre-timezone migration store naive ISO
+            exp = exp.replace(tzinfo=timezone.utc)
+        if exp < datetime.now(timezone.utc):
             revoke_refresh_token(token)
             raise HTTPException(status_code=401, detail="Refresh token expired")
     except Exception:
@@ -200,7 +202,7 @@ def refresh_token_endpoint(request: Request, response: Response, payload: Option
     revoke_refresh_token(token)
     new_access = create_access_token({"sub": user["id"], "role": user["role"], "username": user["username"]})
     new_refresh = create_refresh_token({"sub": user["id"]})
-    expires_at = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
     store_refresh_token(new_refresh, user["id"], expires_at)
     _set_auth_cookies(response, new_access, new_refresh)
     return {"access_token": new_access, "refresh_token": new_refresh, "token_type": "bearer", "user": _to_user_out(user)}

@@ -310,9 +310,19 @@ export async function getMonitorsStats() {
   return res.json();
 }
 
-export async function getDoctorPatients() {
-  const res = await authFetch(`${API}/v1/doctor/patients`, { method: "GET" });
+export async function getDoctorPatients(limit = 100, offset = 0) {
+  const url = new URL(`${API}/v1/doctor/patients`);
+  url.searchParams.set("limit", String(limit));
+  url.searchParams.set("offset", String(offset));
+  const res = await authFetch(url.toString(), { method: "GET" });
   if (!res.ok) throw new Error(`doctor patients ${res.status}`);
+  return res.json();
+}
+export async function adminListTriageEvents(params: { page?: number; limit?: number; specialty?: string; emergency?: boolean; q?: string } = {}) {
+  const url = new URL(`${API}/v1/admin/triage/events`);
+  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v)); });
+  const res = await authFetch(url.toString(), { method: "GET" });
+  if (!res.ok) throw new Error(`triage events ${res.status}: ${await res.text()}`);
   return res.json();
 }
 export const API_BASE = API;

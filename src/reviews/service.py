@@ -2,7 +2,7 @@
 from __future__ import annotations
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 
 try:
@@ -22,7 +22,7 @@ def create_review_request(
     langsmith_run_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     rid = uuid.uuid4().hex
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     confidence = evaluation.get("confidence")
     reason = evaluation.get("comments", {})
     failed = evaluation.get("failed_metrics", [])
@@ -134,7 +134,7 @@ def decide_review(review_id: str, decision: str, expert_id: str, final_answer: O
         final = final_answer
     else:  # rejected
         final = final_answer or "Câu hỏi đã bị từ chối bởi chuyên gia. Vui lòng cung cấp thêm thông tin hoặc liên hệ trực tiếp."
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn = _get_conn()
     conn.execute("UPDATE review_requests SET status=?, assigned_expert_id=?, final_answer=?, expert_notes=?, reviewed_at=? WHERE id=?",
                  (decision if decision != "approved" else "approved", expert_id, final, expert_notes, now, review_id))

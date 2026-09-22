@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
@@ -89,11 +89,11 @@ def etl_records(code: str, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 def save_snapshot(code: str, records: List[Dict[str, Any]]) -> Path:
     d = Path(GHO_SNAPSHOT_DIR) / code
     d.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.utcnow().strftime("%Y%m%d_%H%M")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
     p = d / f"{stamp}.json"
     p.write_text(json.dumps({
         "indicator_code": code,
-        "fetched_at": datetime.utcnow().isoformat(),
+        "fetched_at": datetime.now(timezone.utc).isoformat(),
         "source": f"{GHO_API_BASE}/{code}",
         "records": records,
     }, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -115,7 +115,7 @@ def upsert_sqlite(records: List[Dict[str, Any]]) -> int:
             PRIMARY KEY (indicator_code, country, year, sex)
         )
     """)
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     n = 0
     for rec in records:
         conn.execute(

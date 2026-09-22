@@ -6,7 +6,7 @@ Or imported as background thread from FastAPI lifespan.
 from __future__ import annotations
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
     import schedule  # type: ignore
@@ -96,11 +96,11 @@ def setup_schedule():
     # BYT weekly Monday 03:00
     schedule.every().monday.at("03:00").do(job_byt_weekly)
     # Guideline monthly HEAD on 1st day 04:00 — we simulate via daily check if day==1
-    schedule.every().day.at("04:00").do(lambda: job_guideline_monthly_head() if datetime.utcnow().day == 1 else None)
+    schedule.every().day.at("04:00").do(lambda: job_guideline_monthly_head() if datetime.now(timezone.utc).day == 1 else None)
     # Quarterly deep: 01 Jan/Apr/Jul/Oct 05:00
-    schedule.every().day.at("05:00").do(lambda: job_guideline_quarterly_deep() if datetime.utcnow().day == 1 and datetime.utcnow().month in (1,4,7,10) else None)
+    schedule.every().day.at("05:00").do(lambda: job_guideline_quarterly_deep() if datetime.now(timezone.utc).day == 1 and datetime.now(timezone.utc).month in (1,4,7,10) else None)
     # GHO snapshot quarterly: 01 Jan/Apr/Jul/Oct 06:30 (no human review — audit via monitor_runs)
-    schedule.every().day.at("06:30").do(lambda: job_gho_quarterly() if datetime.utcnow().day == 1 and datetime.utcnow().month in (1,4,7,10) else None)
+    schedule.every().day.at("06:30").do(lambda: job_gho_quarterly() if datetime.now(timezone.utc).day == 1 and datetime.now(timezone.utc).month in (1,4,7,10) else None)
     # Cleanup weekly Sunday 06:00
     schedule.every().sunday.at("06:00").do(job_cleanup_superseded)
     log.info("Scheduler jobs registered: FDA daily 02:00, BYT weekly Mon 03:00, guideline monthly 04:00 (day1), quarterly deep, GHO quarterly 06:30, cleanup Sunday 06:00")

@@ -8,7 +8,7 @@ Hướng B — Công cụ chuẩn bị hồ sơ trước tái khám (SOAP/ADA).
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List
 
 try:
@@ -283,7 +283,7 @@ def generate_soap(user_id: str, days: int = 14, language: str = "vi", disease: s
                     ).strip()
         return {
             "user_id": user_id,
-            "generated_at": datetime.utcnow(),
+            "generated_at": datetime.now(timezone.utc),
             "period": f"{days} ngày",
             "soap": soap,
             "stats": stats,
@@ -294,7 +294,7 @@ def generate_soap(user_id: str, days: int = 14, language: str = "vi", disease: s
         rb = rule_based()
         return {
             "user_id": user_id,
-            "generated_at": datetime.utcnow(),
+            "generated_at": datetime.now(timezone.utc),
             "period": f"{days} ngày",
             "soap": rb,
             "stats": stats,
