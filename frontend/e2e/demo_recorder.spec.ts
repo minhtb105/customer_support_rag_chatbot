@@ -72,6 +72,7 @@ test('demo recorder PC1-PC4 (1 video)', async ({ page }) => {
   await page.locator('select').first().selectOption('fasting');
   await page.getByRole('button', { name: /Lưu chỉ số/ }).click();
   await expect(page.getByText(CRITICAL_TEXT)).toBeVisible();
+  await expect(page.getByTestId('critical-banner')).toBeVisible();
   await expect(page.getByText(/Hỏi thêm ngữ cảnh/)).toBeHidden();
   await expect(page.getByRole('button', { name: /Diễn giải xu hướng/ })).toBeHidden();
   await page.waitForTimeout(2500);
@@ -101,14 +102,14 @@ test('demo recorder PC1-PC4 (1 video)', async ({ page }) => {
   await logout(page);
   await loginAs(page, 'demo_doctor_01', PASSWORD);
   await page.goto('/expert/patients');
-  const patientRow = page.locator('a[href*="/expert/patients/"]', { hasText: PATIENT }).first();
+  const patientRow = page.getByTestId('queue-row').filter({ hasText: PATIENT }).first();
   await expect(patientRow).toContainText(/critical|trend/);
   await patientRow.click();
   await page.locator('select').first().selectOption('90');
   await page.getByRole('button', { name: /Tạo SOAP \(JSON\)/ }).click();
   await expect(page.getByText('S — Subjective')).toBeVisible({ timeout: 60000 });
   await expect(page.getByText('Dành cho bác sĩ chỉ định')).toBeVisible({ timeout: 60000 });
-  const logLink = page.locator('a[href*="/tracker?highlight="]').first();
+  const logLink = page.getByTestId('log-link').first();
   await expect(logLink).toBeVisible();
   await page.waitForTimeout(2000);
   await logLink.click();

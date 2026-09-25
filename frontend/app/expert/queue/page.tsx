@@ -53,7 +53,7 @@ export default function ExpertQueuePage() {
       </div>
       {msg && <div className="rounded-lg border bg-amber-50 p-2 text-xs">{msg}</div>}
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
           <h2 className="text-sm font-semibold">Pending ({reviews.length})</h2>
           <div className="mt-3 space-y-2 max-h-[600px] overflow-auto">
             {reviews.length===0 && <div className="text-xs text-slate-500">Không có yêu cầu pending</div>}
@@ -68,7 +68,7 @@ export default function ExpertQueuePage() {
             ))}
           </div>
         </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
           {!selected ? <div className="text-sm text-slate-500">Chọn một yêu cầu để xem chi tiết + vitals + duyệt.</div> : (
             <div className="space-y-4">
               <div>

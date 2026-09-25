@@ -1,0 +1,28 @@
+{
+  "mode": "ci_no_key",
+  "git_sha": "56f2b57",
+  "timestamp": "2026-09-23T22:35:10.054436",
+  "services": {
+    "triage": {
+      "quality": {
+        "emergency_accuracy": 1.0,
+        "tier_accuracy": 1.0,
+        "group_accuracy": 1.0
+      }
+    },
+    "labs": {
+      "quality": {
+        "nopanic_accuracy": 1.0,
+        "parse_loinc_recall": 1.0,
+        "redflag_accuracy": 1.0
+      }
+    },
+    "solvers": {
+      "quality": {
+        "correct_solver_rate": 1.0,
+        "parse_accuracy": 1.0,
+        "constraint_satisfaction_rate": 1.0
+      }
+    }
+  }
+}

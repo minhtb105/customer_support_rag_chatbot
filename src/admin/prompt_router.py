@@ -7,16 +7,16 @@ from pydantic import BaseModel
 
 try:
     from src.auth.dependencies import require_admin, get_current_user
-    from src.observability.tracing_db import (
+    from src.shared.observability.tracing_db import (
         list_prompts, get_active_prompt, get_prompt_by_version, create_prompt, approve_prompt, reject_prompt
     )
-    from src.prompt_manager import PROMPT_REGISTRY
-    from src.rag_pipeline import rag_chat
+    from src.shared.prompt_manager import PROMPT_REGISTRY
+    from src.chat.rag_pipeline import rag_chat
 except ImportError:
     from auth.dependencies import require_admin, get_current_user  # type: ignore
-    from observability.tracing_db import list_prompts, get_active_prompt, get_prompt_by_version, create_prompt, approve_prompt, reject_prompt  # type: ignore
-    from prompt_manager import PROMPT_REGISTRY  # type: ignore
-    from rag_pipeline import rag_chat  # type: ignore
+    from shared.observability.tracing_db import list_prompts, get_active_prompt, get_prompt_by_version, create_prompt, approve_prompt, reject_prompt  # type: ignore
+    from shared.prompt_manager import PROMPT_REGISTRY  # type: ignore
+    from chat.rag_pipeline import rag_chat  # type: ignore
 
 router = APIRouter(prefix="/v1/admin/prompts", tags=["admin-prompts"])
 
@@ -113,7 +113,7 @@ def approve(tone: str, version: str, current_user=Depends(require_admin)):
     approved = approve_prompt(tone, version)
     # invalidate cache in prompt_manager
     try:
-        from src.prompt_manager import _cache
+        from src.shared.prompt_manager import _cache
         _cache.pop(tone, None)
     except Exception:
         pass
@@ -138,7 +138,7 @@ def dry_run(req: DryRunRequest, current_user=Depends(require_admin)):
     queries = queries[:10]
     # temporarily create a draft prompt version but not active, then test each query via rag_chat with monkey patch prompt
     # We will temporarily override prompt_manager cache for this tone
-    from src.prompt_manager import _cache
+    from src.shared.prompt_manager import _cache
     import hashlib
     # save original active
     original_active = get_active_prompt(req.tone)

@@ -49,7 +49,7 @@ def test_a03_prompt_injection_blocked(client: TestClient, auth_header, monkeypat
         return {"raw_answer":{"answer":"Tôi chưa tìm thấy thông tin này trong hướng dẫn WHO/ADA/BYT được cung cấp. Vui lòng tham khảo bác sĩ chuyên khoa nội tiết để được tư vấn cá nhân. [Source 1]","cited_sources":[1]},"formatted_answer":"fallback","contexts":[{"source_id":"1","content":"ctx","dataset":"who","score":0.9}],"trace_id":"test_trace","tone":"diabetes","prompt_version":"abc","timings":{},"cache_hit":False}
     def fake_eval(q,a,ctxs):
         return {"metrics":{"faithfulness":2,"context_precision":5,"context_recall":5,"answer_relevance":5},"comments":{},"raw":{},"failed_metrics":["faithfulness"],"is_low_confidence":True,"confidence":0.4,"routed_role":"doctor","thresholds":{}}
-    import src.rag_pipeline as rag_mod
+    import src.chat.rag_pipeline as rag_mod
     monkeypatch.setattr(rag_mod, "rag_chat", fake_rag)
     monkeypatch.setattr("src.reviews.evaluator.evaluate_rag", fake_eval)
     hdr = {"Authorization": f"Bearer {auth_header['token']}"}
@@ -151,7 +151,7 @@ def test_a07_soap_requires_auth(client: TestClient):
 
 # --- A08:2021 Software & Data Integrity — file fingerprint ---
 def test_a08_file_fingerprint_detects_tampering(tmp_path):
-    from src.indexer import compute_file_fingerprint
+    from src.shared.indexer import compute_file_fingerprint
     f = tmp_path / "test.pdf"
     f.write_bytes(b"original content")
     h1 = compute_file_fingerprint(str(f))
@@ -166,7 +166,7 @@ def test_a09_logging_present(client: TestClient, auth_header, monkeypatch):
         return {"raw_answer":{"answer":"Answer [Source 1]","cited_sources":[1]},"formatted_answer":"Answer [Source 1]","contexts":[{"source_id":"1","content":"ctx","dataset":"who","score":0.9}],"trace_id":"test_trace","tone":"diabetes","prompt_version":"abc","timings":{},"cache_hit":False}
     def fake_eval(q,a,ctxs):
         return {"metrics":{"faithfulness":5,"context_precision":5,"context_recall":5,"answer_relevance":5},"comments":{},"raw":{},"failed_metrics":[],"is_low_confidence":False,"confidence":1.0,"routed_role":"doctor","thresholds":{}}
-    import src.rag_pipeline as rag_mod
+    import src.chat.rag_pipeline as rag_mod
     monkeypatch.setattr(rag_mod, "rag_chat", fake_rag)
     monkeypatch.setattr("src.reviews.evaluator.evaluate_rag", fake_eval)
     hdr = {"Authorization": f"Bearer {auth_header['token']}"}

@@ -19,12 +19,12 @@ try:
     from src.monitors.db import create_run, finish_run, delete_superseded_expired
     from src.monitors.guideline_fetcher import check_all_guidelines, check_guideline_update
     from src.monitors.safety_fetcher import check_all_safety, check_fda_alerts, fetch_byt_dav_alerts
-    from src.config import MONITOR_SUPERSEDED_RETENTION_DAYS
+    from src.shared.config import MONITOR_SUPERSEDED_RETENTION_DAYS
 except ImportError:
     from monitors.db import create_run, finish_run, delete_superseded_expired  # type: ignore
     from monitors.guideline_fetcher import check_all_guidelines, check_guideline_update  # type: ignore
     from monitors.safety_fetcher import check_all_safety, check_fda_alerts, fetch_byt_dav_alerts  # type: ignore
-    from config import MONITOR_SUPERSEDED_RETENTION_DAYS  # type: ignore
+    from shared.config import MONITOR_SUPERSEDED_RETENTION_DAYS  # type: ignore
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)

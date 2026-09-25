@@ -1,6 +1,6 @@
 # Kiểm Thử Tấn Công Backend — OWASP Top 10 2021
 
-> Nguồn: `tests/security/test_owasp_top10.py:1` (15 tests, `pytestmark = security`), `tests/conftest.py`, `tests/test_monitors.py:test_ssrf_allowlist`, `src/api/main.py:104`, `src/config.py:194`, `scripts/crawl_guidelines.py:274`.
+> Nguồn: `tests/security/test_owasp_top10.py:1` (15 tests, `pytestmark = security`), `tests/conftest.py`, `tests/test_monitors.py:test_ssrf_allowlist`, `src/api/main.py:104`, `src/shared/config.py:194`, `scripts/crawl_guidelines.py:274`.
 
 ## 1. Tổng quan
 
@@ -34,7 +34,7 @@ pytest tests/security/test_owasp_top10.py::test_a01_user_isolation -v
 | **A05 Security Misconfiguration** | `test_a05_cors_misconfiguration` | `owasp:108` | Inspect `app.user_middleware CORSMiddleware` | Nếu `allow_origins=["*"] && allow_credentials` → `xfail`, else `evil.com` không trong allowlist | `src/api/main.py:105 allow_origins=env FRONTEND_URL` split `,` |
 | **A06 Vulnerable Components** | `test_a06_no_high_vulns_in_lockfiles` | `owasp:122` | `frontend/package-lock.json lockfileVersion`, `pyproject.toml fastapi>=` | `lockfileVersion` tồn tại, `fastapi>=` pin | Chưa chạy `safety`/`pip-audit` |
 | **A07 Auth Failures** | `test_a07_soap_requires_auth` | `owasp:135` | `POST /soap/generate {noauth}` vs `with Bearer` | `401` vs `200` | `Depends(get_current_user)` |
-| **A08 Integrity** | `test_a08_file_fingerprint_detects_tampering` | `owasp:152` | `tmp/test.pdf` write `original` → `tampered` → `compute_file_fingerprint` | `h1 != h2` | `src/indexer.py:57 size+mtime+head/tail 256KB` |
+| **A08 Integrity** | `test_a08_file_fingerprint_detects_tampering` | `owasp:152` | `tmp/test.pdf` write `original` → `tampered` → `compute_file_fingerprint` | `h1 != h2` | `src/shared/indexer.py:57 size+mtime+head/tail 256KB` |
 | **A09 Logging/Monitoring** | `test_a09_logging_present` | `owasp:162` | Mock `rag_chat` + `evaluate_rag` → `POST /query` | `langsmith` hoặc `timings` trong resp | Tracing 7 spans + `prompt_version` |
 | **A10 SSRF** | `test_a10_ssrf_crawler_rejects_private_ips` | `owasp:179` | `download_file("http://127.0.0.1:8000/secret.pdf")` + `file:///etc/passwd` | `ok is False` | `scripts/crawl_guidelines.py:274` check `127./10./192.168./172.16-31.` |
 

@@ -1,4 +1,4 @@
-"""Seed 3 demo accounts for the demo-video recorder (demo-only credentials).
+"""Seed 4 demo accounts for the demo-video recorder (demo-only credentials).
 
 Usage:
     python scripts/seed_demo_users.py --force
@@ -8,6 +8,7 @@ Creates (or resets with --force):
     demo_patient_01 (role=user)
     demo_doctor_01  (role=doctor, is_verified=1 so require_expert passes)
     demo_admin_01   (role=admin,  is_verified=1 so require_admin passes)
+    demo_pharmacist_01 (role=pharmacist, is_verified=1 so require_expert passes)
 
 Password defaults to env DEMO_PASSWORD, fallback "Demo@123".
 WARNING demo-only: change the password when hosting publicly.
@@ -30,6 +31,7 @@ ACCOUNTS = [
     ("demo_patient_01", "user", 1),
     ("demo_doctor_01", "doctor", 1),
     ("demo_admin_01", "admin", 1),
+    ("demo_pharmacist_01", "pharmacist", 1),
 ]
 
 

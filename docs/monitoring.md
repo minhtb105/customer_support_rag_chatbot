@@ -77,11 +77,11 @@ Dedup: trùng `alert_url` hoặc `drug_name+title` trong 7 ngày → trả về 
 | `guideline_fetcher.py` | `GUIDELINE_SOURCE_CONFIGS` (7 nguồn), `check_guideline_update()` HEAD/etag, `_check_byt_scrape()` scrape thuvienphapluat.vn weekly, `_download_and_stage()` sha256 dedup, diff + summarize → `create_guideline_version` + notify |
 | `safety_fetcher.py` | `fetch_fda_recalls()` (openFDA enforcement, anonymous), `fetch_fda_label_warnings()`, `check_fda_alerts()`, `fetch_byt_dav_alerts()` scrape DAV/MOH/thuvienphapluat, `check_all_safety()` |
 | `service.py` | `notify_guideline_pending` (specialist/doctor), `notify_safety_pending` (pharmacist), `promote_guideline_to_corpus()` (move staging→corpus, supersede cũ, `reindex_single_pdf`, clear cache), `decide_safety_alert()`, `cleanup_superseded()` |
-| `indexer_helper.py` | `reindex_single_pdf()` tái dùng `src/indexer.py:hybrid_hash_reindex` cho 4 strategies, không quét toàn bộ corpus |
+| `indexer_helper.py` | `reindex_single_pdf()` tái dùng `src/shared/indexer.py:hybrid_hash_reindex` cho 4 strategies, không quét toàn bộ corpus |
 | `router.py` | FastAPI `/v1/monitors/*` (chi tiết dưới) |
 | `scheduler.py` | `schedule` loop: FDA daily 02:00, BYT weekly Mon 03:00, guideline monthly HEAD (day=1 04:00), quarterly deep (Jan/Apr/Jul/Oct), cleanup Sun 06:00 |
 
-### Prompts — `src/prompt_templates.py` + `src/prompt_manager.py`
+### Prompts — `src/shared/prompt_templates.py` + `src/shared/prompt_manager.py`
 
 Thêm 2 tone:
 
@@ -90,7 +90,7 @@ Thêm 2 tone:
 
 Seed tự động qua `PROMPT_REGISTRY` trong `prompt_manager.py:31`.
 
-### Config — `src/config.py`
+### Config — `src/shared/config.py`
 
 Thêm:
 
@@ -154,7 +154,7 @@ Tất cả endpoint đều yêu cầu `Authorization: Bearer <JWT>` hoặc cooki
    - Update `indexed_at`, ghi `corpus_path`, clear `CAGHybridCache._exact` (nếu có)
    - Sau 30 ngày, `cleanup_superseded()` xoá file + row (đúng yêu cầu "xoá hẳn").
 
-2. Citation: `src/generator.py:format_context` sẽ hiển thị `[Source X | GOLD 2025 v1.2 | 2024-02-11]` nhờ metadata `version_label` + `publication_date` lưu trong `change_summary_json` (tương lai có thể embed vào Chroma `metas`).
+2. Citation: `src/chat/generator.py:format_context` sẽ hiển thị `[Source X | GOLD 2025 v1.2 | 2024-02-11]` nhờ metadata `version_label` + `publication_date` lưu trong `change_summary_json` (tương lai có thể embed vào Chroma `metas`).
 
 ---
 

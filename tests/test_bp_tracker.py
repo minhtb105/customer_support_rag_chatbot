@@ -1,7 +1,7 @@
 """Unit tests for Hypertension tracker — AHA/ACC 2025."""
 import pytest
-from src.features.bp_tracker import classify_bp, add_bp_log, get_bp_logs, get_bp_stats, should_escalate_bp, _should_escalate_bp
-from src.config import BP_THRESHOLDS_MMHG
+from src.vitals.bp_tracker import classify_bp, add_bp_log, get_bp_logs, get_bp_stats, should_escalate_bp, _should_escalate_bp
+from src.shared.config import BP_THRESHOLDS_MMHG
 
 
 class TestClassifyBP:

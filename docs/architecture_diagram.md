@@ -1,6 +1,6 @@
 # Sơ Đồ Kiến Trúc — WHO-RAG System
 
-> Nguồn chính: `src/config.py`, `src/rag_pipeline.py:36`, `src/observability/tracing_db.py:32`, `src/indexer.py:98`, `src/monitors/*`, `frontend/app/**`.
+> Nguồn chính: `src/shared/config.py`, `src/chat/rag_pipeline.py:36`, `src/shared/observability/tracing_db.py:32`, `src/shared/indexer.py:98`, `src/monitors/*`, `frontend/app/**`.
 
 > **Mục tiêu đọc-xong-làm-được:** vẽ lại luồng Patient → Doctor trên giấy, chạy `uvicorn` + `npm run dev`, giải thích được RAG/CAG/HILT/FQG/SOAP cho người mới.
 
@@ -27,14 +27,14 @@ Luồng 5 hộp (học thuộc lòng luồng này là đủ onboard):
 
 - Patient nhập chỉ số → `POST /v1/glucose` kiểm tra spike >250/<70 và trend 3 ngày.
 - Hỏi đáp → `POST /v1/query` chạy RAG (cache → hybrid BM25+vector → rerank → LLM `gpt-4o-mini` demo).
-- Memory 3 tầng (`src/memory/`): short 500 tokens + episodic 300 tokens + long-term 3 facts; cuối tuần gom thành 1 fact/tuần.
+- Memory 3 tầng (`src/shared/memory/`): short 500 tokens + episodic 300 tokens + long-term 3 facts; cuối tuần gom thành 1 fact/tuần.
 - Doctor xem `previsit`: sparkline 90 ngày chấm đỏ anomaly (30%) + SOAP text (70%), mỗi nhận định có `[Xem log #id]`; bác sĩ còn có hàng đợi `/expert/patients` sort triage critical → trend → watch → safe.
 - Kiến trúc module hóa đa chỉ số (BP/HR/SpO2) nhưng MVP tập trung sâu Glucose làm POC.
 
 <details>
 <summary>Mermaid chi tiết cũ (click để mở, không cần học thuộc)</summary>
 
-Mermaid gốc 4 sơ đồ đã thu gọn. Muốn xem full thì `git log -- docs/architecture_diagram.md`. Tóm tắt: Client (Next.js) → FastAPI (`src/api/main.py:102`) → RAG Pipeline (`src/rag_pipeline.py:36`) → Storage (Chroma + `metadata/*.db`) + Agents giám sát guideline.
+Mermaid gốc 4 sơ đồ đã thu gọn. Muốn xem full thì `git log -- docs/architecture_diagram.md`. Tóm tắt: Client (Next.js) → FastAPI (`src/api/main.py` — composition root, router theo service ở `src/<service>/router.py`) → RAG Pipeline (`src/chat/rag_pipeline.py:36`) → Storage (Chroma + `metadata/*.db`) + Agents giám sát guideline.
 
 </details>
 
@@ -46,10 +46,12 @@ Mermaid gốc 4 sơ đồ đã thu gọn. Muốn xem full thì `git log -- docs/
 
 ### Structure condensed (đọc để biết file nào sửa khi nào)
 
-- `src/api/main.py` — mọi endpoint `/v1/*`; `src/api/schemas.py` — request/response.
-- `src/rag_pipeline.py` — luồng RAG; `src/retriever.py`, `src/cache.py`, `src/generator.py` — 3 bước con.
-- `src/features/anomaly_detector.py`, `src/features/scope_guard.py`, `src/features/soap_summary.py` — logic ĐTĐ mới.
-- `src/memory/` — 3 tầng memory + `rollup.py`; `src/observability/tracing_db.py` — traces/spans/chunks.
+- `src/api/main.py` — composition root, chỉ wire router + middleware; endpoint thật nằm ở `src/<service>/router.py` + schema ở `src/<service>/schemas.py`.
+- `src/chat/` — service RAG: `rag_pipeline.py` luồng chính, `retriever.py` hybrid BM25+vector, `generator.py` LLM, `router.py` `/v1/query` (+ stream); cache CAG ở `src/shared/cache.py`.
+- `src/diabetes/` — `glucose_tracker.py`, `anomaly_detector.py`, `scope_guard.py`, `soap_summary.py`, `followup_notes.py`.
+- `src/triage/` — `triage_nlu.py`, `red_flag.py`, `triage_events.py`; `src/scheduling/` — `slot_generator.py`, `solvers.py`, `synthetic_roster.py` (gọi in-process từ triage).
+- `src/vitals/` — `bp_tracker.py`, `respiratory_tracker.py`, `mood_tracker.py` (base chung `base_tracker.py`).
+- `src/shared/` — hạ tầng dùng chung: `config.py`, `memory/`, `observability/tracing_db.py`, `indexer.py`, `embedding/`, `models/`, `evaluation.py`.
 - `frontend/app/tracker`, `frontend/app/previsit`, `frontend/app/admin/tracing` — 3 màn hình chính.
 
 ## 2. Luồng dữ liệu — Guideline & Safety (5 bước)
@@ -93,7 +95,7 @@ Mermaid gốc 4 sơ đồ đã thu gọn. Muốn xem full thì `git log -- docs/
 
 ## 6. Tham chiếu nhanh
 
-- Code: `src/config.py:240` hằng số, `src/rag_pipeline.py:36` luồng, `src/observability/tracing_db.py:32` schema, `src/indexer.py:98` reindex, `src/monitors/scheduler.py` lịch 02:00/03:00.
+- Code: `src/shared/config.py:240` hằng số, `src/chat/rag_pipeline.py:36` luồng, `src/shared/observability/tracing_db.py:32` schema, `src/shared/indexer.py:98` reindex, `src/monitors/scheduler.py` lịch 02:00/03:00.
 - **Why business (3-5 dòng, chi tiết ở `docs/benchmark.md` phụ lục):** FreeStyle Libre bán 2-4M VND/bộ chứng minh người dân chịu chi cho monitoring; BHYT chi trả telehealth từ 1/7/2025 + VN chỉ 14 bác sĩ/10k người nên AI triage có giá trị; hướng bán B2B2C cho phòng khám thay vì thu phí lẻ từng bệnh nhân.
 - **Run demo 5 phút:**
   - Backend: `pip install -e .` rồi `uvicorn src.api.main:app --reload --port 8000` (cần `OPENAI_API_KEY`, demo chạy `gpt-4o-mini`, production AWQ/vLLM chỉ doc-only).

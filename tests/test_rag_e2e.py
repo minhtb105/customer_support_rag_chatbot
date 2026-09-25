@@ -5,8 +5,8 @@ Mock `generate_answer` (LLM) de test deterministic; giu retrieval that
 """
 import uuid
 
-from src import rag_pipeline as rp
-from src.models.llm_io import LLMOutput
+from src.chat import rag_pipeline as rp
+from src.shared.models.llm_io import LLMOutput
 
 
 def _run(question: str, monkeypatch):

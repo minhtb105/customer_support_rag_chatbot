@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from src.features.anomaly_detector import (
+from src.diabetes.anomaly_detector import (
     analyze_glucose_log,
     detect_spike,
     detect_trend,

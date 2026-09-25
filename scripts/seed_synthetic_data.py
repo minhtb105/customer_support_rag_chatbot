@@ -19,9 +19,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from src.features.glucose_tracker import init_glucose_db, classify_glucose  # noqa: E402
-import src.features.glucose_tracker as _gt  # noqa: E402
-import src.config as _cfg  # noqa: E402
+from src.diabetes.glucose_tracker import init_glucose_db, classify_glucose  # noqa: E402
+import src.diabetes.glucose_tracker as _gt  # noqa: E402
+import src.shared.config as _cfg  # noqa: E402
 
 ARCHETYPES = ["well_controlled"] * 10 + ["dawn_phenomenon"] * 10 + ["high_risk_comorbid"] * 10
 N_PATIENTS = 30
@@ -48,7 +48,7 @@ VALID_CONTEXTS = {"fasting", "pre_meal", "post_meal_2h", "bedtime", "random"}
 # days for every dawn/high-risk patient so trend coverage survives drift.
 RAMP_VALUES = (100.0, 114.0, 126.0)
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "src" / "features" / "modules" / "diabetes_vn.json"
+MODULE_PATH = Path(__file__).resolve().parents[1] / "src" / "shared" / "modules" / "diabetes_vn.json"
 
 DOCTOR_SPECS = [
     ("syn_doctor_01", "Nội tiết chung", "Mon-Fri 08:00-17:00"),
@@ -204,10 +204,10 @@ def build_trajectories(patients: dict, seed: int, days: int) -> dict:
     Fail-open: module missing/broken -> {} (flat baseline, ramp still applies).
     """
     try:
-        from src.features import disease_engine as _eng
+        from src.shared import disease_engine as _eng
     except ImportError:
         try:
-            from features import disease_engine as _eng  # type: ignore
+            from shared import disease_engine as _eng  # type: ignore
         except ImportError:
             return {}
     try:
@@ -273,9 +273,9 @@ def _ensure_db(db_path=None) -> Path:
     """Ensure glucose_logs table exists on the TARGET db (not just global path)."""
     target = _db_path(db_path)
     try:
-        from src.features.base_tracker import init_table
+        from src.vitals.base_tracker import init_table
     except ImportError:
-        from features.base_tracker import init_table  # type: ignore
+        from vitals.base_tracker import init_table  # type: ignore
     init_table(
         target,
         """
@@ -360,7 +360,7 @@ def _phrase(text: str) -> str:
 
 
 def _save_episodic(user_id: str, text: str, related_log_id, episodic=None) -> bool:
-    # ponytail: skip heavy src.memory import when no object injected (notes row
+    # ponytail: skip heavy src.shared.memory import when no object injected (notes row
     # already carries the data for SOAP S; episodic fills at runtime via API).
     if episodic is None:
         return False
@@ -376,7 +376,7 @@ def run_b4(patients: dict, plan: list, db_path=None, use_llm=True, episodic=None
 
     Dual-write: UPDATE notes on the spike log row (so SOAP S auto-fills) +
     episodic add_message only when an episodic object is injected
-    (standalone skip avoids heavy src.memory model load; API fills it live).
+    (standalone skip avoids heavy src.shared.memory model load; API fills it live).
     Deterministic templates when no OPENAI_API_KEY; never raises.
     """
     stats = {"notes": 0, "episodic": 0}

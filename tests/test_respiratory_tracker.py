@@ -1,6 +1,6 @@
 """Unit tests for Respiratory tracker — peak flow, GOLD, inhaler technique."""
 import pytest
-from src.features.respiratory_tracker import (
+from src.vitals.respiratory_tracker import (
     classify_peak_flow, classify_gold, _classify_inhaler,
     add_respiratory_log, get_respiratory_logs, get_respiratory_stats, should_escalate_respiratory
 )

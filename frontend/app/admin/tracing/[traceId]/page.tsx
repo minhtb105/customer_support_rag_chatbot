@@ -24,7 +24,7 @@ export default function TraceDetailPage(){
   const hasBuildSpan = (spans || []).some((s: any) => s.name === "build_llm_input");
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <div className="text-xs text-slate-500">Trace {trace.id} · {trace.created_at?.slice(0,19).replace("T"," ")} · user {trace.username || trace.user_id.slice(0,8)}</div>
         <h1 className="text-sm font-bold mt-1">{trace.query}</h1>
         <div className="mt-2 text-xs">Tone <span className="rounded-full bg-slate-100 border px-2 py-0.5">{trace.tone}</span> · Prompt {trace.prompt_version} · Model {trace.model} · Embedding {trace.embedding_model} · TopK {trace.top_k} · {trace.total_latency_ms? Math.round(trace.total_latency_ms)+"ms":""}</div>
@@ -32,7 +32,7 @@ export default function TraceDetailPage(){
         {review && <div className="mt-2 text-xs">Review {review.id} — {review.status} · routed {review.routed_role}</div>}
       </div>
 
-      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">RAGAS (on-demand)</h2>
           <button onClick={trigger} disabled={loading} className="rounded-full bg-violet-600 text-white px-3 py-1 text-xs disabled:opacity-50">{loading?"Đang tính...":"Tính RAGAS"}</button>
@@ -50,7 +50,7 @@ export default function TraceDetailPage(){
         {ragas?.raw_json && <details className="mt-2 text-xs"><summary>Raw</summary><pre className="mt-1 bg-slate-900 text-slate-100 p-3 rounded overflow-auto">{JSON.stringify(JSON.parse(ragas.raw_json), null,2)}</pre></details>}
       </div>
 
-      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Waterfall — Spans</h2>
         <div className="mt-3 space-y-2">
           {spans?.map((s:any)=>(
@@ -64,7 +64,7 @@ export default function TraceDetailPage(){
         </div>
       </div>
 
-      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Memory context <span className="font-normal text-slate-500">(truncated 500)</span></h2>
         {!hasBuildSpan ? (
           <div className="mt-2 text-xs text-slate-500">— (cache hit)</div>
@@ -89,7 +89,7 @@ export default function TraceDetailPage(){
         )}
       </div>
 
-      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Chunks retrieved — đầy đủ metadata (snippet 500, page đầu tiên)</h2>
         <div className="mt-3 overflow-auto">
           <table className="w-full text-xs">

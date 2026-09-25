@@ -691,7 +691,7 @@ def download_diabetes_3(force: bool = False) -> dict:
                     f"  1. Truy cập https://diabetesjournals.org/care/issue/47/Supplement_1\n"
                     f"  2. Tải 'Standards of Care in Diabetes — 2024' PDF\n"
                     f"  3. Đặt file vào: {dest}\n"
-                    f"  4. Chạy lại: python -m src.indexer\n"
+                    f"  4. Chạy lại: python -m src.shared.indexer\n"
                     f"WHO IRIS 3 file chính đã đủ để demo RAG.\n",
                     encoding="utf-8",
                 )

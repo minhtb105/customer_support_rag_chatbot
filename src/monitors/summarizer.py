@@ -5,11 +5,11 @@ import os
 from typing import Dict, Any, Optional
 
 try:
-    from src.prompt_manager import get_system_prompt
-    from src.config import DEFAULT_MODEL, LLM_PROVIDER, OPENAI_API_KEY, OPENAI_BASE_URL, GROQ_API_KEY, GROQ_BASE_URL
+    from src.shared.prompt_manager import get_system_prompt
+    from src.shared.config import DEFAULT_MODEL, LLM_PROVIDER, OPENAI_API_KEY, OPENAI_BASE_URL, GROQ_API_KEY, GROQ_BASE_URL
 except ImportError:
-    from prompt_manager import get_system_prompt  # type: ignore
-    from config import DEFAULT_MODEL, LLM_PROVIDER, OPENAI_API_KEY, OPENAI_BASE_URL, GROQ_API_KEY, GROQ_BASE_URL  # type: ignore
+    from shared.prompt_manager import get_system_prompt  # type: ignore
+    from shared.config import DEFAULT_MODEL, LLM_PROVIDER, OPENAI_API_KEY, OPENAI_BASE_URL, GROQ_API_KEY, GROQ_BASE_URL  # type: ignore
 
 def _call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 1200) -> str:
     try:

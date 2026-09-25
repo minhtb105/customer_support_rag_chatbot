@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 
 try:
-    from src.config import BASE_DIR, STAGING_DIR, PDF_DIR, MONITOR_SUPERSEDED_RETENTION_DAYS
+    from src.shared.config import BASE_DIR, STAGING_DIR, PDF_DIR, MONITOR_SUPERSEDED_RETENTION_DAYS
     from src.monitors.db import (
         get_guideline_version, get_safety_alert,
         update_guideline_status, update_safety_status,
@@ -17,7 +17,7 @@ try:
     )
     from src.auth.db import create_notification, _get_conn as auth_conn
 except ImportError:
-    from config import BASE_DIR, STAGING_DIR, PDF_DIR, MONITOR_SUPERSEDED_RETENTION_DAYS  # type: ignore
+    from shared.config import BASE_DIR, STAGING_DIR, PDF_DIR, MONITOR_SUPERSEDED_RETENTION_DAYS  # type: ignore
     from monitors.db import get_guideline_version, get_safety_alert, update_guideline_status, update_safety_status, list_guideline_versions, delete_superseded_expired, get_source  # type: ignore
     from auth.db import create_notification, _get_conn as auth_conn  # type: ignore
 
@@ -86,10 +86,10 @@ def promote_guideline_to_corpus(gid: str, reviewer_id: str, approve: bool = True
     source = gv["source"]
     # Map source to directory (reuse GUIDELINE_SOURCE_DIRS)
     try:
-        from src.config import GUIDELINE_SOURCE_DIRS
+        from src.shared.config import GUIDELINE_SOURCE_DIRS
         dest_dir = GUIDELINE_SOURCE_DIRS.get(source) or (PDF_DIR / source)
     except ImportError:
-        from config import GUIDELINE_SOURCE_DIRS  # type: ignore
+        from shared.config import GUIDELINE_SOURCE_DIRS  # type: ignore
         dest_dir = GUIDELINE_SOURCE_DIRS.get(source) or (PDF_DIR / source)
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_path = dest_dir / src_path.name
@@ -141,7 +141,7 @@ def promote_guideline_to_corpus(gid: str, reviewer_id: str, approve: bool = True
     final = update_guideline_status(gid, "approved", reviewer_id=reviewer_id, review_notes=review_notes, corpus_path=str(dest_path), indexed_at=indexed_at)
     # Also invalidate cache if available
     try:
-        from src.rag_pipeline import cache
+        from src.chat.rag_pipeline import cache
         # clear cache entries that might use old guideline? For simplicity clear all
         # cache doesn't have clear, but we can reset stats or recreate
         # We'll try to clear internal dict if exists

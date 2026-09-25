@@ -18,7 +18,7 @@ import scripts.seed_synthetic_data as seed  # noqa: E402
 
 @pytest.fixture
 def iso_env(monkeypatch, tmp_path):
-    import src.features.glucose_tracker as gt
+    import src.diabetes.glucose_tracker as gt
     tmp_db = tmp_path / "scale.db"
     monkeypatch.setattr(gt, "GLUCOSE_DB_PATH", tmp_db)
     monkeypatch.setenv("SYNTHETIC_SIDECAR_DIR", str(tmp_path / "meta"))
@@ -47,13 +47,13 @@ class TestDefaultGate:
 
     def test_default_hash_distances_unchanged(self):
         # Hash path pinned: recompute independently, must match helper exactly.
-        from src.features.solvers import doctor_attributes
+        from src.scheduling.solvers import doctor_attributes
         for did in [f"syn_doctor_{i:02d}" for i in range(1, 6)]:
             expect = round((hashlib.md5(f"{did}|geo".encode()).digest()[0] % 100) / 10.0, 1)
             assert doctor_attributes(did)["distance_km"] == expect
 
     def test_real_distance_none_without_sidecar(self, monkeypatch, tmp_path):
-        from src.features.solvers import real_distance_km
+        from src.scheduling.solvers import real_distance_km
         monkeypatch.setenv("SYNTHETIC_SIDECAR_DIR", str(tmp_path / "empty"))
         assert real_distance_km("syn_doctor_01", "syn_patient_001") is None
         assert real_distance_km("syn_doctor_01", None) is None
@@ -61,16 +61,16 @@ class TestDefaultGate:
 
 class TestHaversine:
     def test_zero(self):
-        from src.features.solvers import haversine_km
+        from src.scheduling.solvers import haversine_km
         assert haversine_km(21.0, 105.8, 21.0, 105.8) == 0.0
 
     def test_known_pair(self):
-        from src.features.solvers import haversine_km
+        from src.scheduling.solvers import haversine_km
         d = haversine_km(0.0, 0.0, 0.0, 1.0)  # 1 degree at equator
         assert 110.0 < d < 112.5, d
 
     def test_antipodal(self):
-        from src.features.solvers import haversine_km
+        from src.scheduling.solvers import haversine_km
         d = haversine_km(0.0, 0.0, 0.0, 180.0)  # half circumference
         assert 19900.0 < d < 20150.0, d
 
@@ -98,7 +98,7 @@ class TestScaleFlags:
 
     def test_greedy_nearby_nonempty_both_paths(self, iso_env):
         # Real-coords path: seeded patients include near-hospital ones.
-        from src.features.solvers import GreedySolver, real_distance_km
+        from src.scheduling.solvers import GreedySolver, real_distance_km
         seed.seed_all(seed=42, days=7, end_offset=3, reset=True, use_llm=False, skip_b4=True)
         nlu = {"symptoms": [{"code": "numbness"}], "nearby": True,
                "time_constraints": {}, "specialty": "Endocrinology_General"}
@@ -120,7 +120,7 @@ class TestScaleFlags:
 
 class TestQueuePagination:
     def test_paged_deterministic_and_compat(self, client, make_user, doctor_user, monkeypatch, tmp_path):
-        import src.features.glucose_tracker as gt
+        import src.diabetes.glucose_tracker as gt
         tmp_db = tmp_path / "q.db"
         monkeypatch.setattr(gt, "GLUCOSE_DB_PATH", tmp_db)
         gt.init_glucose_db()

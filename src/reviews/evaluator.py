@@ -6,9 +6,9 @@ import os
 from typing import Dict, Any, List
 
 try:
-    from src.config import DEFAULT_MODEL, RAG_EVAL_THRESHOLDS, HILT_ROUTING, PHARMACIST_KEYWORDS
+    from src.shared.config import DEFAULT_MODEL, RAG_EVAL_THRESHOLDS, HILT_ROUTING, PHARMACIST_KEYWORDS
 except ImportError:
-    from config import DEFAULT_MODEL, RAG_EVAL_THRESHOLDS, HILT_ROUTING, PHARMACIST_KEYWORDS  # type: ignore
+    from shared.config import DEFAULT_MODEL, RAG_EVAL_THRESHOLDS, HILT_ROUTING, PHARMACIST_KEYWORDS  # type: ignore
 
 EVAL_PROMPT = """
 You are an expert evaluator for medical Retrieval-Augmented Generation (RAG) systems.

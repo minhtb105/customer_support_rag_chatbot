@@ -23,7 +23,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="mx-auto max-w-md rounded-2xl border bg-white p-6 shadow-sm">
+    <div className="mx-auto max-w-md rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 shadow-sm">
       <h1 className="text-lg font-bold">Đăng nhập</h1>
       <p className="text-xs text-slate-500">Bắt buộc để dùng WHO-RAG. Cookie httpOnly an toàn.</p>
       <form onSubmit={submit} className="mt-4 space-y-3">

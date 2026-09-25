@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 @pytest.fixture(scope="session")
 def client():
     """FastAPI TestClient with temp DB isolation for glucose + vitals + auth (4 diseases)."""
-    import src.config as cfg
+    import src.shared.config as cfg
     tmp_glucose = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
     tmp_glucose.close()
     tmp_auth = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
@@ -24,22 +24,22 @@ def client():
     cfg.VITALS_DB_PATH = Path(tmp_vitals.name)
     # Re-init DBs (glucose legacy + unified vitals + auth)
     try:
-        from src.features.glucose_tracker import init_glucose_db
+        from src.diabetes.glucose_tracker import init_glucose_db
         init_glucose_db()
     except Exception:
         pass
     try:
-        from src.features.bp_tracker import init_bp_db
+        from src.vitals.bp_tracker import init_bp_db
         init_bp_db()
     except Exception:
         pass
     try:
-        from src.features.respiratory_tracker import init_respiratory_db
+        from src.vitals.respiratory_tracker import init_respiratory_db
         init_respiratory_db()
     except Exception:
         pass
     try:
-        from src.features.mood_tracker import init_mood_db
+        from src.vitals.mood_tracker import init_mood_db
         init_mood_db()
     except Exception:
         pass

@@ -10,9 +10,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.features import disease_engine as eng  # noqa: E402
+from src.shared import disease_engine as eng  # noqa: E402
 
-MODULE = Path(__file__).resolve().parents[1] / "src" / "features" / "modules" / "diabetes_vn.json"
+MODULE = Path(__file__).resolve().parents[1] / "src" / "shared" / "modules" / "diabetes_vn.json"
 
 
 def _mini():
@@ -105,7 +105,7 @@ class TestModuleShape:
 
     def test_pure_drift_never_trends(self):
         # D3: 4-week pure-drift fasting series (max +-2/week on base 100) -> none.
-        from src.features.anomaly_detector import detect_trend
+        from src.diabetes.anomaly_detector import detect_trend
         logs = []
         v = 100.0
         for week in range(4):
@@ -117,7 +117,7 @@ class TestModuleShape:
 
     def test_ramp_triple_triggers(self):
         # Recorder math 100 -> 114 -> 126 must trip the cascade detector.
-        from src.features.anomaly_detector import detect_trend
+        from src.diabetes.anomaly_detector import detect_trend
         logs = [{"value_mgdl": v, "context": "fasting",
                  "measured_at": f"2026-08-{10 + i:02d}T07:00:00"} for i, v in enumerate([100, 114, 126])]
         assert detect_trend(logs)["type"] == "trend_cascade"

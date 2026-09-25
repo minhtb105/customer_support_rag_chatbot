@@ -30,15 +30,15 @@
 - **ADA:** Standards of Care 2024 trong `data/raw/pdfs/ada/`.
 - **BYT:** `byt/` có QĐ3319 + QĐ5481 (ĐTĐ) và QĐ3192 (**THA — note đỏ: không dùng cho ĐTĐ**, A chỉ dùng 5481+ADA).
 - **Bệnh khác:** `hypertension 5`, `respiratory 3`, `mental 3` file để demo đa bệnh.
-- Mapping thư mục ở `src/config.py:70 GUIDELINE_SOURCES` (11 keys); crawler tôn trọng mapping, indexer quét đệ quy nên thêm subfolder là tự index.
+- Mapping thư mục ở `src/shared/config.py:70 GUIDELINE_SOURCES` (11 keys); crawler tôn trọng mapping, indexer quét đệ quy nên thêm subfolder là tự index.
 
 ## 4. Chunking Contract
 
-`src/chunk_strategies.py:37`: 6 strategy, hay dùng 4 (`structure/sliding/semantic/hybrid_section_semantic`). Tham số nhớ: `MAX_TOKENS 480`, overlap 200, sliding 350/64, semantic gộp khi cosine ≥0.9128, tokenizer `bert-base-uncased`. Structure giữ headings/số trang (tốt cho trích dẫn), hybrid giữ section + semantic con khi section dài.
+`src/shared/chunk_strategies.py:37`: 6 strategy, hay dùng 4 (`structure/sliding/semantic/hybrid_section_semantic`). Tham số nhớ: `MAX_TOKENS 480`, overlap 200, sliding 350/64, semantic gộp khi cosine ≥0.9128, tokenizer `bert-base-uncased`. Structure giữ headings/số trang (tốt cho trích dẫn), hybrid giữ section + semantic con khi section dài.
 
 ## 5. Embedding & Vector Store
 
-1 đoạn duy nhất: có 2 nhà cung cấp — **OpenAI** (`text-embedding-3-small`, 1536 chiều, cần API key, chính xác hơn) vs **local** (`all-MiniLM-L6-v2`, 384 chiều, chạy offline). `src/indexer.py:72` thử OpenAI trước, rớt thì fallback local. **Tuyệt đối không trộn 2 DB** (384 vs 1536 sẽ lỗi query Chroma) — vì vậy tách `pdf_db/` và `pdf_db_openai/`.
+1 đoạn duy nhất: có 2 nhà cung cấp — **OpenAI** (`text-embedding-3-small`, 1536 chiều, cần API key, chính xác hơn) vs **local** (`all-MiniLM-L6-v2`, 384 chiều, chạy offline). `src/shared/indexer.py:72` thử OpenAI trước, rớt thì fallback local. **Tuyệt đối không trộn 2 DB** (384 vs 1536 sẽ lỗi query Chroma) — vì vậy tách `pdf_db/` và `pdf_db_openai/`.
 
 ## 6. Fingerprinting & Hashing
 
@@ -46,7 +46,7 @@ Mỗi chunk có hash = sha256(nội dung chuẩn hóa + section + trang + index)
 
 ## 7. Incremental Reindex
 
-Luồng `hybrid_hash_reindex` (`src/indexer.py:98`): tính fingerprint mới → so cũ → trùng thì skip; khác thì parse docling → chunk → so hash cũ/mới → xóa removed, thêm added vào Chroma → upsert metadata. Promote guideline từ staging tái dùng đúng hàm này (`reindex_single_pdf`).
+Luồng `hybrid_hash_reindex` (`src/shared/indexer.py:98`): tính fingerprint mới → so cũ → trùng thì skip; khác thì parse docling → chunk → so hash cũ/mới → xóa removed, thêm added vào Chroma → upsert metadata. Promote guideline từ staging tái dùng đúng hàm này (`reindex_single_pdf`).
 
 <details>
 <summary>Chi tiết schema SQL + ingestion pipeline (click để mở)</summary>

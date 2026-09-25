@@ -32,14 +32,14 @@ export default function TriageMonitorPage() {
   };
   useEffect(() => { if (user && isAdmin) load(); }, [user, isAdmin, page]);
 
-  if (loading) return <div className="rounded-2xl border bg-white p-8 text-center text-sm text-slate-500">Đang tải...</div>;
-  if (!user) return <div className="rounded-2xl border bg-white p-8 text-center">Cần đăng nhập <Link href="/login" className="underline">Đăng nhập</Link></div>;
-  if (!isAdmin) return <div className="rounded-2xl border bg-white p-8 text-center text-sm text-red-700">403 — Chỉ admin (lễ tân demo) xem được monitor triage.</div>;
+  if (loading) return <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-8 text-center text-sm text-slate-500">Đang tải...</div>;
+  if (!user) return <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-8 text-center">Cần đăng nhập <Link href="/login" className="underline">Đăng nhập</Link></div>;
+  if (!isAdmin) return <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-8 text-center text-sm text-red-700">403 — Chỉ admin (lễ tân demo) xem được monitor triage.</div>;
 
   return (
     <div className="space-y-4">
       <div><h1 className="text-xl font-bold">Triage monitor (lễ tân)</h1><p className="text-sm text-slate-600">Log các ca agent đã xử lý — read-only, highlight ca phức tạp/khẩn cấp.</p></div>
-      <div className="flex flex-wrap gap-2 rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="flex flex-wrap gap-2 rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <select value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="rounded-lg border px-3 py-2 text-sm">
           <option value="">Mọi chuyên khoa</option>
           <option value="Endocrinology_Complication">Biến chứng ĐTĐ</option>

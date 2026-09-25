@@ -132,7 +132,8 @@ def test_soap_hypertension(client: TestClient, auth_header):
     assert resp.status_code == 200, resp.text
     data = resp.json()
     assert "soap" in data
-    for k in ("subjective", "objective", "assessment", "plan"):
+    # P (plan) intentionally stays "" — doctor decides (see soap_summary.py rule_based + LLM enforce).
+    for k in ("subjective", "objective", "assessment"):
         assert k in data["soap"]
         assert len(data["soap"][k]) > 0
     assert "systolic" in data["soap"]["subjective"].lower() or "mmHg" in data["soap"]["objective"] or "huyết áp" in data["soap"]["subjective"].lower()

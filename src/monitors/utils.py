@@ -10,9 +10,9 @@ from urllib.parse import urlparse
 import requests
 
 try:
-    from src.config import ALLOWED_MONITOR_DOMAINS
+    from src.shared.config import ALLOWED_MONITOR_DOMAINS
 except ImportError:
-    from config import ALLOWED_MONITOR_DOMAINS  # type: ignore
+    from shared.config import ALLOWED_MONITOR_DOMAINS  # type: ignore
 
 # ---------- SSRF ----------
 def is_url_allowed(url: str) -> bool:
@@ -163,10 +163,10 @@ def extract_text_from_pdf(pdf_path: Path, max_chars: int = 20000) -> str:
         doc = converter.convert(str(pdf_path)).document
         # try chunk_strategies helper
         try:
-            from src.chunk_strategies import extract_full_text_from_doc
+            from src.shared.chunk_strategies import extract_full_text_from_doc
             txt = extract_full_text_from_doc(doc)
         except ImportError:
-            from chunk_strategies import extract_full_text_from_doc  # type: ignore
+            from shared.chunk_strategies import extract_full_text_from_doc  # type: ignore
             txt = extract_full_text_from_doc(doc)
         return txt[:max_chars]
     except Exception:

@@ -8,9 +8,9 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 try:
-    from src.config import BASE_DIR
+    from src.shared.config import BASE_DIR
 except ImportError:
-    from config import BASE_DIR  # type: ignore
+    from shared.config import BASE_DIR  # type: ignore
 
 MONITORING_DB_PATH = BASE_DIR / "metadata" / "monitoring.db"
 

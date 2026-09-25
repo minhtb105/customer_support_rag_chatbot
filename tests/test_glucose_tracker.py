@@ -1,14 +1,14 @@
 """Unit tests for Track A — glucose_tracker (diabetes spec)."""
 
 import pytest
-from src.features.glucose_tracker import (
+from src.diabetes.glucose_tracker import (
     classify_glucose,
     should_escalate_to_doctor,
     add_log,
     get_stats,
     get_logs,
 )
-from src.config import GLUCOSE_THRESHOLDS_MGDL
+from src.shared.config import GLUCOSE_THRESHOLDS_MGDL
 
 
 class TestClassifyGlucose:

@@ -22,7 +22,7 @@ STAGED_KNOWN = {"Bệnh thần kinh ngoại biên giai đoạn sớm", "Bệnh v
 
 @pytest.fixture
 def iso_env(monkeypatch, tmp_path):
-    import src.features.glucose_tracker as gt
+    import src.diabetes.glucose_tracker as gt
     monkeypatch.setattr(gt, "GLUCOSE_DB_PATH", tmp_path / "dist.db")
     monkeypatch.setenv("SYNTHETIC_SIDECAR_DIR", str(tmp_path / "meta"))
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
@@ -112,7 +112,7 @@ class TestSidecarStagedAndMeds:
             base_extra = set(m["comorbidities"]) - {"Thừa cân", "Rối loạn giấc ngủ",
                                                     "Tăng huyết áp", "Rối loạn lipid máu"}
             assert base_extra <= STAGED_KNOWN, base_extra
-        import src.features.glucose_tracker as gt
+        import src.diabetes.glucose_tracker as gt
         import sqlite3
         conn = sqlite3.connect(str(gt.GLUCOSE_DB_PATH))
         try:

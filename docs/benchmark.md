@@ -102,6 +102,76 @@ python scripts/run_benchmarks.py --latency-n 10
 ls data/evaluation/results_benchmark_*.json
 ```
 
+## 8. B6-B8 — Service Benchmarks (triage / labs / solvers) — Gold v2
+
+Gold v2 (2026-09-23): `bench_triage` **32** cases (24 + 8: 7 tier + 1
+redflag), `bench_labs` **29** cases (21 + 8 parse), `bench_solvers`
+**28** cases (20 + 8: route/nlu/dfs_relax/greedy_filter). Cases cũ
+backfill `pain_point: legacy` (nội dung giữ nguyên); cases mới mang
+`pain_point` trong enum + `source: <file>::<test>` (nearest-cite) +
+`note`.
+
+`pain_point` enum: `dose_change | drug_interaction | multi_intent |
+booking_time | elderly_phrasing | trend_question | lifestyle_question |
+severity_question | comorbidity_context | multi_analyte |
+relaxation_order | cost_warning | weekday_exclusion | unknown_doctor |
+legacy` (`tests/test_benchmarks.py::PAIN_POINTS` assert allowlist).
+
+Khung chung, metric riêng: Safety (pass/fail) tách khỏi Quality (regression
+WARNING). Chỉ gọi **pure functions** (`check_red_flag`, `route_tier`,
+`is_panic`, labs `_parse_question`, `GreedySolver`/`DFSSolver`/
+`SchedulerOrchestrator`, `simulate_time_off`) — không TestClient, không ghi
+DB, **0 LLM/RAG calls** ở cả hai mode.
+
+| Service | Quality | Safety gates (==1.0, miss 1 case = FAILED + exit 1) | Performance |
+|---|---|---|---|
+| B6 triage | tier/emergency/group accuracy | `panic_recall` | per-case P50/P95 |
+| B7 labs | nopanic/parse-loinc/redflag accuracy | `panic_recall` + `carveout_pass` (thận/gan không bị nuốt) | per-case P50/P95 |
+| B8 solvers | correct-solver / parse / constraint-satisfaction | `never_relax_specialty` + `ga_timing_ok` (<5s) | greedy-solve P50/P95 (pure `GreedySolver.solve`, pin <50ms) |
+
+Unified schema (`results_benchmark_services_<ts>.json`):
+
+```json
+{
+  "timestamp": "...", "mode": "ci_no_key", "overall_status": "PASSED",
+  "baseline_ref": {"path": "baseline_benchmark.json", "mode": "ci_no_key", "git_sha": "..."},
+  "services": {
+    "triage": {"safety_gates": {"panic_recall": 1.0}, "quality": {"tier_accuracy": 1.0}, "performance": {}},
+    "labs": {"safety_gates": {}, "quality": {}, "performance": {}},
+    "solvers": {"safety_gates": {}, "quality": {}, "performance": {"greedy_solve": {}, "ga_simulate_s": {}}}
+  },
+  "regression_warnings": []
+}
+```
+
+`overall_status` chỉ theo safety gates. Regression = mean-quality theo
+service giảm tương đối >5% so baseline → WARNING vàng, exit 0.
+
+```bash
+# CI (không key, ~1-2 phút khi imports đã ấm; fresh-process lâu hơn do import lần đầu)
+python scripts/run_benchmarks.py --services triage,labs,solvers --mode ci_no_key
+
+# Nightly (pure như CI + GA lặp x3 cho timing ổn định; --llm-n là cap dự trữ
+# cho judge LLM tương lai, hiện là no-op vì 0 LLM calls)
+python scripts/run_benchmarks.py --services all-services --mode nightly
+
+# Ghi baseline (manual-only, từ cây xanh; CI không bao giờ ghi)
+python scripts/run_benchmarks.py --services triage,labs,solvers --mode ci_no_key --update-baseline
+```
+
+Bỏ `--services` = chạy B1-B5 legacy byte-identical (keys `b123/b4/b5`, file
+`results_benchmark_<ts>.json` giữ nguyên).
+
+Gold-sync rule: mỗi case có `{"source": "<file>::<test>", "version": 1,
+"pain_point": "<enum>"}`;
+khi sửa test X → cập nhật bench tương ứng + bump version + chạy
+`--update-baseline`. `tests/test_benchmarks.py` assert mọi source resolve
+được tới test name hiện có (grep, không import), `version in (1,2)`,
+size `20..40`, và `pain_point` thuộc enum.
+
+Est: 0 LLM calls, 0 DB writes, thời gian ~1-2 phút (phần lớn là import
+lần đầu + GA-200 in-memory).
+
 ## 7. Khuyến nghị
 
 1. Đổi `DATASET_PATH` mặc định trong `run_benchmarks.py:36` từ `retrieval_evaluation.json` sang `diabetes_retrieval_evaluation.json` để tránh 0 toàn tập.

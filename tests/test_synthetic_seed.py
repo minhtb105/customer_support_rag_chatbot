@@ -21,7 +21,7 @@ import scripts.seed_synthetic_data as seed  # noqa: E402
 
 @pytest.fixture
 def iso_env(monkeypatch, tmp_path):
-    import src.features.glucose_tracker as gt
+    import src.diabetes.glucose_tracker as gt
     tmp_db = tmp_path / "syn.db"
     monkeypatch.setattr(gt, "GLUCOSE_DB_PATH", tmp_db)
     monkeypatch.setenv("SYNTHETIC_SIDECAR_DIR", str(tmp_path / "meta"))
@@ -110,7 +110,7 @@ class TestSyntheticSeed:
                           use_llm=True, episodic=None)
         assert r["b4"]["notes"] > 0  # dawn+high-risk spike weeks got notes
         # episodic via fake on explicit run_b4 (seed used real lazy import -> fail-open 0)
-        import src.features.glucose_tracker as gt  # noqa
+        import src.diabetes.glucose_tracker as gt  # noqa
         conn = sqlite3.connect(str(gt.GLUCOSE_DB_PATH))
         try:
             rows = conn.execute(
@@ -140,7 +140,7 @@ class TestSyntheticSeed:
         assert any("bánh ngọt" in c for _, c, _ in fake_episodic.saved)
 
     def test_roster_helper(self, iso_env):
-        from src.features import synthetic_roster as sr
+        from src.scheduling import synthetic_roster as sr
         seed.seed_all(seed=42, days=2, end_offset=3, reset=True, use_llm=False)
         assert sr.get_patient_display_name("syn_patient_001")
         assert sr.get_patient_pcp("syn_patient_001").startswith("syn_doctor_")
@@ -149,7 +149,7 @@ class TestSyntheticSeed:
         assert len(sr.query_doctor_availability(doctor_id="syn_doctor_03")) == 1
 
     def test_roster_fail_open(self, monkeypatch, tmp_path):
-        from src.features import synthetic_roster as sr
+        from src.scheduling import synthetic_roster as sr
         monkeypatch.setenv("SYNTHETIC_SIDECAR_DIR", str(tmp_path / "empty"))
         assert sr.get_patient_display_name("syn_patient_001") is None
         assert sr.get_patient_pcp("syn_patient_001") is None

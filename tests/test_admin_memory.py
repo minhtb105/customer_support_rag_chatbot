@@ -175,7 +175,7 @@ def test_facts_entities_empty_and_missing_metadata_fail_open(client: TestClient,
 
 def test_ragas_excludes_memory_chunks(client: TestClient, admin_client, monkeypatch):
     import uuid as _uuid
-    from src.observability import tracing_db as tdb
+    from src.shared.observability import tracing_db as tdb
     trace_id = tdb.create_trace(user_id="u1", username="u1", query="q?", tone="balanced",
                                 model="m", embedding_model="e", chunking_strategy="structure", top_k=5)
     span = tdb.create_span(trace_id=trace_id, name="retrieve_context")

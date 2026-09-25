@@ -84,6 +84,8 @@ test.describe('Tracker A — Guided UI', () => {
     await page.locator('input[type="number"]').first().fill('280');
     await page.getByRole('button', { name: /Lưu chỉ số/ }).click();
     await expect(page.getByText(/CẢNH BÁO: Đường huyết nguy hiểm/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('critical-banner')).toBeVisible();
+    await expect(page.getByTestId('tracker-save')).toBeVisible();
     await expect(page.getByText(/Hỏi thêm ngữ cảnh/)).toBeHidden();
     await expect(page.getByRole('button', { name: /Diễn giải xu hướng/ })).toBeHidden();
   });
@@ -110,7 +112,9 @@ test.describe('Tracker A — Guided UI', () => {
     await page.getByRole('button', { name: /Lưu chỉ số/ }).click();
     await expect(page.getByText(/Trend cascade/)).toBeVisible({ timeout: 5000 });
     await expect(page.getByText(/Hỏi thêm ngữ cảnh/)).toBeVisible();
+    await expect(page.getByTestId('fqg-input')).toBeVisible();
     await page.getByPlaceholder('vd: ăn 2 miếng bánh ngọt').fill('ăn 2 miếng bánh ngọt');
+    await expect(page.getByTestId('fqg-send')).toBeVisible();
     await page.getByRole('button', { name: 'Gửi' }).click();
     await expect(page.getByText('Đã lưu ngữ cảnh.')).toBeVisible({ timeout: 5000 });
   });
@@ -129,6 +133,7 @@ test.describe('Tracker A — Guided UI', () => {
 
     await page.goto('/tracker');
     await expect(page.getByText(/Biểu đồ 14 ngày/)).toBeVisible();
+    await expect(page.getByTestId('trend-explain')).toBeVisible();
     await page.getByRole('button', { name: /Diễn giải xu hướng/ }).click();
     await expect(page.getByText(/Xu hướng tăng nhẹ/)).toBeVisible({ timeout: 5000 });
   });

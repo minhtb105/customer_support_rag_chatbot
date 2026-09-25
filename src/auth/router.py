@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Response, Request, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 try:
-    from src.config import ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS, COOKIE_SECURE, COOKIE_SAMESITE, VALID_ROLES, EXPERT_ROLES
+    from src.shared.config import ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS, COOKIE_SECURE, COOKIE_SAMESITE, VALID_ROLES, EXPERT_ROLES
     from src.auth.schemas import RegisterRequest, LoginRequest, TokenResponse, UserOut, UserUpdateRequest, RefreshRequest
     from src.auth.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token
     from src.auth.db import (
@@ -17,7 +17,7 @@ try:
     )
     from src.auth.dependencies import get_current_user, require_admin
 except ImportError:
-    from config import ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS, COOKIE_SECURE, COOKIE_SAMESITE, VALID_ROLES, EXPERT_ROLES  # type: ignore
+    from shared.config import ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS, COOKIE_SECURE, COOKIE_SAMESITE, VALID_ROLES, EXPERT_ROLES  # type: ignore
     from auth.schemas import RegisterRequest, LoginRequest, TokenResponse, UserOut, UserUpdateRequest, RefreshRequest  # type: ignore
     from auth.security import hash_password, verify_password, create_access_token, create_refresh_token, decode_token  # type: ignore
     from auth.db import (  # type: ignore

@@ -6,19 +6,19 @@ from typing import Optional
 def reindex_single_pdf(pdf_path: str, strategies: Optional[list] = None, version_label: str | None = None, publication_date: str | None = None):
     """Reindex single PDF using existing hybrid_hash_reindex logic."""
     try:
-        from src.indexer import hybrid_hash_reindex, get_or_create_vectorstore, _resolve_index_db_dir, compute_file_fingerprint
-        from src.embedding.adapter import EmbeddingAdapter
-        from src.models.chunk import Chunk  # noqa
-        from src.chunk_strategies import ChunkingStrategy
-        from src.config import META_DB_PATH, EMBEDDING_PROVIDER, EMBEDDING_MODEL, TOKENIZER_MODEL, OPENAI_EMBEDDING_MODEL, BASE_DIR
-        from src.metadata_store import init_db
+        from src.shared.indexer import hybrid_hash_reindex, get_or_create_vectorstore, _resolve_index_db_dir, compute_file_fingerprint
+        from src.shared.embedding.adapter import EmbeddingAdapter
+        from src.shared.models.chunk import Chunk  # noqa
+        from src.shared.chunk_strategies import ChunkingStrategy
+        from src.shared.config import META_DB_PATH, EMBEDDING_PROVIDER, EMBEDDING_MODEL, TOKENIZER_MODEL, OPENAI_EMBEDDING_MODEL, BASE_DIR
+        from src.shared.metadata_store import init_db
     except ImportError:
-        from indexer import hybrid_hash_reindex, get_or_create_vectorstore, _resolve_index_db_dir, compute_file_fingerprint  # type: ignore
-        from embedding.adapter import EmbeddingAdapter  # type: ignore
-        from models.chunk import Chunk  # type: ignore
-        from chunk_strategies import ChunkingStrategy  # type: ignore
-        from config import META_DB_PATH, EMBEDDING_PROVIDER, EMBEDDING_MODEL, TOKENIZER_MODEL, OPENAI_EMBEDDING_MODEL, BASE_DIR  # type: ignore
-        from metadata_store import init_db  # type: ignore
+        from shared.indexer import hybrid_hash_reindex, get_or_create_vectorstore, _resolve_index_db_dir, compute_file_fingerprint  # type: ignore
+        from shared.embedding.adapter import EmbeddingAdapter  # type: ignore
+        from shared.models.chunk import Chunk  # type: ignore
+        from shared.chunk_strategies import ChunkingStrategy  # type: ignore
+        from shared.config import META_DB_PATH, EMBEDDING_PROVIDER, EMBEDDING_MODEL, TOKENIZER_MODEL, OPENAI_EMBEDDING_MODEL, BASE_DIR  # type: ignore
+        from shared.metadata_store import init_db  # type: ignore
 
     init_db(META_DB_PATH)
 
@@ -63,15 +63,15 @@ def reindex_single_pdf(pdf_path: str, strategies: Optional[list] = None, version
         else:
             embedder = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
             tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_MODEL)
-        from src.embedding.adapter import EmbeddingAdapter as EA  # type: ignore
+        from src.shared.embedding.adapter import EmbeddingAdapter as EA  # type: ignore
         embedding_adapter = EA(embedder=embedder, tokenizer=tokenizer, max_len=512) if 'EA' in locals() else None
         # fallback if EA not imported
         if embedding_adapter is None:
             try:
-                from embedding.adapter import EmbeddingAdapter as EA2  # type: ignore
+                from shared.embedding.adapter import EmbeddingAdapter as EA2  # type: ignore
                 embedding_adapter = EA2(embedder=embedder, tokenizer=tokenizer, max_len=512)
             except ImportError:
-                from src.embedding.adapter import EmbeddingAdapter as EA3  # type: ignore
+                from src.shared.embedding.adapter import EmbeddingAdapter as EA3  # type: ignore
                 embedding_adapter = EA3(embedder=embedder, tokenizer=tokenizer, max_len=512)
     except Exception as e:
         raise RuntimeError(f"Embedding adapter init failed: {e}")

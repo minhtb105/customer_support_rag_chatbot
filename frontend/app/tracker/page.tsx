@@ -5,6 +5,8 @@ import { useAuth } from "@/lib/auth";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from "recharts";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import StatusBadge from "@/components/StatusBadge";
+import { useIsDark } from "@/components/ThemeToggle";
 
 const contexts = [
   { value: "fasting", label: "Đói (fasting)" },
@@ -21,10 +23,10 @@ const GUARD_RE = /thiết kế riêng để theo dõi đường huyết|nằm ng
 const EntryAlert = (p: any) => {
   const { value, setValue, context, setContext, notes, setNotes, msg, anomaly, isCritical, submit } = p;
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-1">
+    <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-1 dark:bg-slate-900 dark:border-slate-700">
       <h2 className="text-sm font-semibold">Nhập chỉ số</h2>
       {isCritical && (
-        <div className="mt-4 rounded-xl border-2 border-red-600 bg-red-600 p-4 text-white shadow-xl">
+        <div data-testid="critical-banner" role="alert" className="animate-critical-pulse mt-4 rounded-xl border-2 border-red-600 bg-red-600 p-4 text-white shadow-xl">
           <div className="font-bold text-sm">🚨 {CRITICAL_TEXT}</div>
           {anomaly?.reason && <div className="mt-2 text-xs leading-relaxed">{anomaly.reason}</div>}
           {msg && <div className="mt-2 rounded-lg bg-white/10 p-2 text-xs">{msg}</div>}
@@ -36,8 +38,8 @@ const EntryAlert = (p: any) => {
           <div><label className="text-xs text-slate-600">Giá trị (mg/dL)</label><input type="number" value={value} onChange={(e)=>setValue(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" /></div>
           <div><label className="text-xs text-slate-600">Bối cảnh</label><select value={context} onChange={(e)=>setContext(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm">{contexts.map(c=> <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
         </div>
-        <div><label className="text-xs text-slate-600">Ghi chú</label><input value={notes} onChange={(e)=>setNotes(e.target.value)} placeholder="vd: sau ăn phở" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" /></div>
-        <button onClick={submit} className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-700">Lưu chỉ số</button>
+        <div><label className="text-xs text-slate-600">Ghi chú</label><input value={notes} onChange={(e)=>setNotes(e.target.value)} placeholder="vd: sau ăn phở" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" /></div>
+        <button data-testid="tracker-save" onClick={submit} className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 min-h-[44px] focus-visible:outline-2">Lưu chỉ số</button>
         {msg && <div className="rounded-lg border bg-slate-50 p-3 text-xs">{msg}</div>}
         {anomaly && anomaly.type !== "none" && !isCritical && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
@@ -103,24 +105,24 @@ const FqgChat = (p: any) => {
   };
   if (!open && !fqg.length) return null;
   return (
-    <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 shadow-sm">
+    <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 shadow-sm dark:bg-blue-950/40 dark:border-blue-900">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Hỏi thêm ngữ cảnh (FQG)</h3>
-        <button onClick={()=>setOpen((o)=>!o)} className="text-xs text-blue-700 underline">{open?"Thu gọn":"Mở chat"}</button>
+        <button onClick={()=>setOpen((o)=>!o)} className="text-xs text-blue-700 underline dark:text-blue-300 min-h-[44px] px-2">{open?"Thu gọn":"Mở chat"}</button>
       </div>
       {open && (
         <>
-          <div className="mt-3 max-h-64 space-y-2 overflow-auto rounded-lg border bg-white p-3">
+          <div className="mt-3 max-h-64 space-y-2 overflow-auto rounded-lg border bg-white p-3 dark:bg-slate-900 dark:border-slate-700">
             {messages.length ? messages.map((m,i)=>(
-              <div key={i} className={`rounded-lg p-2 text-xs leading-relaxed ${m.role==="user"?"ml-8 bg-emerald-50 border border-emerald-100 text-emerald-900":m.role==="guard"?"bg-red-50 border border-red-200 text-red-800":m.role==="sys"?"bg-slate-100 text-slate-600":"mr-8 bg-blue-50 border border-blue-100 text-blue-900"}`}>
+              <div key={i} className={`rounded-lg p-2 text-sm leading-relaxed ${m.role==="user"?"ml-8 bg-emerald-50 border border-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-100":m.role==="guard"?"bg-red-50 border border-red-200 text-red-800 dark:bg-red-950 dark:border-red-800 dark:text-red-100":m.role==="sys"?"bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300":"mr-8 bg-blue-50 border border-blue-100 text-blue-900 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-100"}`}>
                 {m.role==="guard" && <div className="font-bold">⛔ Ngoài phạm vi hỗ trợ</div>}
                 <div className="whitespace-pre-wrap">{m.text}</div>
               </div>
-            )) : <div className="p-2 text-xs text-slate-500">AI sẽ hỏi thêm khi phát hiện trend bất thường.</div>}
+            )) : <div className="p-2 text-sm text-slate-500 dark:text-slate-400">AI sẽ hỏi thêm khi phát hiện trend bất thường.</div>}
           </div>
           <div className="mt-2 flex gap-2">
-            <input value={input} onChange={(e)=>setInput(e.target.value)} onKeyDown={(e)=>{ if(e.key==="Enter") send(); }} placeholder="vd: ăn 2 miếng bánh ngọt" className="w-full rounded-lg border px-3 py-2 text-sm" />
-            <button onClick={send} disabled={sending} className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50">{sending?"...":"Gửi"}</button>
+            <input data-testid="fqg-input" value={input} onChange={(e)=>setInput(e.target.value)} onKeyDown={(e)=>{ if(e.key==="Enter") send(); }} placeholder="vd: ăn 2 miếng bánh ngọt" className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" />
+            <button data-testid="fqg-send" onClick={send} disabled={sending} className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 min-h-[44px]">{sending?"...":"Gửi"}</button>
           </div>
         </>
       )}
@@ -165,6 +167,8 @@ const TriageWidget = (p: any) => {
       });
       if (data?.followup_question) bits.push(`❓ ${data.followup_question}`);
       if (data?.solver_used) bits.push(`⚙️ Solver: ${data.solver_used}${data?.routing_reason ? ` — ${data.routing_reason}` : ""}`);
+      if (data?.handoff_tier) bits.push(`🏷️ Handoff tier: ${data.handoff_tier}${data?.what_happens_next ? ` — ${data.what_happens_next}` : ""}`);
+      if (data?.panic) bits.push(`🚨 Panic lab: ${data?.message || "Gọi 115 ngay."}`);
       if (data?.simulation_summary) bits.push(`📊 GA: ${data.simulation_summary.reassigned} xếp lại / ${data.simulation_summary.unplaced} chưa xếp được, fitness=${data.simulation_summary.fitness}`);
       setMsgs((prev) => [...prev, { role: "ai", text: bits.join("\n") || "Đã ghi nhận." }]);
     } catch (e: any) {
@@ -174,10 +178,10 @@ const TriageWidget = (p: any) => {
     }
   };
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">📅 Đặt lịch khám (AI triage)</h3>
-        <button onClick={() => setOpen((o) => !o)} className="rounded-full bg-violet-600 px-4 py-2 text-xs text-white hover:bg-violet-700">{open ? "Thu gọn" : "Mở"}</button>
+        <button onClick={() => setOpen((o) => !o)} className="rounded-full bg-violet-600 px-4 py-2 text-xs text-white hover:bg-violet-700 min-h-[44px]">{open ? "Thu gọn" : "Mở"}</button>
       </div>
       {locked && (
         <div className="mt-3 rounded-xl border-2 border-red-600 bg-red-600 p-4 text-sm font-bold text-white shadow-xl">
@@ -207,8 +211,11 @@ const TriageWidget = (p: any) => {
 
 const MyTracker = (p: any) => {
   const { data, highlightId, trend, explainTrend, isCritical, anomalySet, hasServerIds } = p;
+  const dark = useIsDark();
   const chartData = data?.logs ? [...data.logs].reverse().map((l: any)=>({ id: l.id, time: l.measured_at.slice(5,16).replace("T"," "), value: l.value_mgdl })) : [];
   const isAnom = (l: any) => hasServerIds ? anomalySet.has(Number(l.id)) : (l.value_mgdl > 250 || l.value_mgdl < 70);
+  const gridStroke = dark ? "#334155" : "#e2e8f0";
+  const lineStroke = dark ? "#60a5fa" : "#0ea5e9";
   const dot = (props: any) => {
     const hot = hasServerIds ? anomalySet.has(Number(props?.payload?.id)) : (props?.payload?.value > 250 || props?.payload?.value < 70);
     return <circle cx={props.cx} cy={props.cy} r={hot?5:3} fill={hot?"#ef4444":"#0ea5e9"} stroke="#fff" strokeWidth={1} />;
@@ -223,22 +230,23 @@ const MyTracker = (p: any) => {
           <Kpi label="Tần suất" value={`${data.stats.logs_per_week}/tuần`} sub={data.stats.logs_per_week<3? "Chưa đạt KPI":"Đạt KPI"} alert={data.stats.logs_per_week<3} />
         </div>
       )}
-      <div className="rounded-2xl border bg-white p-5 shadow-sm">
-        <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Biểu đồ 14 ngày</h3>{!isCritical && <button onClick={explainTrend} className="rounded-full bg-slate-900 px-4 py-2 text-xs text-white hover:bg-black">Diễn giải xu hướng (RAG)</button>}</div>
+      <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+        <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Biểu đồ 14 ngày</h3>{!isCritical && <button data-testid="trend-explain" onClick={explainTrend} className="rounded-full bg-slate-900 px-4 py-2 text-xs text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900 min-h-[44px]">Diễn giải xu hướng (RAG)</button>}</div>
+        <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-slate-500 dark:text-slate-400"><span>● Bình thường</span><span className="text-red-600">● Bất thường (spike/trend)</span><span>Ngưỡng 70 / 126 / 200</span></div>
         <div className="mt-4 h-56">
-          {chartData.length? <ResponsiveContainer width="100%" height="100%"><LineChart data={chartData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="time" tick={{fontSize:10}} /><YAxis domain={[40,320]} tick={{fontSize:10}} /><Tooltip /><ReferenceLine y={126} stroke="#f59e0b" strokeDasharray="4 4" label={{value:"126",fontSize:10}} /><ReferenceLine y={200} stroke="#ef4444" strokeDasharray="4 4" label={{value:"200",fontSize:10}} /><ReferenceLine y={70} stroke="#f97316" strokeDasharray="4 4" /><Line type="monotone" dataKey="value" stroke="#0ea5e9" strokeWidth={2} dot={dot} /></LineChart></ResponsiveContainer> : <div className="flex h-full items-center justify-center text-sm text-slate-500">Chưa có dữ liệu</div>}
+          {chartData.length? <ResponsiveContainer width="100%" height="100%"><LineChart data={chartData}><CartesianGrid strokeDasharray="3 3" stroke={gridStroke} /><XAxis dataKey="time" tick={{fontSize:10}} stroke={gridStroke} /><YAxis domain={[40,320]} tick={{fontSize:10}} stroke={gridStroke} /><Tooltip contentStyle={dark?{backgroundColor:"#0f172a",borderColor:"#334155",color:"#e2e8f0"}:undefined} /><ReferenceLine y={126} stroke="#f59e0b" strokeDasharray="4 4" label={{value:"126",fontSize:10}} /><ReferenceLine y={200} stroke="#ef4444" strokeDasharray="4 4" label={{value:"200",fontSize:10}} /><ReferenceLine y={70} stroke="#f97316" strokeDasharray="4 4" /><Line type="monotone" dataKey="value" stroke={lineStroke} strokeWidth={2} dot={dot} /></LineChart></ResponsiveContainer> : <div className="flex h-full items-center justify-center text-sm text-slate-500">Chưa có dữ liệu — nhập chỉ số đầu tiên ở khung bên trái.</div>}
         </div>
         {data?.should_escalate && <div className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-800">⚠️ Khuyến nghị liên hệ bác sĩ</div>}
         {trend && <div className="mt-4 rounded-lg border bg-slate-50 p-4 text-xs leading-relaxed whitespace-pre-wrap">{trend}</div>}
       </div>
-      <div className="rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
         <h3 className="text-sm font-semibold">Lịch sử</h3>
-        <div className="mt-3 max-h-72 overflow-auto divide-y rounded-lg border">
+        <div className="mt-3 max-h-72 overflow-auto divide-y rounded-lg border dark:border-slate-700">
           {data?.logs?.length? data.logs.map((l:any)=>{
             const hl = String(l.id)===String(highlightId);
             const an = isAnom(l);
-            return <div key={l.id} id={`log-${l.id}`} className={`flex items-center justify-between px-3 py-2 text-xs ${hl?"bg-yellow-100 ring-2 ring-yellow-400":""} ${an?"border-l-4 border-l-orange-500 bg-orange-50":""}`}><div><div className="font-mono">#{l.id} · {l.measured_at.slice(0,16).replace("T"," ")} · {l.value_mgdl} mg/dL</div><div className="text-slate-500">{l.context} {l.notes? `· ${l.notes}`:""}</div></div><span className={`rounded-full border px-2 py-1 text-[11px] font-medium ${classColor(l.classification)}`}>{l.classification}</span></div>;
-          }): <div className="p-6 text-center text-sm text-slate-500">Chưa có log</div>}
+            return <div key={l.id} id={`log-${l.id}`} className={`flex items-center justify-between gap-2 px-3 py-2 text-sm overflow-x-auto ${hl?"bg-yellow-100 ring-2 ring-yellow-400 dark:bg-yellow-950":""} ${an?"border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-950/40":""}`}><div className="min-w-0"><div className="font-mono text-[11px]">#{l.id} · {l.measured_at.slice(0,16).replace("T"," ")} · {l.value_mgdl} mg/dL</div><div className="text-slate-500 dark:text-slate-400 truncate">{l.context} {l.notes? `· ${l.notes}`:""}</div></div><StatusBadge level={l.classification} text={l.classification} /></div>;
+          }): <div className="p-6 text-center text-sm text-slate-500">Chưa có log — dữ liệu sẽ hiện sau lần lưu đầu tiên.</div>}
         </div>
       </div>
     </div>
@@ -304,4 +312,4 @@ export default function TrackerPage(){
     </div>
   );
 }
-function Kpi({label,value,sub,alert}:any){ return <div className={`rounded-xl border p-3 ${alert?"bg-amber-50 border-amber-200":"bg-white"}`}><div className="text-[11px] text-slate-500">{label}</div><div className="text-sm font-bold">{value}</div>{sub && <div className={`text-[11px] ${alert?"text-amber-700":"text-slate-500"}`}>{sub}</div>}</div>; }
+function Kpi({label,value,sub,alert}:any){ return <div className={`rounded-xl border p-3 ${alert?"bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800":"bg-white dark:bg-slate-900 dark:border-slate-700"}`}><div className="text-[11px] text-slate-500 dark:text-slate-400">{label}</div><div className="text-sm font-bold">{value}</div>{sub && <div className={`text-[11px] ${alert?"text-amber-700 dark:text-amber-300":"text-slate-500 dark:text-slate-400"}`}>{sub}</div>}</div>; }

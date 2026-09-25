@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from src.auth.security import create_access_token, hash_password
 from src.auth.db import create_user, get_user_by_username, _get_conn
-from src.config import BASE_DIR
+from src.shared.config import BASE_DIR
 from src.monitors.db import (
     create_guideline_version,
     create_safety_alert,
@@ -178,7 +178,7 @@ def test_api_safety_approve_roles(users):
 def test_promote_flow_staging_to_corpus(users):
     from src.monitors.db import create_guideline_version
     from src.monitors.service import promote_guideline_to_corpus
-    from src.config import STAGING_DIR
+    from src.shared.config import STAGING_DIR
 
     staging = STAGING_DIR / "gold" / "test_pytest_promote"
     staging.mkdir(parents=True, exist_ok=True)

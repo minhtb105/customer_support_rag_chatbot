@@ -58,7 +58,7 @@ export default function ApiPlaygroundPage() {
         {!user && <div className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">Cần đăng nhập để truy vấn. <Link href="/login" className="underline">Đăng nhập</Link></div>}
       </div>
 
-      <div className="rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-5 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
             <label className="text-xs font-medium">Câu hỏi</label>
@@ -90,7 +90,7 @@ export default function ApiPlaygroundPage() {
               <div className="text-xs mt-1">Bạn sẽ nhận notification khi expert duyệt. Xem tại <Link href="/my/reviews" className="underline">Lịch sử</Link></div>
             </div>
           )}
-          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-5 shadow-sm">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold">Answer {(streamDone||res)?.is_low_confidence ? "(low confidence)" : ""} {loading && streamMode ? "▌ streaming..." : ""}</h2>
               <span className={`rounded-full px-2 py-1 text-xs border ${(streamDone||res)?.cache_hit ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-slate-50 border-slate-200"}`}>{(streamDone||res)?.cache_hit ? "cache hit" : "generated"} · {(streamDone||res)?.status || (loading?"streaming":"—")}</span>
@@ -111,7 +111,7 @@ export default function ApiPlaygroundPage() {
             <div className="mt-3 text-xs text-slate-500">Latency: {(streamDone||res)?.audit?.latency_ms ?? (streamDone||res)?.timings?.generate_answer?.toFixed?.(3) ?? "—"} ms · Prompt: <code>{streamMeta?.prompt_version ?? (streamDone||res)?.prompt_version ?? "—"}</code> · Trace: {(streamMeta||streamDone||res)?.trace_id || "—"} · Review: {(streamDone||res)?.review_id || "—"}</div>
           </div>
 
-          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-5 shadow-sm">
             <h3 className="text-sm font-semibold">Audit Trail — Citations ({(streamMeta?.contexts?.length ?? res?.audit?.citations?.length ?? res?.contexts?.length ?? 0)})</h3>
             <div className="mt-3 space-y-3 max-h-96 overflow-auto pr-1">
               {((streamMeta?.contexts || streamDone?.contexts || res?.audit?.citations || res?.contexts) || []).map((c: any, i: number) => (
@@ -122,8 +122,8 @@ export default function ApiPlaygroundPage() {
               ))}
             </div>
           </div>
-          <details className="rounded-2xl border bg-white p-5 shadow-sm"><summary className="cursor-pointer text-sm font-semibold">Raw JSON (done)</summary><pre className="mt-3 overflow-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100">{JSON.stringify(streamDone||res, null, 2)}</pre></details>
-          {streamMeta && <details className="rounded-2xl border bg-white p-5 shadow-sm"><summary className="cursor-pointer text-sm font-semibold">Metadata event</summary><pre className="mt-3 overflow-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100">{JSON.stringify(streamMeta, null, 2)}</pre></details>}
+          <details className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-5 shadow-sm"><summary className="cursor-pointer text-sm font-semibold">Raw JSON (done)</summary><pre className="mt-3 overflow-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100">{JSON.stringify(streamDone||res, null, 2)}</pre></details>
+          {streamMeta && <details className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-5 shadow-sm"><summary className="cursor-pointer text-sm font-semibold">Metadata event</summary><pre className="mt-3 overflow-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100">{JSON.stringify(streamMeta, null, 2)}</pre></details>}
         </div>
       )}
       {!streamAnswer && !res && !err && !loading && <div className="rounded-2xl border border-dashed bg-slate-50 p-8 text-center text-sm text-slate-600">Nhập câu hỏi và bấm Gửi streaming. Cần login.</div>}

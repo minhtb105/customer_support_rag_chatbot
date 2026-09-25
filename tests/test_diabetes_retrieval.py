@@ -11,7 +11,7 @@ import json
 import pytest
 from pathlib import Path
 
-from src.evaluation import recall_at_k, hit_at_k, mean_reciprocal_rank
+from src.shared.evaluation import recall_at_k, hit_at_k, mean_reciprocal_rank
 
 
 DIABETES_DATASET = Path("data/evaluation/diabetes_retrieval_evaluation.json")
@@ -93,7 +93,7 @@ def test_all_four_diseases_covered():
 
 def test_recall_metrics_sanity():
     # Synthetic sanity: perfect retrieval should give 1.0 (requires ContextItem list)
-    from src.models.llm_io import ContextItem
+    from src.shared.models.llm_io import ContextItem
     retrieved = [ContextItem(source_id="a", content="x"), ContextItem(source_id="b", content="y")]
     assert recall_at_k(retrieved, ["a.pdf"], k=5) == 1.0
     assert hit_at_k(retrieved, ["c.pdf"], k=5) == 0

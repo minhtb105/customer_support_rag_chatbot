@@ -24,7 +24,7 @@ NAMES = ["BS. Nguyen Van A", "BS. Tran Thi B", "BS. Le Van C",
 
 @pytest.fixture
 def iso_solver(monkeypatch, tmp_path):
-    import src.features.glucose_tracker as gt
+    import src.diabetes.glucose_tracker as gt
     tmp_db = tmp_path / "solver.db"
     monkeypatch.setattr(gt, "GLUCOSE_DB_PATH", tmp_db)
     gt.init_glucose_db()
@@ -57,7 +57,7 @@ class TestNLUExtensions:
         "có bảo hiểm y tế", "co bao hiem y te",
     ])
     def test_bhyt_variants(self, iso_solver, msg):
-        from src.features.triage_nlu import parse_triage
+        from src.triage.triage_nlu import parse_triage
         nlu = parse_triage(msg)
         assert nlu["has_bhyt"] is True, msg
         assert "bhyt" in nlu["constraints"], msg
@@ -71,21 +71,21 @@ class TestNLUExtensions:
         ("muon kham trung uong", "central"),
     ])
     def test_branch_variants(self, iso_solver, msg, tier):
-        from src.features.triage_nlu import parse_triage
+        from src.triage.triage_nlu import parse_triage
         nlu = parse_triage(msg)
         assert nlu["tier"] == tier, msg
         assert "branch" in nlu["constraints"], msg
 
     @pytest.mark.parametrize("msg", ["trừ 10h-11h, muốn khám", "tru 10h-11h, muon kham"])
     def test_window_variants(self, iso_solver, msg):
-        from src.features.triage_nlu import parse_triage
+        from src.triage.triage_nlu import parse_triage
         nlu = parse_triage(msg)
         assert nlu["time_constraints"].get("excluded_window") == {
             "start": "10:00", "end": "11:00"}, msg
         assert "window" in nlu["constraints"], msg
 
     def test_doctor_set_and_simulation(self, iso_solver):
-        from src.features.triage_nlu import parse_triage
+        from src.triage.triage_nlu import parse_triage
         nlu = parse_triage(f"Đặt lịch {NAMES[3]} hoặc {NAMES[4]} sáng mai")
         assert nlu["requested_doctors"] == ["syn_doctor_04", "syn_doctor_05"]
         assert nlu["requested_doctor"] == "syn_doctor_04"  # backward-compat: first
@@ -98,8 +98,8 @@ class TestNLUExtensions:
         assert nlu["simulation"]["days_off"] == 2
 
     def test_router_boundary_1_vs_2(self, iso_solver):
-        from src.features.solvers import SchedulerOrchestrator
-        from src.features.triage_nlu import parse_triage
+        from src.scheduling.solvers import SchedulerOrchestrator
+        from src.triage.triage_nlu import parse_triage
         one = parse_triage("muốn khám có BHYT")
         assert len([c for c in one["constraints"]]) == 1
         assert SchedulerOrchestrator.route(one)[0] == "greedy"
@@ -110,7 +110,7 @@ class TestNLUExtensions:
 
 class TestAttributes:
     def test_calibration_mix(self, iso_solver):
-        from src.features.solvers import doctor_attributes
+        from src.scheduling.solvers import doctor_attributes
         ids = [did for did, _, _ in DOCTOR_SPECS]
         attrs = [doctor_attributes(d) for d in ids]
         assert sum(1 for a in attrs if a["distance_km"] < 5) >= 2
@@ -134,8 +134,8 @@ class TestGreedy:
 
     def test_greedy_solver_timing_and_filters(self, iso_solver):
         import time as _t
-        from src.features.solvers import GreedySolver
-        from src.features.triage_nlu import parse_triage
+        from src.scheduling.solvers import GreedySolver
+        from src.triage.triage_nlu import parse_triage
         nlu = parse_triage("muốn khám có BHYT")
         t0 = _t.perf_counter()
         res = GreedySolver.solve(nlu)
@@ -175,8 +175,8 @@ class TestDFS:
         assert "không đảm bảo BHYT — có thể phát sinh chi phí" in (data["routing_reason"] or "")
 
     def test_relax_order_never_specialty(self, iso_solver):
-        from src.features.solvers import DFSSolver
-        from src.features.triage_nlu import parse_triage
+        from src.scheduling.solvers import DFSSolver
+        from src.triage.triage_nlu import parse_triage
         nlu = parse_triage(f"Tê rần ngón chân, mắt mờ, đặt lịch {NAMES[2]} ở Bạch Mai, có BHYT")
         res = DFSSolver.solve(nlu)
         assert res["relaxed"] == ["doctor", "branch", "bhyt"]
@@ -186,7 +186,7 @@ class TestDFS:
 
 class TestGA:
     def test_simulation_anonymous(self, client, iso_solver):
-        import src.features.glucose_tracker as gt
+        import src.diabetes.glucose_tracker as gt
         import sqlite3
         conn = sqlite3.connect(str(gt.GLUCOSE_DB_PATH))
         before = conn.execute("SELECT COUNT(*) FROM glucose_logs").fetchone()[0]
@@ -210,7 +210,7 @@ class TestGA:
         assert after == before  # zero DB writes (D1/D4)
 
     def test_simulation_skips_dual_write(self, client, make_user, iso_solver):
-        import src.features.glucose_tracker as gt
+        import src.diabetes.glucose_tracker as gt
         user, tok = make_user(role="user")
         hdr = {"Authorization": f"Bearer {tok}"}
         pr = client.post("/v1/glucose", json={
@@ -260,7 +260,7 @@ class TestWithKeyPhantomDoctor:
     """F1: with-key LLM merge must not hallucinate requested_doctor (mocked, no API call)."""
 
     def test_llm_phantom_doctor_dropped(self, iso_solver, monkeypatch):
-        import src.features.triage_nlu as nlu_mod
+        import src.triage.triage_nlu as nlu_mod
         # Mock the LLM call itself — never hits OpenAI.
         monkeypatch.setattr(nlu_mod, "_parse_llm", lambda text: {
             "requested_doctor": "Bac si la",  # phantom: not a roster ID/name
@@ -274,12 +274,12 @@ class TestWithKeyPhantomDoctor:
         assert nlu["requested_doctors"] == []
         assert "doctor" not in nlu["constraints"]
         # No spurious "doctor" relaxation downstream.
-        from src.features.solvers import DFSSolver, count_constraints
+        from src.scheduling.solvers import DFSSolver, count_constraints
         assert "doctor" not in count_constraints(nlu)
         assert "doctor" not in DFSSolver.solve(nlu).get("relaxed", [])
 
     def test_llm_valid_doctor_kept_consistent(self, iso_solver, monkeypatch):
-        import src.features.triage_nlu as nlu_mod
+        import src.triage.triage_nlu as nlu_mod
         monkeypatch.setattr(nlu_mod, "_parse_llm", lambda text: {
             "requested_doctor": NAMES[0],  # real roster name -> resolvable
             "symptoms": [], "urgency": "routine",

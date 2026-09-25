@@ -61,8 +61,8 @@ export default function GuidelinesPage() {
     }
   };
 
-  if (!user) return <div className="rounded-xl border bg-white p-6 text-sm">Cần đăng nhập (specialist/doctor/admin).</div>;
-  if (!["specialist", "doctor", "admin"].includes(user.role)) return <div className="rounded-xl border bg-white p-6 text-sm">Cần role specialist/doctor/admin. Bạn là {user.role}.</div>;
+  if (!user) return <div className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 text-sm">Cần đăng nhập (specialist/doctor/admin).</div>;
+  if (!["specialist", "doctor", "admin"].includes(user.role)) return <div className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 text-sm">Cần role specialist/doctor/admin. Bạn là {user.role}.</div>;
 
   return (
     <div className="space-y-4">
@@ -92,7 +92,7 @@ export default function GuidelinesPage() {
               summary = it.change_summary_json ? JSON.parse(it.change_summary_json) : null;
             } catch {}
             return (
-              <div key={it.id} className="rounded-xl border bg-white p-4 shadow-sm">
+              <div key={it.id} className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold">
@@ -120,7 +120,7 @@ export default function GuidelinesPage() {
           })}
         </div>
       ) : (
-        <div className="rounded-xl border bg-white p-6 text-sm text-slate-500">Không có bản ghi {status}.</div>
+        <div className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 text-sm text-slate-500">Không có bản ghi {status}.</div>
       )}
     </div>
   );

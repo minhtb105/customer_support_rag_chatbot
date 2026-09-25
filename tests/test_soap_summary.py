@@ -1,8 +1,8 @@
 """Unit tests for Track B — soap_summary (diabetes pre-visit)."""
 
 import pytest
-from src.features.soap_summary import generate_soap, soap_to_markdown
-from src.features.glucose_tracker import add_log
+from src.diabetes.soap_summary import generate_soap, soap_to_markdown
+from src.diabetes.glucose_tracker import add_log
 
 
 class TestSoapSummary:

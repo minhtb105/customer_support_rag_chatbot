@@ -20,8 +20,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from src.features.glucose_tracker import add_log, init_glucose_db
-from src.config import GLUCOSE_DB_PATH
+from src.diabetes.glucose_tracker import add_log, init_glucose_db
+from src.shared.config import GLUCOSE_DB_PATH
 
 NOTES_POOL = ["ngủ ngon", "ăn bún chả", "hơi mệt"]
 

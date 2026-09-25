@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 @pytest.fixture
 def iso_env(monkeypatch, tmp_path):
-    import src.features.glucose_tracker as gt
+    import src.diabetes.glucose_tracker as gt
     tmp_db = tmp_path / "mon.db"
     monkeypatch.setattr(gt, "GLUCOSE_DB_PATH", tmp_db)
     gt.init_glucose_db()
@@ -27,26 +27,26 @@ def iso_env(monkeypatch, tmp_path):
 
 class TestTrailingTag:
     def test_segment_exact_true(self):
-        from src.features.followup_notes import has_triage_marker
+        from src.diabetes.followup_notes import has_triage_marker
         assert has_triage_marker("note A | [AI Triage]") is True
         assert has_triage_marker("[AI Triage]") is True
 
     def test_substring_not_enough(self):
-        from src.features.followup_notes import has_triage_marker
+        from src.diabetes.followup_notes import has_triage_marker
         assert has_triage_marker("foo [AI Triage] bar") is False
         assert has_triage_marker("x[AI Triage]") is False
         assert has_triage_marker("") is False
         assert has_triage_marker(None) is False
 
     def test_old_notes_untagged(self):
-        from src.features.followup_notes import has_triage_marker
+        from src.diabetes.followup_notes import has_triage_marker
         # Legacy FQG/seed notes carry no marker.
         assert has_triage_marker("ngủ ngon | ăn bún chả") is False
         assert has_triage_marker("hơi mệt") is False
 
     def test_triage_source_tags_tail(self, iso_env):
-        from src.features import glucose_tracker as gt
-        from src.features.followup_notes import save_followup_notes, has_triage_marker
+        from src.diabetes import glucose_tracker as gt
+        from src.diabetes.followup_notes import save_followup_notes, has_triage_marker
         rec = gt.add_log("tag_user_01", 120, context="fasting", notes="baseline notes")
         out = save_followup_notes("tag_user_01", "tê chân, mắt mờ", rec["id"], source="triage")
         assert out["saved_note"] is True
@@ -57,8 +57,8 @@ class TestTrailingTag:
         assert len(notes) <= 500
 
     def test_long_body_keeps_tag(self, iso_env):
-        from src.features import glucose_tracker as gt
-        from src.features.followup_notes import save_followup_notes
+        from src.diabetes import glucose_tracker as gt
+        from src.diabetes.followup_notes import save_followup_notes
         rec = gt.add_log("tag_user_02", 120, context="fasting", notes="x" * 480)
         save_followup_notes("tag_user_02", "y" * 100, rec["id"], source="triage")
         notes = gt.get_logs("tag_user_02", limit=5)[0]["notes"]
@@ -66,8 +66,8 @@ class TestTrailingTag:
         assert len(notes) <= 500
 
     def test_followup_default_untagged(self, iso_env):
-        from src.features import glucose_tracker as gt
-        from src.features.followup_notes import save_followup_notes, has_triage_marker
+        from src.diabetes import glucose_tracker as gt
+        from src.diabetes.followup_notes import save_followup_notes, has_triage_marker
         rec = gt.add_log("tag_user_03", 120, context="fasting", notes="prev")
         save_followup_notes("tag_user_03", "ăn 2 miếng bánh ngọt", rec["id"])
         notes = gt.get_logs("tag_user_03", limit=5)[0]["notes"]
@@ -77,14 +77,14 @@ class TestTrailingTag:
 
 class TestTriageEventsPure:
     def test_excerpt_capped_200(self, iso_env):
-        from src.features import triage_events as te
+        from src.triage import triage_events as te
         assert te.append_triage_event(user_id="u1", message="z" * 500) is True
         got = te.list_triage_events()
         assert got["total"] == 1
         assert len(got["events"][0]["excerpt"]) == 200
 
     def test_filters_and_pagination(self, iso_env):
-        from src.features import triage_events as te
+        from src.triage import triage_events as te
         te.append_triage_event(user_id="u1", message="tê chân", specialty="Endocrinology_General")
         te.append_triage_event(user_id="u2", message="vã mồ hôi lơ mơ", emergency=True,
                                red_flag_type="hypo_severe")
@@ -111,7 +111,7 @@ class TestTriageEventsEndpoint:
         assert r.status_code == 403, r.text
 
     def test_200_admin_paged(self, client: TestClient, admin_client, iso_env):
-        from src.features import triage_events as te
+        from src.triage import triage_events as te
         te.append_triage_event(user_id="u9", message="đau ngực dữ dội", emergency=True,
                                red_flag_type="cardio_stroke")
         hdr = {"Authorization": f"Bearer {admin_client['token']}"}

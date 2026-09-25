@@ -6,18 +6,18 @@ from pydantic import BaseModel
 
 try:
     from src.auth.dependencies import require_admin
-    from src.observability.tracing_db import (
+    from src.shared.observability.tracing_db import (
         list_traces, get_trace, list_spans, list_chunks, get_ragas, upsert_ragas, delete_expired_traces
     )
-    from src.observability.tracing_db import TRACING_DB_PATH
+    from src.shared.observability.tracing_db import TRACING_DB_PATH
     from src.reviews.evaluator import evaluate_rag
-    from src.config import TRACING_PAGE_SIZE, EMBEDDING_PROVIDER, EMBEDDING_MODEL
+    from src.shared.config import TRACING_PAGE_SIZE, EMBEDDING_PROVIDER, EMBEDDING_MODEL
 except ImportError:
     from auth.dependencies import require_admin  # type: ignore
-    from observability.tracing_db import list_traces, get_trace, list_spans, list_chunks, get_ragas, upsert_ragas, delete_expired_traces  # type: ignore
-    from observability.tracing_db import TRACING_DB_PATH  # type: ignore
+    from shared.observability.tracing_db import list_traces, get_trace, list_spans, list_chunks, get_ragas, upsert_ragas, delete_expired_traces  # type: ignore
+    from shared.observability.tracing_db import TRACING_DB_PATH  # type: ignore
     from reviews.evaluator import evaluate_rag  # type: ignore
-    from config import TRACING_PAGE_SIZE, EMBEDDING_PROVIDER, EMBEDDING_MODEL  # type: ignore
+    from shared.config import TRACING_PAGE_SIZE, EMBEDDING_PROVIDER, EMBEDDING_MODEL  # type: ignore
 
 router = APIRouter(prefix="/v1/admin", tags=["admin-tracing"])
 
@@ -32,9 +32,9 @@ _COLLECTIONS_TTL_S = 60
 def _get_chroma_collection(strategy: str):
     """Open Chroma collection read-only via PersistentClient (no embeddings, no makedirs)."""
     try:
-        from src.retriever import _resolve_db_dir
+        from src.chat.retriever import _resolve_db_dir
     except ImportError:
-        from retriever import _resolve_db_dir  # type: ignore
+        from chat.retriever import _resolve_db_dir  # type: ignore
     import os
     import chromadb
     db_dir = _resolve_db_dir(strategy)
@@ -81,9 +81,9 @@ def _collection_overview(strategy: str) -> dict:
 
 def _serialize_chunk(vector_id: str, doc: str, meta: dict) -> dict:
     try:
-        from src.retriever import deserialize_metadata, EMBEDDING_MODEL as _EMB_MODEL
+        from src.chat.retriever import deserialize_metadata, EMBEDDING_MODEL as _EMB_MODEL
     except ImportError:
-        from retriever import deserialize_metadata, EMBEDDING_MODEL as _EMB_MODEL  # type: ignore
+        from chat.retriever import deserialize_metadata, EMBEDDING_MODEL as _EMB_MODEL  # type: ignore
     m = deserialize_metadata(dict(meta or {}))
     full = (doc or "")[:CHUNK_FULL_MAX]
     snippet = (doc or "")[:CHUNK_SNIPPET_LEN]
@@ -208,7 +208,7 @@ def admin_trigger_ragas(trace_id: str, current_user=Depends(require_admin)):
             "confidence": result.get("confidence"),
         }, result.get("raw", {}), evaluator_model=result.get("evaluator_model") or "gpt-4o-mini")
         # also update trace is_low flag
-        from src.observability.tracing_db import update_trace
+        from src.shared.observability.tracing_db import update_trace
         update_trace(trace_id, is_low_confidence=1 if result.get("is_low_confidence") else 0, routed_role=result.get("routed_role"))
         return get_ragas(trace_id)
     except Exception as e:
@@ -221,7 +221,7 @@ def admin_cleanup(current_user=Depends(require_admin)):
 
 @router.get("/traces/stats/summary")
 def admin_stats(current_user=Depends(require_admin)):
-    from src.observability.tracing_db import _conn
+    from src.shared.observability.tracing_db import _conn
     conn = _conn()
     total = conn.execute("SELECT COUNT(*) as c FROM traces").fetchone()["c"]
     low = conn.execute("SELECT COUNT(*) as c FROM traces WHERE is_low_confidence=1").fetchone()["c"]
@@ -291,9 +291,9 @@ def _get_memory_collection():
     """
     import os
     try:
-        from src.config import BASE_DIR, EMBEDDING_PROVIDER as _prov
+        from src.shared.config import BASE_DIR, EMBEDDING_PROVIDER as _prov
     except ImportError:
-        from config import BASE_DIR, EMBEDDING_PROVIDER as _prov  # type: ignore
+        from shared.config import BASE_DIR, EMBEDDING_PROVIDER as _prov  # type: ignore
     sub = "embeddings/memory_db_openai" if str(_prov or "").lower() == "openai" else "embeddings/memory_db"
     db_dir = str(BASE_DIR / sub)
     if not os.path.isdir(db_dir):
@@ -321,9 +321,9 @@ def _serialize_memory_fact(vector_id: str, doc: str, meta: dict) -> dict:
     try:
         if ts is not None:
             try:
-                from src.memory.long_term import TemporalWeighting
+                from src.shared.memory.long_term import TemporalWeighting
             except ImportError:
-                from memory.long_term import TemporalWeighting  # type: ignore
+                from shared.memory.long_term import TemporalWeighting  # type: ignore
             weight = TemporalWeighting(90).calculate_weight(float(ts))
     except Exception:
         weight = None

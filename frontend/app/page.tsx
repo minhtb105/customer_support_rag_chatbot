@@ -47,7 +47,7 @@ export default function OverviewPage() {
       </div>
 
       {/* 5 criteria */}
-      <section className="rounded-2xl border bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
         <h2 className="text-sm font-semibold">Khung 5 tiêu chí “Pain Point chín muồi”</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-5">
           <Criteria n="1" t="Quy mô & nghiêm trọng" d="7,3% ~7M, biến chứng vĩnh viễn" ok />
@@ -59,7 +59,7 @@ export default function OverviewPage() {
       </section>
 
       {/* Market evidence table */}
-      <section className="rounded-2xl border bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
         <h2 className="text-sm font-semibold">Bằng chứng định lượng — khoảng trống tái khám</h2>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-sm">
@@ -127,7 +127,7 @@ export default function OverviewPage() {
       </section>
 
       {/* Guidelines status */}
-      <section className="rounded-2xl border bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
         <h2 className="text-sm font-semibold">Trạng thái Corpus Guideline</h2>
         {guidelines ? (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -182,12 +182,12 @@ function TrackCard({ badge, title, desc, kpi, href, cta, color }: any) {
     violet: "from-violet-500 to-purple-600",
   };
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm flex flex-col">
+    <div className="rounded-2xl border bg-white p-5 shadow-sm flex flex-col dark:bg-slate-900 dark:border-slate-700">
       <div className={`inline-flex w-fit rounded-full bg-gradient-to-r ${colorMap[color]} px-3 py-1 text-xs font-semibold text-white`}>{badge}</div>
       <h3 className="mt-3 text-sm font-semibold">{title}</h3>
-      <p className="mt-1 text-xs text-slate-600 line-clamp-3">{desc}</p>
-      <div className="mt-2 text-[11px] font-mono text-slate-500">{kpi}</div>
-      <Link href={href} className="mt-4 inline-flex w-fit rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-black">
+      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 line-clamp-3">{desc}</p>
+      <div className="mt-2 text-[11px] font-mono text-slate-500 dark:text-slate-400">{kpi}</div>
+      <Link href={href} className="mt-4 inline-flex w-fit rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900 min-h-[44px] items-center">
         {cta}
       </Link>
     </div>

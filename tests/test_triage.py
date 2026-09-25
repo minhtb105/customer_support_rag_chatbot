@@ -21,7 +21,7 @@ from scripts.seed_synthetic_data import DOCTOR_SPECS  # exact seed strings, neve
 
 @pytest.fixture
 def iso_triage(monkeypatch, tmp_path):
-    import src.features.glucose_tracker as gt
+    import src.diabetes.glucose_tracker as gt
     tmp_db = tmp_path / "triage.db"
     monkeypatch.setattr(gt, "GLUCOSE_DB_PATH", tmp_db)
     gt.init_glucose_db()
@@ -100,7 +100,7 @@ class TestRedFlag:
             assert r.json()["emergency"] is False, msg
 
     def test_short_circuit_no_nlu_call(self, client, iso_triage, monkeypatch):
-        import src.features.triage_nlu as nlu
+        import src.triage.triage_nlu as nlu
 
         def _boom(_text):
             raise AssertionError("NLU must not run on emergency path")
@@ -112,8 +112,8 @@ class TestRedFlag:
         assert r.json()["recommended_doctors"] == []
 
     def test_short_circuit_no_import(self, client, iso_triage, monkeypatch):
-        monkeypatch.setitem(sys.modules, "src.features.triage_nlu", None)
-        monkeypatch.setitem(sys.modules, "src.features.slot_generator", None)
+        monkeypatch.setitem(sys.modules, "src.triage.triage_nlu", None)
+        monkeypatch.setitem(sys.modules, "src.scheduling.slot_generator", None)
         r = _post(client, "méo miệng, yếu nửa người từ sáng")
         assert r.status_code == 200, r.text
         assert r.json()["emergency"] is True
@@ -130,7 +130,7 @@ class TestRedFlag:
 
 class TestSlots:
     def test_seed_strings_open_days(self):
-        from src.features.slot_generator import parse_working_hours
+        from src.scheduling.slot_generator import parse_working_hours
         hours = [h for _, _, h in DOCTOR_SPECS]
         assert len(hours) == 5
         for h in hours:
@@ -142,8 +142,8 @@ class TestSlots:
             assert 5 in parse_working_hours(h)
 
     def test_cross_check_availability(self, iso_triage):
-        from src.features.slot_generator import parse_working_hours
-        from src.features.synthetic_roster import query_doctor_availability
+        from src.scheduling.slot_generator import parse_working_hours
+        from src.scheduling.synthetic_roster import query_doctor_availability
         mon = {d["doctor_id"] for d in query_doctor_availability(day="Mon")}
         sat = {d["doctor_id"] for d in query_doctor_availability(day="Sat")}
         sun = query_doctor_availability(day="Sunday")
@@ -154,7 +154,7 @@ class TestSlots:
             assert 0 in parsed and 6 not in parsed
 
     def test_busy_deterministic_hashlib(self):
-        from src.features import slot_generator as sg
+        from src.scheduling import slot_generator as sg
         a = sg.is_slot_busy("syn_doctor_01", "2026-09-21", "09:30")
         b = sg.is_slot_busy("syn_doctor_01", "2026-09-21", "09:30")
         assert a == b
@@ -170,7 +170,7 @@ class TestSlots:
                 assert date.fromisoformat(s["date"]).weekday() != 2, s  # T4 = Wednesday
 
     def test_complication_chain_single_doctor(self, client, iso_triage, monkeypatch):
-        from src.features import slot_generator as sg
+        from src.scheduling import slot_generator as sg
         doctors = _roster(iso_triage)
         comp = [d for d in doctors if d["specialty"] == "Biến chứng ĐTĐ"]
         assert len(comp) == 1  # same-specialty alternative impossible by design
@@ -217,7 +217,7 @@ class TestEndpoint:
         assert r.json()["recommended_doctors"] == []
 
     def test_anonymous_zero_db_writes(self, client, iso_triage):
-        import src.features.glucose_tracker as gt
+        import src.diabetes.glucose_tracker as gt
         import sqlite3
         conn = sqlite3.connect(str(gt.GLUCOSE_DB_PATH))
         before = conn.execute("SELECT COUNT(*) FROM glucose_logs").fetchone()[0]
@@ -246,7 +246,7 @@ class TestEndpoint:
         assert "cồn ruột" in (data.get("previsit_notes") or "")
         assert data["recommended_doctors"], "booking intent must propose slots"
         assert data["recommended_doctors"][0]["doctor_id"] == real_id
-        import src.features.glucose_tracker as gt
+        import src.diabetes.glucose_tracker as gt
         logs = gt.get_logs(user["id"], limit=1)
         assert "cồn ruột" in (logs[0].get("notes") or "")
 
@@ -257,7 +257,7 @@ class TestEndpoint:
         assert r1.json() == r2.json()
 
     def test_notes_truncated(self, client, make_user, iso_triage):
-        import src.features.glucose_tracker as gt
+        import src.diabetes.glucose_tracker as gt
         user, tok = make_user(role="user")
         hdr = {"Authorization": f"Bearer {tok}"}
         client.post("/v1/glucose", json={
@@ -279,7 +279,7 @@ class TestTriageAuthGate:
     MSG = "tê chân, mắt mờ, muốn khám tuần sau"
 
     def test_unauthenticated_with_user_id_zero_writes(self, client, make_user, iso_triage):
-        import src.features.glucose_tracker as gt
+        import src.diabetes.glucose_tracker as gt
         victim, vtok = make_user(role="user")
         vh = {"Authorization": f"Bearer {vtok}"}
         pr = client.post("/v1/glucose", json={
@@ -295,7 +295,7 @@ class TestTriageAuthGate:
         assert notes == "baseline notes", notes
 
     def test_user_role_cannot_write_to_other_user(self, client, make_user, iso_triage):
-        import src.features.glucose_tracker as gt
+        import src.diabetes.glucose_tracker as gt
         victim, vtok = make_user(role="user")
         attacker, atok = make_user(role="user")
         vh = {"Authorization": f"Bearer {vtok}"}
@@ -314,7 +314,7 @@ class TestTriageAuthGate:
         assert notes == "victim baseline", notes
 
     def test_own_id_dual_write(self, client, make_user, iso_triage):
-        import src.features.glucose_tracker as gt
+        import src.diabetes.glucose_tracker as gt
         user, tok = make_user(role="user")
         hdr = {"Authorization": f"Bearer {tok}"}
         pr = client.post("/v1/glucose", json={

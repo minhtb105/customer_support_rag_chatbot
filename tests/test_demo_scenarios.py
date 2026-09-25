@@ -16,13 +16,13 @@ from fastapi.testclient import TestClient
 @pytest.fixture
 def iso_glucose(monkeypatch):
     """Isolate glucose DB per test + reset episodic buffer."""
-    import src.features.glucose_tracker as gt
+    import src.diabetes.glucose_tracker as gt
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
     tmp.close()
     monkeypatch.setattr(gt, "GLUCOSE_DB_PATH", Path(tmp.name))
     gt.init_glucose_db()
     try:
-        from src.memory.episodic import get_episodic_memory
+        from src.shared.memory.episodic import get_episodic_memory
         get_episodic_memory().conversation_buffer.clear()
         get_episodic_memory().summaries.clear()
     except Exception:
@@ -86,7 +86,7 @@ class TestDemoScenarios:
         }, headers=hdr)
         assert f.status_code == 200, f.text
         assert f.json()["saved"] is True
-        from src.memory.episodic import get_episodic_memory
+        from src.shared.memory.episodic import get_episodic_memory
         buf = get_episodic_memory().conversation_buffer
         assert any("banh ngot" in (m.get("content") or "") for m in buf)
         g = client.get(f"/v1/glucose/{user['id']}", headers=hdr)
@@ -97,7 +97,7 @@ class TestDemoScenarios:
         user, tok = make_user(role="user")
         hdr = {"Authorization": f"Bearer {tok}"}
         try:
-            import src.rag_pipeline as rp
+            import src.chat.rag_pipeline as rp
             monkeypatch.setattr(rp, "rag_chat",
                                 lambda *a, **k: (_ for _ in ()).throw(AssertionError("RAG must not be called")))
         except Exception:

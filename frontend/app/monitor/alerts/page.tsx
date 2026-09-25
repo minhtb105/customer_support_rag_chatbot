@@ -69,8 +69,8 @@ export default function AlertsPage() {
     }
   };
 
-  if (!user) return <div className="rounded-xl border bg-white p-6 text-sm">Cần đăng nhập (pharmacist/admin).</div>;
-  if (!["pharmacist", "admin"].includes(user.role)) return <div className="rounded-xl border bg-white p-6 text-sm">Cần role pharmacist/admin. Bạn là {user.role}.</div>;
+  if (!user) return <div className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 text-sm">Cần đăng nhập (pharmacist/admin).</div>;
+  if (!["pharmacist", "admin"].includes(user.role)) return <div className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 text-sm">Cần role pharmacist/admin. Bạn là {user.role}.</div>;
 
   return (
     <div className="space-y-4">
@@ -104,7 +104,7 @@ export default function AlertsPage() {
               sum = it.ai_summary ? JSON.parse(it.ai_summary) : null;
             } catch {}
             return (
-              <div key={it.id} className="rounded-xl border bg-white p-4 shadow-sm">
+              <div key={it.id} className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2">
@@ -136,7 +136,7 @@ export default function AlertsPage() {
           })}
         </div>
       ) : (
-        <div className="rounded-xl border bg-white p-6 text-sm text-slate-500">Không có cảnh báo pending.</div>
+        <div className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 text-sm text-slate-500">Không có cảnh báo pending.</div>
       )}
     </div>
   );

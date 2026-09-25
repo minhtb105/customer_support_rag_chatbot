@@ -35,14 +35,14 @@ export default function TracingListPage(){
         <p className="text-xs text-slate-600">Truy vết user query → chunks retrieved → final answer + RAGAS. Lưu 30 ngày, 10 trace/trang. Chỉ admin.</p>
         <div className="text-xs text-slate-500">{API_BASE} · Tổng {total} traces · <Link href="/admin/tracing/chunks" className="text-blue-700 hover:underline font-medium">Chunks →</Link> · <Link href="/admin/tracing/memory" className="text-blue-700 hover:underline font-medium">Memory →</Link></div>
       </div>
-      <div className="rounded-2xl border bg-white p-4 shadow-sm flex flex-wrap gap-2 items-end">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm flex flex-wrap gap-2 items-end">
         <div><label className="text-xs">Tìm kiếm</label><input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="query/answer" className="ml-2 rounded border px-2 py-1 text-xs" /></div>
         <div><label className="text-xs">Tone</label><select value={tone} onChange={(e)=>setTone(e.target.value)} className="ml-2 rounded border px-2 py-1 text-xs"><option value="">all</option><option value="diabetes">diabetes</option><option value="hypertension">hypertension</option><option value="respiratory">respiratory</option><option value="mental">mental</option><option value="balanced">balanced</option></select></div>
         <button onClick={()=>load(1)} className="rounded-full bg-slate-900 text-white px-4 py-1.5 text-xs">Lọc</button>
         <button onClick={()=>{ setQ(""); setTone(""); load(1); }} className="rounded-full border px-4 py-1.5 text-xs">Xóa</button>
       </div>
       {msg && <div className="rounded-lg bg-red-50 border border-red-200 p-2 text-xs text-red-700">{msg}</div>}
-      <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 shadow-sm overflow-hidden">
         <table className="w-full text-xs">
           <thead className="bg-slate-50 border-b text-left"><tr><th className="p-2">Query</th><th>Answer</th><th>Tone</th><th>RAGAS</th><th>Latency</th><th>Thời gian</th></tr></thead>
           <tbody>

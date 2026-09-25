@@ -1,5 +1,6 @@
 """FastAPI router for /v1/monitors — Guideline & Safety agents"""
 from __future__ import annotations
+import time
 from typing import Optional, Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -15,16 +16,32 @@ try:
     from src.monitors.guideline_fetcher import check_guideline_update, check_all_guidelines
     from src.monitors.safety_fetcher import check_all_safety, check_fda_alerts, fetch_byt_dav_alerts
     from src.monitors.service import promote_guideline_to_corpus, decide_safety_alert, cleanup_superseded
-    from src.config import GUIDELINE_SOURCE_DIRS
+    from src.monitors.schemas import GuidelineStatus
+    from src.shared.config import GUIDELINE_SOURCE_DIRS, BASE_DIR
+    from src.api.deps import _count_pdfs
 except ImportError:
     from auth.dependencies import get_current_user, require_admin, require_expert  # type: ignore
     from monitors.db import list_guideline_versions, get_guideline_version, list_safety_alerts, get_safety_alert, list_sources, get_source, list_runs, get_stats, create_run, finish_run  # type: ignore
     from monitors.guideline_fetcher import check_guideline_update, check_all_guidelines  # type: ignore
     from monitors.safety_fetcher import check_all_safety, check_fda_alerts, fetch_byt_dav_alerts  # type: ignore
     from monitors.service import promote_guideline_to_corpus, decide_safety_alert, cleanup_superseded  # type: ignore
-    from config import GUIDELINE_SOURCE_DIRS  # type: ignore
+    from monitors.schemas import GuidelineStatus  # type: ignore
+    from shared.config import GUIDELINE_SOURCE_DIRS, BASE_DIR  # type: ignore
+    from api.deps import _count_pdfs  # type: ignore
 
 router = APIRouter(prefix="/v1/monitors", tags=["monitors"])
+
+# /v1/guidelines/status — corpus-level status (public, auth optional)
+guidelines_status_router = APIRouter(prefix="/v1", tags=["guidelines"])
+
+@guidelines_status_router.get("/guidelines/status", response_model=GuidelineStatus)
+def guidelines_status():
+    total, by_src = _count_pdfs()
+    manifest = BASE_DIR / "data" / "guideline_manifest.json"
+    last_updated = None
+    if manifest.exists():
+        last_updated = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(manifest.stat().st_mtime))
+    return GuidelineStatus(total_pdfs=total, by_source=by_src, manifest_path=str(manifest.relative_to(BASE_DIR)) if manifest.exists() else "data/guideline_manifest.json", last_updated=last_updated)
 
 # ---------- helpers ----------
 def _ensure_guideline_roles(user: dict):

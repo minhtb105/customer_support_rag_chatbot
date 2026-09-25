@@ -7,10 +7,10 @@ from typing import List, Dict, Any, Optional
 
 try:
     from src.auth.db import _get_conn, create_notification, add_query_history, update_query_history_answer
-    from src.config import VALID_ROLES
+    from src.shared.config import VALID_ROLES
 except ImportError:
     from auth.db import _get_conn, create_notification, add_query_history, update_query_history_answer  # type: ignore
-    from config import VALID_ROLES  # type: ignore
+    from shared.config import VALID_ROLES  # type: ignore
 
 def create_review_request(
     query: str,
@@ -157,25 +157,25 @@ def get_review_with_vitals(review_id: str) -> Optional[Dict[str, Any]]:
     # fetch vitals from existing trackers
     vitals = {}
     try:
-        from src.features.glucose_tracker import get_logs as g_logs, get_stats as g_stats
+        from src.diabetes.glucose_tracker import get_logs as g_logs, get_stats as g_stats
         vitals["glucose_logs"] = g_logs(requester_id, limit=20)
         vitals["glucose_stats"] = g_stats(requester_id)
     except Exception:
         vitals["glucose_logs"] = []
     try:
-        from src.features.bp_tracker import get_bp_logs, get_bp_stats
+        from src.vitals.bp_tracker import get_bp_logs, get_bp_stats
         vitals["bp_logs"] = get_bp_logs(requester_id, limit=20)
         vitals["bp_stats"] = get_bp_stats(requester_id)
     except Exception:
         vitals["bp_logs"] = []
     try:
-        from src.features.respiratory_tracker import get_respiratory_logs, get_respiratory_stats
+        from src.vitals.respiratory_tracker import get_respiratory_logs, get_respiratory_stats
         vitals["respiratory_logs"] = get_respiratory_logs(requester_id, limit=20)
         vitals["respiratory_stats"] = get_respiratory_stats(requester_id)
     except Exception:
         vitals["respiratory_logs"] = []
     try:
-        from src.features.mood_tracker import get_mood_logs, get_mood_stats
+        from src.vitals.mood_tracker import get_mood_logs, get_mood_stats
         vitals["mood_logs"] = get_mood_logs(requester_id, limit=20)
         vitals["mood_stats"] = get_mood_stats(requester_id)
     except Exception:

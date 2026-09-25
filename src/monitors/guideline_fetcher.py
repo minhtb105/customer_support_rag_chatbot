@@ -12,12 +12,12 @@ import requests
 from bs4 import BeautifulSoup
 
 try:
-    from src.config import BASE_DIR, STAGING_DIR, PDF_DIR, GUIDELINE_SOURCE_DIRS
+    from src.shared.config import BASE_DIR, STAGING_DIR, PDF_DIR, GUIDELINE_SOURCE_DIRS
     from src.monitors.db import create_guideline_version, get_guideline_version, list_guideline_versions, update_source_check, get_source
     from src.monitors.utils import head_with_etag, download_file_safe, sha256_file, extract_text_from_pdf, assert_url_allowed
     from src.monitors.summarizer import summarize_guideline_diff
 except ImportError:
-    from config import BASE_DIR, STAGING_DIR, PDF_DIR, GUIDELINE_SOURCE_DIRS  # type: ignore
+    from shared.config import BASE_DIR, STAGING_DIR, PDF_DIR, GUIDELINE_SOURCE_DIRS  # type: ignore
     from monitors.db import create_guideline_version, get_guideline_version, list_guideline_versions, update_source_check, get_source  # type: ignore
     from monitors.utils import head_with_etag, download_file_safe, sha256_file, extract_text_from_pdf, assert_url_allowed  # type: ignore
     from monitors.summarizer import summarize_guideline_diff  # type: ignore

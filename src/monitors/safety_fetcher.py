@@ -8,12 +8,12 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 try:
-    from src.config import FDA_API_BASE, FDA_CACHE_TTL_SECONDS
+    from src.shared.config import FDA_API_BASE, FDA_CACHE_TTL_SECONDS
     from src.monitors.db import create_safety_alert, get_source, update_source_check
     from src.monitors.utils import cached_get, assert_url_allowed, HEADERS
     from src.monitors.summarizer import summarize_safety_alert
 except ImportError:
-    from config import FDA_API_BASE, FDA_CACHE_TTL_SECONDS  # type: ignore
+    from shared.config import FDA_API_BASE, FDA_CACHE_TTL_SECONDS  # type: ignore
     from monitors.db import create_safety_alert, get_source, update_source_check  # type: ignore
     from monitors.utils import cached_get, assert_url_allowed, HEADERS  # type: ignore
     from monitors.summarizer import summarize_safety_alert  # type: ignore

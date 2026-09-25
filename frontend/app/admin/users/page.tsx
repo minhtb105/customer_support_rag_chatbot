@@ -38,7 +38,7 @@ export default function AdminUsersPage() {
       <h1 className="text-xl font-bold">Quản trị User & Expert</h1>
       <p className="text-xs text-slate-600">Admin tạo/duyệt expert (doctor/pharmacist/specialist). Tự tạo admin qua CLI: python scripts/seed_admin.py</p>
       {msg && <div className="rounded-lg border bg-amber-50 p-2 text-xs">{msg}</div>}
-      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Tạo expert mới (admin)</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-5">
           <input placeholder="username" value={form.username} onChange={(e)=>setForm({...form, username:e.target.value})} className="rounded border px-2 py-1 text-xs" />
@@ -51,7 +51,7 @@ export default function AdminUsersPage() {
         </div>
         <button onClick={createExpert} className="mt-3 rounded-full bg-slate-900 text-white px-4 py-2 text-xs">Tạo</button>
       </div>
-      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Danh sách users ({users.length})</h2>
         <div className="mt-3 overflow-auto">
           <table className="w-full text-xs">

@@ -51,7 +51,7 @@ export default function MemoryFactsPage() {
         <p className="text-xs text-slate-600">Xem long-term facts theo user. 10 facts/trang. Chỉ admin.</p>
         <div className="text-xs text-slate-500">{API_BASE} · Tổng {total} facts · <Link href="/admin/tracing" className="text-blue-700 hover:underline font-medium">← Traces</Link> · <Link href="/admin/tracing/chunks" className="text-blue-700 hover:underline font-medium">Chunks →</Link></div>
       </div>
-      <div className="rounded-2xl border bg-white p-4 shadow-sm flex flex-wrap gap-2 items-end">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm flex flex-wrap gap-2 items-end">
         <div>
           <label className="text-xs">User</label>
           <select value={userId} onChange={(e) => setUserId(e.target.value)} className="ml-2 rounded border px-2 py-1 text-xs max-w-[220px]">
@@ -72,7 +72,7 @@ export default function MemoryFactsPage() {
         <button onClick={() => { setQ(""); setFactType("all"); setPage(1); }} className="rounded-full border px-4 py-1.5 text-xs">Xóa</button>
       </div>
       {msg && <div className="rounded-lg bg-red-50 border border-red-200 p-2 text-xs text-red-700">{msg}</div>}
-      <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 shadow-sm overflow-hidden">
         <table className="w-full text-xs">
           <thead className="bg-slate-50 border-b text-left"><tr><th className="p-2">#</th><th>Fact type</th><th>Entities</th><th>Nội dung</th><th>Conf.</th><th>Weight</th><th>Source</th></tr></thead>
           <tbody>

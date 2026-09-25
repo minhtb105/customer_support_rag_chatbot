@@ -1,6 +1,6 @@
 # Đánh Giá Hệ Thống — Retrieval & LLM-as-Judge
 
-> Code: `src/evaluation.py`, `src/reviews/evaluator.py`, `src/observability/tracing_db.py:118`. Thuật ngữ RAG/CAG xem Glossary ở `docs/architecture_diagram.md`.
+> Code: `src/shared/evaluation.py`, `src/reviews/evaluator.py`, `src/shared/observability/tracing_db.py:118`. Thuật ngữ RAG/CAG xem Glossary ở `docs/architecture_diagram.md`.
 
 > **Mục tiêu đọc-xong-làm-được:** giải thích Recall/Hit/MRR bằng ví dụ đời thường, kể được 4 tiêu chí judge, chạy pytest đúng file.
 
@@ -23,7 +23,7 @@ Ví dụ đời thường: có 10 quả táo chín cần hái (tài liệu đún
 - **Hit@K:** có hái trúng ít nhất 1 quả chín không (1/0). Đo "đỡ trắng tay".
 - **MRR:** quả chín đầu tiên nằm ở vị trí mấy. Vị trí 1 được 1 điểm, vị trí 2 được 1/2, không trúng được 0.
 
-Code (`src/evaluation.py:90`): so tên file chuẩn hóa (bỏ `.pdf`, lower, thay ký tự lạ bằng `_`) rồi tính 3 số trên. Có cảnh báo `matched_gold` khi đáp án vàng chưa từng khớp doc nào (nghi nhãn sai).
+Code (`src/shared/evaluation.py:90`): so tên file chuẩn hóa (bỏ `.pdf`, lower, thay ký tự lạ bằng `_`) rồi tính 3 số trên. Có cảnh báo `matched_gold` khi đáp án vàng chưa từng khớp doc nào (nghi nhãn sai).
 
 ## 3. Retrieval Interface
 
@@ -52,7 +52,7 @@ Bảng `ragas_evaluations` (`tracing_db.py:118`) lưu 5 điểm (4 trên + fluen
 
 ## 5. Prompt Versioning & Tracing
 
-- Bảng `prompts`: mỗi tone 1 version active, version = sha8(text). Registry 12 tones ở `src/prompt_manager.py:31`.
+- Bảng `prompts`: mỗi tone 1 version active, version = sha8(text). Registry 12 tones ở `src/shared/prompt_manager.py:31`.
 - Mỗi `rag_chat` ghi 7 spans (`cache_check → ... → format_answer`) + `total_latency_ms` + `prompt_version` vào `tracing.db`. Giữ 30 ngày, xem ở trang admin tracing.
 
 ## 6. Feedback

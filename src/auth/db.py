@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 try:
-    from src.config import AUTH_DB_PATH
+    from src.shared.config import AUTH_DB_PATH
 except ImportError:
-    from config import AUTH_DB_PATH  # type: ignore
+    from shared.config import AUTH_DB_PATH  # type: ignore
 
 def _get_conn() -> sqlite3.Connection:
     AUTH_DB_PATH.parent.mkdir(parents=True, exist_ok=True)

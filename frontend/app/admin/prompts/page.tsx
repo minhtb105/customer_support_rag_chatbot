@@ -52,12 +52,12 @@ export default function PromptsPage(){
       </div>
       {data && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
             <h2 className="text-sm font-semibold">Active — {tone} ({data.active?.version})</h2>
             <pre className="mt-2 bg-slate-50 border p-3 rounded text-xs whitespace-pre-wrap max-h-64 overflow-auto">{data.active?.text || "—"}</pre>
             <div className="text-[11px] text-slate-500">Updated {data.active?.created_at?.slice(0,19)} by {data.active?.created_by?.slice(0,8)}</div>
           </div>
-          <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
             <h2 className="text-sm font-semibold">Tạo Draft (chỉnh sửa)</h2>
             <textarea value={draft} onChange={(e)=>setDraft(e.target.value)} rows={10} className="mt-2 w-full rounded border p-2 text-xs" />
             <input value={desc} onChange={(e)=>setDesc(e.target.value)} placeholder="description" className="mt-2 w-full rounded border p-2 text-xs" />
@@ -66,7 +66,7 @@ export default function PromptsPage(){
           </div>
         </div>
       )}
-      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Dry-run preview — 5 queries (golden hoặc tự nhập)</h2>
         <p className="text-xs text-slate-500">Nếu để trống queries, hệ thống dùng 5 golden queries của tone. Hoặc nhập mỗi dòng 1 query (tối đa 10).</p>
         <textarea value={dryQueries} onChange={(e)=>setDryQueries(e.target.value)} rows={5} placeholder={"Nhập query tùy ý, mỗi dòng 1 câu\nvd: Ngưỡng chẩn đoán đái tháo đường là bao nhiêu?"} className="mt-2 w-full rounded border p-2 text-xs" />
@@ -84,7 +84,7 @@ export default function PromptsPage(){
           </div>
         )}
       </div>
-      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Versions — {tone}</h2>
         <table className="w-full text-xs mt-2">
           <thead className="bg-slate-50 border-b"><tr><th className="p-2 text-left">Version</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>

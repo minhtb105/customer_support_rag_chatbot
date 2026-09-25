@@ -3,9 +3,23 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
+  --foreground-rgb: 15, 23, 42;
   --background-start-rgb: 248, 250, 252;
   --background-end-rgb: 255, 255, 255;
+  /* calm medical palette */
+  --med-primary: #2563eb;
+  --med-success: #059669;
+  --med-warning: #d97706;
+  --med-critical: #dc2626;
+  --med-surface: #ffffff;
+  --med-border: #e2e8f0;
+}
+.dark {
+  --foreground-rgb: 226, 232, 240;
+  --background-start-rgb: 2, 6, 23;
+  --background-end-rgb: 15, 23, 42;
+  --med-surface: #0f172a;
+  --med-border: #334155;
 }
 
 body {
@@ -20,4 +34,25 @@ body {
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 9999px;
+}
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+/* polish keyframes (CSS-only, no framer-motion) */
+@keyframes med-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.45); }
+  50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+}
+@keyframes med-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-critical-pulse { animation: med-pulse 2s ease-in-out infinite; }
+.animate-fade-in { animation: med-fade-in 0.18s ease-out; }
+
+/* a11y: visible focus rings everywhere */
+:focus-visible {
+  outline: 2px solid var(--med-primary);
+  outline-offset: 2px;
 }

@@ -1,6 +1,6 @@
 """Unit tests for Mental health tracker — PHQ-9/GAD-7 + PII + crisis."""
 import pytest
-from src.features.mood_tracker import (
+from src.vitals.mood_tracker import (
     classify_phq9, classify_gad7, contains_crisis_keywords, classify_mood,
     add_mood_log, get_mood_logs, get_mood_stats, should_escalate_mood, redact_pii
 )

@@ -25,11 +25,11 @@ import requests
 log = logging.getLogger(__name__)
 
 try:
-    from src.config import BASE_DIR, GHO_API_BASE, GHO_INDICATORS, GHO_SNAPSHOT_DIR, GHO_TEXT_DIR, GHO_DB_PATH
+    from src.shared.config import BASE_DIR, GHO_API_BASE, GHO_INDICATORS, GHO_SNAPSHOT_DIR, GHO_TEXT_DIR, GHO_DB_PATH
     from src.monitors.db import create_run, finish_run
     from src.monitors.utils import assert_url_allowed
 except ImportError:  # type: ignore
-    from config import BASE_DIR, GHO_API_BASE, GHO_INDICATORS, GHO_SNAPSHOT_DIR, GHO_TEXT_DIR, GHO_DB_PATH  # type: ignore
+    from shared.config import BASE_DIR, GHO_API_BASE, GHO_INDICATORS, GHO_SNAPSHOT_DIR, GHO_TEXT_DIR, GHO_DB_PATH  # type: ignore
     from monitors.db import create_run, finish_run  # type: ignore
     from monitors.utils import assert_url_allowed  # type: ignore
 
@@ -170,17 +170,17 @@ def index_gho_texts(lines: List[str], country: str = "VNM") -> Dict[str, int]:
     """Index cau textualized vao ca 4 strategy DB (ids on dinh de rerun replace)."""
     import hashlib, time
     try:
-        from chunk_strategies import ChunkingStrategy
+        from shared.chunk_strategies import ChunkingStrategy
     except ImportError:
-        from src.chunk_strategies import ChunkingStrategy
+        from src.shared.chunk_strategies import ChunkingStrategy
     stats: Dict[str, int] = {}
     try:
-        from src.indexer import get_or_create_vectorstore, _resolve_index_db_dir
-        from src.metadata_store import (upsert_file_and_chunks, get_chunk_hashes_for_file,
+        from src.shared.indexer import get_or_create_vectorstore, _resolve_index_db_dir
+        from src.shared.metadata_store import (upsert_file_and_chunks, get_chunk_hashes_for_file,
                                         find_vector_ids_for_chunk_hashes, delete_chunks_by_hashes)
     except ImportError:
-        from indexer import get_or_create_vectorstore, _resolve_index_db_dir  # type: ignore
-        from metadata_store import (upsert_file_and_chunks, get_chunk_hashes_for_file,  # type: ignore
+        from shared.indexer import get_or_create_vectorstore, _resolve_index_db_dir  # type: ignore
+        from shared.metadata_store import (upsert_file_and_chunks, get_chunk_hashes_for_file,  # type: ignore
                                     find_vector_ids_for_chunk_hashes, delete_chunks_by_hashes)
     for strategy in [ChunkingStrategy.STRUCTURE, ChunkingStrategy.SLIDING,
                      ChunkingStrategy.SEMANTIC, ChunkingStrategy.HYBRID_SECTION_SEMANTIC]:

@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture
 def iso_glucose(monkeypatch):
-    import src.features.glucose_tracker as gt
+    import src.diabetes.glucose_tracker as gt
     tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
     tmp.close()
     monkeypatch.setattr(gt, "GLUCOSE_DB_PATH", Path(tmp.name))
@@ -54,6 +54,9 @@ def _seed_three(client: TestClient, make_user):
 
 class TestDoctorPatients:
     def test_401_no_token(self, client: TestClient, iso_glucose):
+        # session-scoped TestClient shares its cookie jar with prior tests that
+        # logged in, so clear cookies to simulate a truly unauthenticated request.
+        client.cookies.clear()
         r = client.get("/v1/doctor/patients")
         assert r.status_code == 401, r.text
 
@@ -73,7 +76,7 @@ class TestDoctorPatients:
 
     def test_fail_open_one_user_broken(self, client: TestClient, make_user, doctor_user, iso_glucose, monkeypatch):
         u_crit, u_trend, u_safe = _seed_three(client, make_user)
-        import src.features.glucose_tracker as gt
+        import src.diabetes.glucose_tracker as gt
         orig = gt.get_logs
 
         def flaky(uid, limit=50, days=None):

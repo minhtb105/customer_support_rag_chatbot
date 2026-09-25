@@ -84,7 +84,7 @@ class TestDiabetesAPI:
         uid = auth_header["user"]["id"]
         # If RAG were invoked it would go through rag_chat — guard must return before it
         try:
-            import src.rag_pipeline as rp
+            import src.chat.rag_pipeline as rp
             monkeypatch.setattr(rp, "rag_chat", lambda *a, **k: (_ for _ in ()).throw(AssertionError("RAG must not be called")))
         except Exception:
             pass

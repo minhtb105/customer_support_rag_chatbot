@@ -39,7 +39,7 @@ python scripts/seed_synthetic_data.py --reset --seed 42  # nạp 30 bn + 2 JSON
 
 Sidecars: `metadata/doctors_patients.json` (ID → tên đẹp, tuổi, giới tính,
 comorbidity, PCP, archetype) + `metadata/synthetic_roster.json` (5 bác sĩ +
-giờ làm việc). Helper đọc sidecar (fail-open): `src/features/synthetic_roster.py`
+giờ làm việc). Helper đọc sidecar (fail-open): `src/scheduling/synthetic_roster.py`
 (`get_patient_display_name` / `get_patient_pcp` / `query_doctor_availability`).
 
 Demo: login admin/doctor → `/expert/patients` thấy 30 bệnh nhân tên tiếng Việt,

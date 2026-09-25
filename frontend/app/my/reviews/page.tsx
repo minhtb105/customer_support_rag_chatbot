@@ -32,7 +32,7 @@ export default function MyReviewsPage() {
         <div className="text-xs text-slate-500">{API_BASE} · user {user.username} ({user.role})</div>
       </div>
       {notif && (
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
           <h2 className="text-sm font-semibold">Notifications ({notif.unread_count} chưa đọc)</h2>
           <div className="mt-2 space-y-1 max-h-40 overflow-auto">
             {(notif.notifications||[]).slice(0,10).map((n:any)=><div key={n.id} className={`text-xs p-2 rounded ${n.is_read? "bg-white border":"bg-amber-50 border border-amber-200"}`}>{n.title}: {n.body}</div>)}
@@ -40,7 +40,7 @@ export default function MyReviewsPage() {
         </div>
       )}
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
           <h2 className="text-sm font-semibold">Review requests ({data?.reviews?.length||0})</h2>
           <div className="mt-3 space-y-2 max-h-[500px] overflow-auto">
             {(data?.reviews||[]).map((r:any)=>(
@@ -55,7 +55,7 @@ export default function MyReviewsPage() {
             {!data?.reviews?.length && <div className="text-xs text-slate-500">Chưa có review</div>}
           </div>
         </div>
-        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
           <h2 className="text-sm font-semibold">Query history ({history.length}) — cập nhật sau duyệt</h2>
           <div className="mt-3 space-y-2 max-h-[500px] overflow-auto">
             {history.map((h:any)=>(

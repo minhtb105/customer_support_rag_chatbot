@@ -6,9 +6,9 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 
 try:
-    from src.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
+    from src.shared.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS
 except ImportError:
-    from config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS  # type: ignore
+    from shared.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_DAYS  # type: ignore
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

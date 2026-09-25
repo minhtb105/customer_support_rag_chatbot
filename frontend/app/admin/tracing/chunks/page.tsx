@@ -60,7 +60,7 @@ export default function ChunksPage(){
         <p className="text-xs text-slate-600">Duyệt toàn bộ corpus vector DB theo từng collection. 10 chunks/trang. Chỉ admin.</p>
         <div className="text-xs text-slate-500">{API_BASE} · Tổng {total} chunks · <Link href="/admin/tracing" className="text-blue-700 hover:underline font-medium">← Traces</Link> · <Link href="/admin/tracing/memory" className="text-blue-700 hover:underline font-medium">Memory →</Link></div>
       </div>
-      <div className="rounded-2xl border bg-white p-4 shadow-sm flex flex-wrap gap-2 items-end">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm flex flex-wrap gap-2 items-end">
         <div><label className="text-xs">Collection</label>
           <select value={strategy} onChange={(e)=>setStrategy(e.target.value)} className="ml-2 rounded border px-2 py-1 text-xs">
             {collections.map((c:any)=><option key={c.strategy} value={c.strategy}>{c.strategy} ({c.count})</option>)}
@@ -78,7 +78,7 @@ export default function ChunksPage(){
         <button onClick={()=>{ setQ(""); setDataset("all"); setPage(1); loadChunks(1, strategy, "all", ""); }} className="rounded-full border px-4 py-1.5 text-xs">Xóa</button>
       </div>
       {msg && <div className="rounded-lg bg-red-50 border border-red-200 p-2 text-xs text-red-700">{msg}</div>}
-      <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 shadow-sm overflow-hidden">
         <table className="w-full text-xs">
           <thead className="bg-slate-50 border-b text-left"><tr><th className="p-2">#</th><th>Source</th><th>File/dataset</th><th>Trang</th><th>Chunk idx</th><th>Nội dung</th><th>Cập nhật</th></tr></thead>
           <tbody>

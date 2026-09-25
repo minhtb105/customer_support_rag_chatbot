@@ -62,11 +62,13 @@ test.describe('Pre-visit B — SOAP Generation', () => {
     });
 
     await page.goto('/previsit');
+    await expect(page.getByTestId('soap-json-btn')).toBeVisible();
     await page.getByRole('button', { name: /Tạo SOAP \(JSON\)/ }).click();
     await expect(page.getByText('S — Subjective')).toBeVisible({ timeout: 5000 });
     await expect(page.getByText('O — Objective')).toBeVisible();
     await expect(page.getByText('A — Assessment')).toBeVisible();
     await expect(page.getByText('Dành cho bác sĩ chỉ định')).toBeVisible();
+    await expect(page.getByTestId('log-link').first()).toBeVisible();
     await expect(page.locator('a[href*="/tracker?highlight="]').first()).toBeVisible();
   });
 
