@@ -140,6 +140,8 @@ VITALS_DB_PATH = BASE_DIR / "metadata" / "vitals.db"
 GLUCOSE_DB_PATH = BASE_DIR / "metadata" / "glucose_logs.db"
 # Lab reports DB (FHIR-style lab_reports + lab_observations, separate from glucose_logs)
 LAB_DB_PATH = BASE_DIR / "metadata" / "labs.db"
+# Micro-curriculum DB (learner_profile + lesson_progress, separate file)
+LEARN_DB_PATH = BASE_DIR / "metadata" / "learn.db"
 # PII redact — fields to mask before logging/storage
 PII_REDACT_FIELDS = {"name", "phone", "email", "address", "cmnd", "cccd"}
 

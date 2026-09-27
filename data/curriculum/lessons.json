@@ -1,0 +1,574 @@
+{
+ "lessons": [
+  {
+   "goal": "Bác hiểu bệnh của mình là gì.",
+   "group": "hieu-benh",
+   "id": "1.1",
+   "script_vi": "Chào bác. Hôm nay con kể cho bác nghe bệnh tiểu đường tuýp 2 là gì, thật đơn giản. Trong máu của mình có chất đường, gọi là đường huyết, để nuôi cơ thể. Người khỏe thì cơ thể dùng đường này rất tốt. Còn với bác, cơ thể dùng đường kém đi, nên đường ứ lại trong máu và làm chỉ số tăng cao. Bệnh này tiến triển chậm, nhiều bác lúc đầu không thấy mệt gì cả. Nhưng nếu để đường huyết cao lâu ngày, nó sẽ làm hại mắt, thận, tim và bàn chân. Tin vui là bác hoàn toàn có thể sống khỏe nếu ăn uống điều độ, vận động nhẹ nhàng, uống thuốc đúng như đơn bác sĩ và đo đường huyết đều đặn. Bài học này chỉ để bác hiểu bệnh, không thay lời dặn của bác sĩ. Ngày mai con sẽ kể về các chỉ số đường huyết mục tiêu.",
+   "short": false,
+   "status": "draft",
+   "title": "Bệnh tiểu đường tuýp 2 là gì",
+   "quiz": {
+    "q": "Bệnh tiểu đường tuýp 2 là gì?",
+    "options": [
+     "Do ăn một bữa cơm ngọt",
+     "Do cơ thể dùng chất đường trong máu kém hiệu quả",
+     "Do uống ít nước"
+    ],
+    "correct": 1,
+    "explanation": "Bệnh tiểu đường tuýp 2 là do cơ thể dùng đường trong máu kém hiệu quả, không phải do ăn ngọt một bữa."
+   }
+  },
+  {
+   "goal": "Bác nhớ hai con số mục tiêu.",
+   "group": "hieu-benh",
+   "id": "1.2",
+   "script_vi": "Hôm nay con cùng bác nhớ hai con số quan trọng, đơn vị là mg/dL như trên máy đo của bác. Thứ nhất, đường huyết lúc đói, tức là khi bác chưa ăn sáng, nên dưới 130. Thứ hai, sau khi ăn 2 giờ, nên dưới 180. Bác không cần nhớ số lẻ, chỉ cần nhớ đói dưới 130, no dưới 180. Nếu chỉ số thỉnh thoảng cao hơn một chút, bác đừng hoảng, hãy xem lại bữa ăn và vận động hôm đó. Còn nếu thấy dưới 70 hoặc trên 250, đó là dấu hiệu nguy hiểm, bác phải gọi người nhà hoặc gọi cấp cứu 115 ngay. Bác nên ghi chỉ số vào sổ mỗi ngày để lần tái khám bác sĩ xem được. Ngày mai con kể vì sao phải đo đều mỗi ngày.",
+   "short": false,
+   "status": "draft",
+   "title": "Chỉ số đường huyết mục tiêu",
+   "quiz": {
+    "q": "Chỉ số đường huyết mục tiêu là bao nhiêu?",
+    "options": [
+     "Lúc đói dưới 130, sau ăn 2 giờ dưới 180 mg/dL",
+     "Lúc nào cũng phải bằng 100 mg/dL",
+     "Sau ăn càng cao càng tốt"
+    ],
+    "correct": 0,
+    "explanation": "Lúc đói nên dưới 130 mg/dL, sau ăn 2 giờ nên dưới 180 mg/dL. Máy đo của bác hiện đơn vị mg/dL."
+   }
+  },
+  {
+   "goal": "Bác hiểu xét nghiệm HbA1c.",
+   "group": "hieu-benh",
+   "id": "1.3",
+   "script_vi": "Bác có hay nghe bác sĩ nói xét nghiệm HbA1c không. Hôm nay con giải thích thật dễ. HbA1c là xét nghiệm máu làm ở bệnh viện, vài tháng một lần, cho biết đường huyết trung bình của bác trong khoảng 3 tháng qua. Nó khác với máy đo ở nhà, vì máy ở nhà chỉ cho biết chỉ số lúc đó. Mục tiêu thường gặp là HbA1c dưới 7 phần trăm, bác sĩ sẽ dặn cụ thể cho từng bác. Nếu HbA1c cao, nghĩa là 3 tháng qua đường huyết hay cao, bác cần xem lại ăn uống, vận động và thuốc cùng bác sĩ. Bác nhớ đi xét nghiệm đúng hẹn, và mang theo sổ đo ở nhà để bác sĩ so sánh. Đây là kiến thức để bác hiểu, không phải lời khuyên đổi thuốc.",
+   "short": false,
+   "status": "draft",
+   "title": "Xét nghiệm HbA1c là gì",
+   "quiz": {
+    "q": "Xét nghiệm HbA1c cho biết điều gì?",
+    "options": [
+     "Đo huyết áp tại nhà",
+     "Đo cân nặng mỗi sáng",
+     "Xét nghiệm máu cho biết đường huyết trung bình 3 tháng"
+    ],
+    "correct": 2,
+    "explanation": "HbA1c dưới 7 phần trăm là mục tiêu thường gặp, theo hướng dẫn của Bộ Y tế và hiệp hội thế giới."
+   }
+  },
+  {
+   "goal": "Bác thấy việc đo đều có ích.",
+   "group": "hieu-benh",
+   "id": "1.4",
+   "script_vi": "Nhiều bác hỏi con, ngày nào cũng chích tay đo, có thật cần không. Con xin thưa là rất cần. Đường huyết thay đổi theo bữa ăn, vận động, giấc ngủ và thuốc. Nếu bác chỉ đo khi thấy mệt, mình sẽ bỏ lỡ lúc nó tăng âm thầm. Đo đều mỗi ngày, mỗi lần một chấm nhỏ, bác sẽ có một dãy số để thấy xu hướng lên hay xuống. Khi tái khám, bác sĩ nhìn dãy số đó là biết ngay cách điều trị có hợp không. Bác nên đo đúng giờ đã hẹn với bác sĩ, ví dụ sáng đói và sau ăn 2 giờ. Ghi số kèm giờ và bữa ăn. Đừng tự đổi thuốc khi thấy số lạ, hãy hỏi bác sĩ. Đo đều là cách bác thương lấy mình.",
+   "short": true,
+   "status": "draft",
+   "title": "Vì sao phải đo đều mỗi ngày",
+   "quiz": {
+    "q": "Vì sao phải đo đường huyết đều mỗi ngày?",
+    "options": [
+     "Để hết que thử cho nhanh",
+     "Để thấy xu hướng đường huyết và xử lý sớm cùng bác sĩ",
+     "Để khoe với hàng xóm"
+    ],
+    "correct": 1,
+    "explanation": "Đo đều giúp bác và bác sĩ thấy xu hướng và xử lý sớm, thay vì đoán mò."
+   }
+  },
+  {
+   "goal": "Bác dùng máy đo đúng cách.",
+   "group": "hieu-benh",
+   "id": "1.5",
+   "script_vi": "Hôm nay con hướng dẫn bác dùng máy đo cho đúng. Trước khi đo, bác rửa tay bằng xà phòng và lau khô, vì tay dính đường sẽ làm số cao giả. Lắp kim mới mỗi lần đo, không dùng chung kim với ai. Chích nhẹ bên cạnh đầu ngón tay, nặn ra một giọt máu vừa đủ, chạm que thử vào giọt máu. Máy sẽ hiện số theo đơn vị mg/dL sau vài giây. Bác ghi số đó kèm giờ và lúc đói hay sau ăn. Nếu số hiện dưới 70 hoặc trên 250, bác báo người nhà ngay. Que thử và kim cũ bỏ vào lọ riêng, để xa tầm trẻ nhỏ. Nếu máy báo lỗi nhiều lần, bác mang máy ra hiệu thuốc hoặc bệnh viện nhờ kiểm tra.",
+   "short": true,
+   "status": "draft",
+   "title": "Dùng máy đo đúng cách",
+   "quiz": {
+    "q": "Cách dùng máy đo đường huyết đúng là gì?",
+    "options": [
+     "Rửa tay, lấy máu đầu ngón tay, đọc số mg/dL và ghi lại",
+     "Đo qua lớp áo cho nhanh",
+     "Dùng chung kim với người khác"
+    ],
+    "correct": 0,
+    "explanation": "Rửa tay sạch, lấy máu đầu ngón tay, đọc kết quả mg/dL và ghi lại kèm giờ đo."
+   }
+  },
+  {
+   "goal": "Bác ăn đúng giờ mỗi ngày.",
+   "group": "dinh-duong",
+   "id": "2.1",
+   "script_vi": "Bác ơi, với người tiểu đường, ăn đúng giờ quan trọng không kém ăn món gì. Khi bác bỏ bữa rồi ăn dồn, đường huyết sẽ lên xuống thất thường, rất mệt. Bác nên ăn 3 bữa chính đúng giờ mỗi ngày, thêm 1 đến 2 bữa phụ nhỏ nếu bác sĩ dặn. Mỗi bữa ăn vừa đủ no, không ăn quá no cũng không để bụng quá đói. Buổi tối bác đừng ăn quá khuya, nên ăn trước khi ngủ khoảng 3 giờ. Uống đủ nước trong ngày. Nếu hôm nào bác ăn tiệc hay ăn khác thường, bác ghi lại và đo thêm một lần để biết cơ thể mình phản ứng ra sao. Ăn đúng giờ là món thuốc không tốn tiền.",
+   "short": false,
+   "status": "draft",
+   "title": "Ăn đúng giờ, đủ bữa",
+   "quiz": {
+    "q": "Thói quen ăn uống nào tốt cho đường huyết?",
+    "options": [
+     "Bỏ bữa sáng để giảm đường",
+     "Ăn đúng giờ, đủ bữa mỗi ngày",
+     "Ăn dồn một bữa thật no"
+    ],
+    "correct": 1,
+    "explanation": "Ăn đúng giờ giúp đường huyết ổn định, tránh lúc quá đói lúc quá no."
+   }
+  },
+  {
+   "goal": "Bác chia đĩa cơm hợp lý.",
+   "group": "dinh-duong",
+   "id": "2.2",
+   "script_vi": "Hôm nay con chỉ bác một mẹo rất dễ, gọi là chia đĩa cơm. Bác lấy cái đĩa thường ăn, chia trong đầu làm 3 phần. Một nửa đĩa là rau xanh luộc hoặc canh rau. Một phần tư đĩa là thức ăn đạm như cá, thịt nạc, trứng hoặc đậu. Một phần tư còn lại là cơm. Ăn rau trước, rồi đến thức ăn, cơm ăn sau cùng và ăn chậm. Cách này giúp bác no lâu mà đường huyết lên chậm hơn. Bác vẫn được ăn món mình thích, chỉ cần bớt cơm lại một chút và thêm rau. Nếu bác ăn bún, phở thì cũng nhớ gọi thêm rau. Mẹo nhỏ này bác làm được ngay từ bữa tối nay.",
+   "short": false,
+   "status": "draft",
+   "title": "Mẹo chia đĩa cơm",
+   "quiz": {
+    "q": "Chia đĩa cơm thế nào cho hợp lý?",
+    "options": [
+     "Ăn toàn cơm trắng cho chắc bụng",
+     "Chỉ ăn thịt, bỏ hẳn cơm",
+     "Nửa đĩa rau, một phần đạm, một phần cơm"
+    ],
+    "correct": 2,
+    "explanation": "Nửa đĩa rau, một phần tư đạm, một phần tư cơm giúp bữa ăn cân bằng mà vẫn ngon."
+   }
+  },
+  {
+   "goal": "Bác bớt đồ ngọt.",
+   "group": "dinh-duong",
+   "id": "2.3",
+   "script_vi": "Bác thương mến, nước ngọt, trà sữa, bánh kẹo làm đường huyết tăng rất nhanh sau khi ăn, mà lại mau đói lại. Một chai nước ngọt nhỏ có thể chứa lượng đường bằng nhiều thìa đường. Bác nên hạn chế tối đa, để dành cho dịp đặc biệt và chỉ dùng một lượng rất nhỏ. Khi khát, bác uống nước lọc, nước chè nhạt hoặc nước canh. Khi thèm ngọt, bác có thể ăn một miếng trái cây ít ngọt sau bữa ăn thay vì bánh kẹo. Nếu bác đi đám tiệc và lỡ dùng đồ ngọt, đừng tự trách mình, hãy ghi lại và đo đường huyết để rút kinh nghiệm. Bớt ngọt dần dần, bác sẽ thấy người nhẹ nhàng hơn.",
+   "short": false,
+   "status": "draft",
+   "title": "Bớt nước ngọt và bánh kẹo",
+   "quiz": {
+    "q": "Vì sao nên hạn chế nước ngọt và bánh kẹo?",
+    "options": [
+     "Hạn chế nước ngọt, bánh kẹo vì làm đường huyết tăng nhanh",
+     "Uống nước ngọt thay nước lọc",
+     "Ăn kẹo trước khi ngủ cho dễ ngủ"
+    ],
+    "correct": 0,
+    "explanation": "Nước ngọt và bánh kẹo làm đường huyết tăng rất nhanh nên cần hạn chế tối đa."
+   }
+  },
+  {
+   "goal": "Bác chọn tinh bột tốt hơn.",
+   "group": "dinh-duong",
+   "id": "2.4",
+   "script_vi": "Tinh bột là cơm, bún, xôi, khoai, bánh mì. Cơ thể cần tinh bột để có sức, nên bác không nên nhịn hẳn. Chỉ cần chọn loại tốt hơn và ăn lượng vừa phải. Cơm gạo lứt, yến mạch, khoai lang luộc, bắp luộc làm đường huyết lên chậm hơn cơm trắng, xôi nếp và bánh mì trắng. Bác có thể trộn gạo lứt với gạo trắng cho dễ ăn lúc đầu. Mỗi bữa bác ăn khoảng một bát cơm vừa, không ăn thêm bát thứ hai rồi thứ ba. Khoai thì ăn củ vừa, đừng ăn cả rổ. Bác nhớ ăn chậm, nhai kỹ, đường huyết sẽ dễ chịu hơn nhiều.",
+   "short": false,
+   "status": "draft",
+   "title": "Chọn tinh bột tốt",
+   "quiz": {
+    "q": "Nên chọn tinh bột nào?",
+    "options": [
+     "Xôi và bánh mì trắng là tốt nhất",
+     "Gạo lứt, yến mạch, khoai luộc làm đường huyết lên chậm hơn",
+     "Nhịn hẳn tinh bột"
+    ],
+    "correct": 1,
+    "explanation": "Gạo lứt, yến mạch, khoai luộc làm đường huyết lên chậm hơn cơm trắng và xôi."
+   }
+  },
+  {
+   "goal": "Bác ăn nhiều rau hơn.",
+   "group": "dinh-duong",
+   "id": "2.5",
+   "script_vi": "Rau xanh là bạn thân của bác. Rau có nhiều chất xơ, giúp bác no lâu, ăn ít cơm lại mà vẫn no, và làm đường huyết sau ăn lên chậm hơn. Mỗi ngày bác cố ăn khoảng hai bát rau trở lên, chia đều các bữa. Rau luộc, rau nấu canh, rau sống rửa sạch đều tốt. Bác hạn chế rau xào nhiều mỡ và dưa muối mặn. Đi chợ bác mua rau theo mùa cho rẻ và tươi. Nếu bác ngại nấu nhiều món, chỉ cần một nồi canh rau to là cả nhà cùng ăn được. Ăn rau trước khi ăn cơm là mẹo nhỏ mà hiệu quả lớn. Bác thử ngay hôm nay nhé.",
+   "short": true,
+   "status": "draft",
+   "title": "Ăn nhiều rau xanh",
+   "quiz": {
+    "q": "Rau xanh có lợi gì?",
+    "options": [
+     "Rau làm đường huyết tăng cao",
+     "Không cần ăn rau cũng được",
+     "Rau giúp no lâu và đường huyết lên chậm"
+    ],
+    "correct": 2,
+    "explanation": "Rau xanh nhiều chất xơ, giúp no lâu và đường huyết lên chậm."
+   }
+  },
+  {
+   "goal": "Bác ăn đạm vừa đủ.",
+   "group": "dinh-duong",
+   "id": "2.6",
+   "script_vi": "Chất đạm là cá, thịt, trứng, đậu, giúp bác chắc cơ và no lâu. Mỗi bữa bác ăn một lượng bằng khoảng lòng bàn tay là vừa. Ưu tiên cá, thịt nạc, thịt gà bỏ da, trứng và đậu phụ. Hạn chế thịt mỡ, da gà, xúc xích và đồ chiên rán nhiều dầu. Cách nấu tốt là luộc, hấp, kho nhạt hoặc nướng, thay vì chiên ngập dầu. Bác đừng nghĩ ăn nhiều thịt là bù được cơm, vì ăn quá nhiều cũng không tốt cho thận và cân nặng. Ăn vừa đủ, chia đều các bữa, đó là cách khôn ngoan nhất.",
+   "short": true,
+   "status": "draft",
+   "title": "Ăn đạm vừa phải",
+   "quiz": {
+    "q": "Ăn đạm thế nào cho đúng?",
+    "options": [
+     "Ăn cá, thịt nạc, trứng, đậu vừa phải mỗi bữa",
+     "Ăn càng nhiều thịt mỡ càng tốt",
+     "Bỏ hẳn thức ăn đạm"
+    ],
+    "correct": 0,
+    "explanation": "Cá, thịt nạc, trứng, đậu giúp chắc cơ và no lâu, nên ăn lượng vừa phải mỗi bữa."
+   }
+  },
+  {
+   "goal": "Bác chọn chất béo lành mạnh.",
+   "group": "dinh-duong",
+   "id": "2.7",
+   "script_vi": "Bác ơi, chất béo cũng cần cho cơ thể, nhưng phải chọn cho khéo. Mỡ trong cá và một ít dầu thực vật khi nấu là lựa chọn tốt hơn mỡ heo, da gà và bơ. Đồ chiên rán giòn tan rất ngon nhưng nhiều dầu mỡ, bác nên ăn ít thôi. Khi nấu ăn, bác cho ít dầu, dùng chảo chống dính để đỡ tốn dầu. Hạn chế xúc xích, lạp xưởng và đồ ăn nhanh. Bác cũng nên ăn nhạt bớt, vì ăn mặn nhiều không tốt cho huyết áp và tim. Một chút thay đổi trong bếp mỗi ngày sẽ bảo vệ tim của bác lâu dài.",
+   "short": true,
+   "status": "draft",
+   "title": "Chọn chất béo khôn ngoan",
+   "quiz": {
+    "q": "Nên dùng chất béo nào?",
+    "options": [
+     "Ăn nhiều mỡ heo và da gà",
+     "Ưu tiên mỡ cá và dầu thực vật lượng ít, hạn chế đồ chiên rán",
+     "Uống dầu ăn thay nước"
+    ],
+    "correct": 1,
+    "explanation": "Mỡ cá và dầu thực vật lượng ít tốt hơn mỡ động vật và đồ chiên rán."
+   }
+  },
+  {
+   "goal": "Bác ăn trái cây đúng cách.",
+   "group": "dinh-duong",
+   "id": "2.8",
+   "script_vi": "Trái cây có vitamin tốt, bác vẫn được ăn, chỉ cần ăn cho đúng. Bác chọn quả ít ngọt, mỗi lần ăn một lượng nhỏ bằng nắm tay, và ăn sau bữa cơm chứ đừng ăn lúc đói cồn cào. Tránh uống nước ép vì một ly nước ép cần nhiều quả, lượng đường cao mà lại mau đói. Quả sấy khô và mứt cũng nhiều đường, bác ăn rất ít thôi. Sau khi ăn loại quả mới, bác có thể đo đường huyết để biết cơ thể mình hợp hay không. Nếu thấy tăng cao, lần sau bác giảm lượng xuống. Ăn trái cây điều độ thì vừa ngon miệng vừa an toàn.",
+   "short": false,
+   "status": "draft",
+   "title": "Ăn trái cây đúng cách",
+   "quiz": {
+    "q": "Ăn trái cây thế nào cho đúng?",
+    "options": [
+     "Uống nhiều nước ép trái cây mỗi ngày",
+     "Không bao giờ được ăn trái cây",
+     "Ăn lượng nhỏ trái cây ít ngọt sau bữa, tránh nước ép nhiều đường"
+    ],
+    "correct": 2,
+    "explanation": "Ăn một lượng nhỏ trái cây ít ngọt sau bữa ăn, tránh uống nước ép nhiều đường."
+   }
+  },
+  {
+   "goal": "Bác uống đúng.",
+   "group": "dinh-duong",
+   "id": "2.9",
+   "script_vi": "Nước lọc là thức uống tốt nhất cho bác, uống đều trong ngày, đừng để khát khô mới uống. Trà nhạt không đường cũng được. Bác nên hạn chế tối đa rượu bia, vì rượu bia vừa làm đường huyết thất thường vừa hại gan, lại dễ quên uống thuốc. Nếu có việc phải dùng, bác chỉ dùng rất ít và phải ăn kèm, tuyệt đối không uống lúc đói, và hỏi ý kiến bác sĩ trước. Nước ngọt có ga thì như bài trước con đã kể, bác tránh nhé. Bác cũng đừng nhịn nước, vì thiếu nước làm người mệt thêm. Uống đủ nước, người bác sẽ tỉnh táo hơn.",
+   "short": true,
+   "status": "draft",
+   "title": "Uống nước đúng cách",
+   "quiz": {
+    "q": "Nên uống gì mỗi ngày?",
+    "options": [
+     "Uống nước lọc là tốt nhất, hạn chế rượu bia tối đa",
+     "Uống bia thay nước mỗi ngày",
+     "Nhịn uống nước để giảm đường"
+    ],
+    "correct": 0,
+    "explanation": "Nước lọc là thức uống tốt nhất; rượu bia nên hạn chế tối đa và hỏi ý kiến bác sĩ."
+   }
+  },
+  {
+   "goal": "Bác đi tiệc mà vẫn an toàn.",
+   "group": "dinh-duong",
+   "id": "2.10",
+   "script_vi": "Đám cưới, đám giỗ là niềm vui, bác cứ đi, chỉ cần khéo một chút. Trước khi đi, bác ăn lót dạ nhẹ ở nhà để không quá đói. Vào tiệc, bác ưu tiên rau và món đạm, cơm xôi ăn ít, đồ ngọt nếm cho biết chứ đừng ăn nhiều. Ăn chậm, nói chuyện vui vẻ, đừng cố ăn hết mâm. Tuyệt đối không tự ý uống thêm thuốc vì sợ ăn nhiều, thuốc chỉ uống đúng đơn bác sĩ. Sau tiệc bác đo thêm một lần để biết, và hôm sau ăn thanh đạm lại. Nếu thấy mệt nhiều thì báo người nhà. Vui mà vẫn giữ được đường huyết ổn định, đó là giỏi nhất.",
+   "short": false,
+   "status": "draft",
+   "title": "Đi tiệc mà vẫn khỏe",
+   "quiz": {
+    "q": "Đi đám tiệc nên làm gì?",
+    "options": [
+     "Nhịn cả ngày để dành bụng đi tiệc",
+     "Ăn lót dạ ở nhà, chọn rau và đạm, ăn chậm, đo thêm sau tiệc",
+     "Uống thuốc gấp đôi trước khi đi tiệc"
+    ],
+    "correct": 1,
+    "explanation": "Ăn trước một chút ở nhà, chọn món rau và đạm, ăn chậm và đo thêm sau tiệc."
+   }
+  },
+  {
+   "goal": "Bác đi bộ đều mỗi ngày.",
+   "group": "van-dong",
+   "id": "3.1",
+   "script_vi": "Đi bộ là món quà rẻ nhất cho người tiểu đường. Mỗi ngày bác đi bộ khoảng 30 phút, đi nhanh vừa sức, hơi ra mồ hôi nhẹ là được. Có thể chia hai lần, sáng 15 phút chiều 15 phút. Đi bộ sau bữa ăn khoảng 30 phút đến 1 giờ rất tốt cho đường huyết. Bác mang giày mềm vừa chân, đội nón khi nắng. Khởi động nhẹ vài phút trước khi đi, đi chậm lại vài phút trước khi về. Uống nước đầy đủ. Nếu bác thấy đau ngực, khó thở hay chóng mặt thì dừng lại nghỉ và báo người nhà. Đều đặn mỗi ngày tốt hơn nhiều so với tập nặng một bữa rồi nghỉ cả tuần.",
+   "short": false,
+   "status": "draft",
+   "title": "Đi bộ 30 phút mỗi ngày",
+   "quiz": {
+    "q": "Vận động nào phù hợp nhất với bác?",
+    "options": [
+     "Nằm một chỗ cho khỏe",
+     "Tập thật nặng một tuần một lần",
+     "Đi bộ 30 phút mỗi ngày vừa sức"
+    ],
+    "correct": 2,
+    "explanation": "Đi bộ 30 phút mỗi ngày, đi nhanh vừa sức giúp đường huyết ổn định."
+   }
+  },
+  {
+   "goal": "Bác biết khi nào không nên tập.",
+   "group": "van-dong",
+   "id": "3.2",
+   "script_vi": "Tập thể dục rất tốt, nhưng có lúc phải nghỉ, bác nhớ nhé. Trước khi tập, nếu bác đo thấy đường huyết trên 250 mg/dL thì hôm đó nghỉ ngơi, đừng cố tập. Nếu dưới 70 mg/dL thì đó là hạ đường huyết, bác phải xử trí ngay chứ không được tập. Khi đang sốt, mệt nhiều, đau ngực hay khó thở, bác cũng nghỉ. Sau khi khỏi, bác tập lại nhẹ nhàng từ từ. Quy tắc này để bảo vệ bác, vì tập sai lúc có thể gây nguy hiểm. Bác đừng buồn khi phải nghỉ một hôm, ngày mai khỏe mình tập tiếp. An toàn luôn quan trọng hơn thành tích.",
+   "short": false,
+   "status": "draft",
+   "title": "Khi nào nên nghỉ tập",
+   "quiz": {
+    "q": "Khi nào bác không nên tập thể dục?",
+    "options": [
+     "Đường huyết trên 250 mg/dL thì nghỉ, không tập",
+     "Càng cao càng phải chạy nhanh",
+     "Dưới 70 cũng cố tập cho khỏe"
+    ],
+    "correct": 0,
+    "explanation": "Nếu đường huyết trên 250 mg/dL thì nghỉ ngơi, không tập, và hỏi ý kiến bác sĩ."
+   }
+  },
+  {
+   "goal": "Bác vận động nhẹ sau ăn.",
+   "group": "van-dong",
+   "id": "3.3",
+   "script_vi": "Sau bữa ăn, đường huyết thường lên cao nhất sau khoảng 1 đến 2 giờ. Thay vì nằm xem ti vi ngay, bác đi lại nhẹ nhàng trong nhà hoặc sân khoảng 15 đến 30 phút. Dọn dẹp nhẹ, tưới cây, đi dạo quanh nhà đều được. Vận động nhẹ lúc này giúp cơ thể dùng bớt đường trong máu. Bác đừng tập nặng ngay sau ăn vì dễ đau bụng và mệt. Nếu trời mưa, bác đi lại trong nhà cũng tốt. Thói quen nhỏ này mỗi ngày sẽ giúp chỉ số sau ăn của bác đẹp lên trông thấy. Bác rủ người nhà đi cùng cho vui.",
+   "short": true,
+   "status": "draft",
+   "title": "Vận động nhẹ sau ăn",
+   "quiz": {
+    "q": "Sau bữa ăn nên làm gì?",
+    "options": [
+     "Ăn xong nằm ngay cho tiêu",
+     "Đi lại nhẹ nhàng sau ăn khoảng 15 đến 30 phút",
+     "Ăn xong chạy nhanh ngay"
+    ],
+    "correct": 1,
+    "explanation": "Vận động nhẹ sau ăn như đi lại trong nhà giúp đường huyết sau ăn ổn định hơn."
+   }
+  },
+  {
+   "goal": "Bác duy trì đều đặn.",
+   "group": "van-dong",
+   "id": "3.4",
+   "script_vi": "Bí quyết không nằm ở tập nặng, mà ở tập đều. Mỗi tuần bác cố vận động ít nhất 5 ngày, mỗi ngày khoảng 30 phút vừa sức. Bác chọn môn mình thích thì mới bền, như đi bộ, đạp xe chậm, dưỡng sinh hay làm vườn. Bác rủ bạn bè hoặc con cháu tập cùng để có người nhắc và vui hơn. Ghi lại mỗi ngày tập vào sổ, cuối tuần nhìn lại sẽ thấy tự hào. Nếu bận một hôm, hôm sau tập bù nhẹ, đừng bỏ luôn cả tuần. Cơ thể thích sự đều đặn. Bác kiên trì 3 tháng sẽ thấy đường huyết và giấc ngủ tốt lên.",
+   "short": true,
+   "status": "draft",
+   "title": "Đều đặn hơn nặng",
+   "quiz": {
+    "q": "Bí quyết tập luyện hiệu quả là gì?",
+    "options": [
+     "Tập một bữa thật nặng rồi nghỉ cả tháng",
+     "Chỉ tập khi có hứng",
+     "Tập đều mỗi ngày vừa sức"
+    ],
+    "correct": 2,
+    "explanation": "Tập đều mỗi ngày, vừa sức, tốt hơn tập nặng thất thường."
+   }
+  },
+  {
+   "goal": "Bác tập an toàn.",
+   "group": "van-dong",
+   "id": "3.5",
+   "script_vi": "Để mỗi buổi tập đều vui và an toàn, bác chuẩn bị vài thứ nhỏ. Mang giày mềm vừa chân để bảo vệ bàn chân. Mang theo vài viên kẹo ngọt phòng khi thấy run tay, vã mồ hôi vì hạ đường huyết. Mang nước uống. Báo người nhà biết mình đi tập ở đâu. Đừng tập lúc đang quá đói, nếu đói bác ăn nhẹ trước rồi nghỉ một lúc hãy tập. Sau khi tập, bác kiểm tra chân xem có chỗ đỏ hay phồng rộp không. Nếu thấy đau ngực, khó thở hay choáng thì dừng ngay và gọi người giúp. Chuẩn bị kỹ thì tập mới yên tâm.",
+   "short": false,
+   "status": "draft",
+   "title": "Tập an toàn",
+   "quiz": {
+    "q": "Tập an toàn cần chuẩn bị gì?",
+    "options": [
+     "Mang giày mềm, mang kẹo ngọt phòng khi mệt và báo người nhà",
+     "Tập một mình nơi vắng không cần mang gì",
+     "Tập lúc đói cồn cào cho giảm nhanh"
+    ],
+    "correct": 0,
+    "explanation": "Mang giày mềm, mang theo kẹo ngọt phòng hạ đường huyết và có người biết mình đang tập."
+   }
+  },
+  {
+   "goal": "Bác uống thuốc đúng.",
+   "group": "thuoc-theo-doi",
+   "id": "4.1",
+   "script_vi": "Thuốc tiểu đường chỉ phát huy khi bác uống đúng. Đúng loại, đúng liều, đúng giờ như đơn bác sĩ đã ghi. Bác nên uống vào giờ cố định mỗi ngày, có thể đặt báo thức hoặc nhờ con cháu nhắc. Thuốc của bác có thể có Metformin hoặc loại khác, mỗi người một đơn khác nhau, bác đừng so sánh đơn mình với đơn hàng xóm. Tuyệt đối không tự tăng liều khi thấy đường cao, không tự ngưng khi thấy khỏe, vì đường huyết có thể tăng vọt trở lại rất nguy hiểm. Nếu quên một liều, bác hỏi bác sĩ hoặc dược sĩ cách xử trí, đừng uống gấp đôi. Bài này chỉ nhắc thói quen, mọi thay đổi thuốc đều do bác sĩ quyết.",
+   "short": false,
+   "status": "draft",
+   "title": "Uống thuốc đúng cách",
+   "quiz": {
+    "q": "Nguyên tắc uống thuốc là gì?",
+    "options": [
+     "Tự tăng liều khi thấy đường cao",
+     "Uống đúng loại, đúng giờ, đúng liều như đơn bác sĩ",
+     "Thấy khỏe thì ngưng thuốc"
+    ],
+    "correct": 1,
+    "explanation": "Uống đúng loại, đúng giờ, đúng liều như đơn bác sĩ và không tự ý ngưng hay tăng liều."
+   }
+  },
+  {
+   "goal": "Bác theo dõi chỉ số khoa học.",
+   "group": "thuoc-theo-doi",
+   "id": "4.2",
+   "script_vi": "Một cuốn sổ nhỏ sẽ là trợ thủ đắc lực của bác. Mỗi lần đo, bác ghi ngày giờ, chỉ số mg/dL, và ghi rõ lúc đói hay sau ăn bao lâu. Thêm một dòng ngắn về bữa ăn hoặc vận động hôm đó, ví dụ ăn tiệc hay đi bộ 30 phút. Đo đúng giờ bác sĩ đã hẹn, thường là sáng đói và sau ăn 2 giờ. Đừng đo dồn nhiều lần liên tiếp vì tốn que mà không thêm thông tin. Mang sổ này đi mỗi lần tái khám, bác sĩ sẽ dựa vào đó để đánh giá. Nếu thấy số lạ như dưới 70 hoặc trên 250 nhiều lần, bác báo cho bác sĩ sớm, đừng chờ đến hẹn.",
+   "short": false,
+   "status": "draft",
+   "title": "Ghi chép theo dõi",
+   "quiz": {
+    "q": "Theo dõi đường huyết thế nào cho khoa học?",
+    "options": [
+     "Đo lúc nào nhớ ra thì đo",
+     "Đo nhiều lần liên tiếp cho chắc",
+     "Đo đúng giờ hẹn, ghi số kèm lúc đói hay sau ăn"
+    ],
+    "correct": 2,
+    "explanation": "Đo đúng giờ, ghi số kèm lúc đói hay sau ăn để bác sĩ có đủ thông tin."
+   }
+  },
+  {
+   "goal": "Bác tái khám đầy đủ.",
+   "group": "thuoc-theo-doi",
+   "id": "4.3",
+   "script_vi": "Tái khám đúng hẹn quan trọng như uống thuốc vậy. Bác đi đúng ngày bác sĩ hẹn, đừng để quá lâu. Trước khi đi, bác chuẩn bị sổ đo đường huyết, đơn thuốc đang dùng và kết quả xét nghiệm cũ nếu có. Ghi ra giấy những điều muốn hỏi, ví dụ hay mệt lúc nào, ăn gì thấy tăng cao, để khỏi quên khi gặp bác sĩ. Tại buổi khám, bác kể thật về việc uống thuốc và ăn uống, đừng giấu vì sợ bị mắng, bác sĩ cần sự thật để giúp bác. Sau khám, bác đọc lại đơn mới xem có gì đổi không và hỏi rõ nếu chưa hiểu. Tái khám đều là cách bảo vệ mình tốt nhất.",
+   "short": true,
+   "status": "draft",
+   "title": "Tái khám đúng hẹn",
+   "quiz": {
+    "q": "Đi tái khám cần chuẩn bị gì?",
+    "options": [
+     "Đi tái khám đúng hẹn, mang sổ đo và đơn cũ",
+     "Khỏe thì khỏi cần tái khám",
+     "Tự ra hiệu thuốc đổi đơn"
+    ],
+    "correct": 0,
+    "explanation": "Đi tái khám đúng hẹn, mang sổ đo và đơn thuốc cũ để bác sĩ đánh giá chính xác."
+   }
+  },
+  {
+   "goal": "Bác bảo quản thuốc tốt.",
+   "group": "thuoc-theo-doi",
+   "id": "4.4",
+   "script_vi": "Thuốc cần được giữ gìn thì mới tốt. Bác để thuốc nơi khô mát, tránh ánh nắng và nơi ẩm như gần bếp hay nhà tắm. Để xa tầm tay trẻ nhỏ. Thường xuyên xem hạn dùng trên vỉ thuốc, thuốc hết hạn thì bỏ, không tiếc mà uống. Khi lĩnh thuốc mới, bác xếp thuốc cũ lên trước để dùng trước. Que thử và kim chích cũng giữ nơi sạch, khô. Mỗi lần uống, bác nhìn lại tên thuốc trên vỉ cho chắc. Nếu thuốc đổi màu, vón cục hay có mùi lạ, bác mang ra hiệu thuốc hỏi, đừng cố uống. Giữ thuốc cẩn thận là giữ sức khỏe của mình.",
+   "short": true,
+   "status": "draft",
+   "title": "Bảo quản thuốc",
+   "quiz": {
+    "q": "Bảo quản thuốc thế nào?",
+    "options": [
+     "Để thuốc nơi ẩm ướt cho tiện",
+     "Dùng thuốc hết hạn cũng không sao",
+     "Để nơi khô mát, xa trẻ em, kiểm tra hạn dùng"
+    ],
+    "correct": 1,
+    "explanation": "Để thuốc nơi khô mát, xa tầm trẻ em, kiểm tra hạn dùng và không dùng thuốc hết hạn."
+   }
+  },
+  {
+   "goal": "Bác xử lý khi quên thuốc.",
+   "group": "thuoc-theo-doi",
+   "id": "4.5",
+   "script_vi": "Ai cũng có lúc quên thuốc, bác đừng hoảng. Nguyên tắc là không bao giờ uống gấp đôi để bù. Nếu mới quên không lâu, bác uống ngay liều đã quên. Nếu đã gần đến giờ liều tiếp theo, bác bỏ qua liều đã quên và uống liều tiếp theo đúng giờ. Ghi lại lần quên vào sổ để kể với bác sĩ ở lần khám sau. Để bớt quên, bác đặt báo thức, để thuốc nơi dễ thấy hoặc nhờ người nhà nhắc. Nếu quên nhiều ngày liên tiếp và thấy mệt, bác liên hệ bác sĩ sớm. Cách xử trí chi tiết có thể khác nhau theo từng loại thuốc, nên lời dặn của bác sĩ và dược sĩ mới là chuẩn nhất cho bác.",
+   "short": false,
+   "status": "draft",
+   "title": "Quên thuốc thì làm sao",
+   "quiz": {
+    "q": "Quên uống thuốc thì làm sao?",
+    "options": [
+     "Uống gấp đôi liều cho bù",
+     "Bỏ luôn cả tuần",
+     "Không uống bù gấp đôi, hỏi bác sĩ hoặc dược sĩ"
+    ],
+    "correct": 2,
+    "explanation": "Khi quên liều, không uống gấp đôi mà hỏi bác sĩ hoặc dược sĩ cách xử trí."
+   }
+  },
+  {
+   "goal": "Bác nhận biết và xử trí hạ đường huyết.",
+   "group": "bien-chung",
+   "id": "5.1",
+   "script_vi": "Đây là bài quan trọng nhất, bác nghe kỹ nhé. Hạ đường huyết là khi chỉ số xuống dưới 70 mg/dL. Dấu hiệu là run tay, vã mồ hôi, đói cồn cào, tim đập nhanh, hoa mắt, choáng váng. Khi thấy vậy, bác ngồi xuống ngay để khỏi ngã, ăn 3 đến 4 viên đường hoặc uống nửa cốc nước ngọt, rồi nghỉ 15 phút và đo lại. Nếu vẫn mệt hoặc người lơ mơ, gọi người nhà và gọi cấp cứu 115 ngay, đừng chần chừ. Bác luôn mang theo kẹo ngọt khi ra ngoài. Còn khi đường huyết trên 250 mg/dL kèm mệt nhiều thì đó là tăng cao nguy hiểm, bác cũng gọi người nhà ngay. Hạ đường huyết có thể nguy hiểm tính mạng nếu xử trí chậm, nên cả nhà cũng nên biết các dấu hiệu này để giúp bác kịp thời.",
+   "short": false,
+   "status": "draft",
+   "title": "Hạ đường huyết phải làm sao",
+   "quiz": {
+    "q": "Dấu hiệu hạ đường huyết là gì?",
+    "options": [
+     "Run tay, vã mồ hôi, choáng là dấu hiệu hạ đường huyết cần xử trí ngay",
+     "Hạ đường huyết thì đi ngủ là khỏi",
+     "Hạ đường huyết không nguy hiểm"
+    ],
+    "correct": 0,
+    "explanation": "Run tay, vã mồ hôi, đói cồn cào, choáng là dấu hiệu hạ đường huyết — xử trí ngay và gọi 115 nếu không đỡ."
+   }
+  },
+  {
+   "goal": "Bác chăm sóc bàn chân.",
+   "group": "bien-chung",
+   "id": "5.2",
+   "script_vi": "Đường huyết cao lâu ngày dễ làm chân bị tổn thương mà bác không thấy đau, nên chăm chân mỗi ngày rất quan trọng. Mỗi tối bác rửa chân bằng nước ấm, lau khô kỹ cả kẽ chân. Nhìn xem chân có chỗ đỏ, phồng rộp hay xước không. Cắt móng thẳng, đừng cắt sâu khóe. Luôn mang giày dép mềm vừa chân, không đi chân đất kể cả trong nhà. Không tự cắt khoét vết chai hay mụn ở chân. Nếu có vết xước lâu lành, sưng đỏ hay chảy mủ, bác đến bác sĩ ngay, đừng tự đắp lá. Đôi chân khỏe sẽ đưa bác đi chơi xa cùng con cháu.",
+   "short": false,
+   "status": "draft",
+   "title": "Chăm sóc bàn chân",
+   "quiz": {
+    "q": "Chăm sóc bàn chân thế nào?",
+    "options": [
+     "Đi chân đất cho thoáng",
+     "Tự cắt khoét vết chai ở chân",
+     "Rửa sạch, lau khô, mang giày mềm, báo bác sĩ khi có vết thương"
+    ],
+    "correct": 1,
+    "explanation": "Rửa chân sạch, lau khô kẽ chân, mang giày mềm và báo bác sĩ ngay khi có vết xước lâu lành."
+   }
+  },
+  {
+   "goal": "Bác biết khi nào phải đi viện.",
+   "group": "bien-chung",
+   "id": "5.3",
+   "script_vi": "Bác nhớ những lúc phải đi viện ngay, đừng chần chừ. Khi đường huyết trên 300 mg/dL kèm mệt nhiều, khát nhiều, tiểu nhiều, khó thở hay nôn ói, bác đi viện ngay. Khi sốt cao không hạ, vết thương sưng đỏ lan rộng, mắt mờ đột ngột, đau ngực hay tê yếu một bên người, cũng đi viện ngay. Bác đừng tự ý tăng thuốc ở nhà để chờ đợi, vì có lúc cần bác sĩ xử trí chuyên sâu. Luôn mang theo đơn thuốc và sổ đo khi đi viện. Gọi người nhà đưa đi, hoặc gọi cấp cứu 115 nếu không đi được. Nhận biết sớm và đi sớm sẽ giúp bác qua khỏi an toàn.",
+   "short": false,
+   "status": "draft",
+   "title": "Khi nào phải đi viện ngay",
+   "quiz": {
+    "q": "Khi nào bác phải đi viện ngay?",
+    "options": [
+     "Chờ vài tuần xem có tự khỏi không",
+     "Tự tăng thuốc ở nhà là đủ",
+     "Đường huyết trên 300 kèm mệt nhiều, khó thở thì đi viện ngay"
+    ],
+    "correct": 2,
+    "explanation": "Đường huyết trên 300 mg/dL kèm mệt nhiều, khó thở, nôn ói thì đi viện ngay."
+   }
+  },
+  {
+   "goal": "Bác chăm sóc tinh thần.",
+   "group": "tam-ly",
+   "id": "6.1",
+   "script_vi": "Bác ơi, lo lắng và buồn bã kéo dài cũng làm đường huyết khó ổn định, ăn ngủ kém đi. Mang bệnh mãn tính mà buồn là điều rất bình thường, bác đừng tự trách mình. Mỗi ngày bác dành chút thời gian làm điều mình thích như nghe nhạc, tưới cây, trò chuyện với bạn. Ngủ đủ giấc, đừng thức quá khuya. Khi có điều lo, bác kể với con cháu hoặc bạn bè, đừng giữ trong lòng. Nếu buồn nhiều tuần không dứt, bác kể với bác sĩ để được giúp. Giữ tinh thần vui vẻ cũng là một cách chữa bệnh. Bác xứng đáng được sống vui mỗi ngày.",
+   "short": true,
+   "status": "draft",
+   "title": "Giữ tinh thần vui vẻ",
+   "quiz": {
+    "q": "Tinh thần ảnh hưởng đến bệnh thế nào?",
+    "options": [
+     "Chia sẻ lo lắng, ngủ đủ, vận động nhẹ giúp tinh thần và đường huyết tốt hơn",
+     "Giấu mọi lo lắng trong lòng",
+     "Thức khuya mỗi ngày cũng không sao"
+    ],
+    "correct": 0,
+    "explanation": "Lo lắng kéo dài làm đường huyết khó ổn định; chia sẻ và ngủ đủ giúp bác khỏe hơn."
+   }
+  },
+  {
+   "goal": "Bác và gia đình cùng đồng hành.",
+   "group": "tam-ly",
+   "id": "6.2",
+   "script_vi": "Bệnh tiểu đường sẽ nhẹ nhàng hơn khi cả nhà cùng đồng hành. Người nhà có thể nhắc bác uống thuốc đúng giờ, cùng ăn nhiều rau và bớt ngọt để bác không thấy lạc lõng. Cùng bác đi bộ buổi chiều vừa vui vừa khỏe cả nhà. Học thuộc dấu hiệu hạ đường huyết để giúp bác kịp lúc. Động viên bác khi kết quả tốt lên, an ủi khi kết quả chưa đẹp, đừng trách mắng. Bác cũng đừng giấu bệnh, hãy cho người thân biết để họ giúp đúng cách. Cả nhà cùng khỏe, đó là bài học cuối của tuần đầu. Từ mai bác sẽ tiếp tục những bài tiếp theo cùng người đồng hành của mình.",
+   "short": true,
+   "status": "draft",
+   "title": "Cả nhà cùng đồng hành",
+   "quiz": {
+    "q": "Người nhà giúp bác thế nào?",
+    "options": [
+     "Giấu bệnh không cho ai biết",
+     "Người nhà cùng nhắc thuốc, ăn lành mạnh và vận động cùng bác",
+     "Bắt cả nhà ăn kiêng khắt khe theo mình"
+    ],
+    "correct": 1,
+    "explanation": "Người nhà nhắc uống thuốc, cùng ăn lành mạnh và cùng đi bộ giúp bác duy trì lâu dài."
+   }
+  }
+ ]
+}

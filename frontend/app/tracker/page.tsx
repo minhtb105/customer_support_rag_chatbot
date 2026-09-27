@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
 import { useIsDark } from "@/components/ThemeToggle";
+import VoiceWidget from "@/components/VoiceWidget";
 
 const contexts = [
   { value: "fasting", label: "Đói (fasting)" },
@@ -23,7 +24,7 @@ const GUARD_RE = /thiết kế riêng để theo dõi đường huyết|nằm ng
 const EntryAlert = (p: any) => {
   const { value, setValue, context, setContext, notes, setNotes, msg, anomaly, isCritical, submit } = p;
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-1 dark:bg-slate-900 dark:border-slate-700">
+    <div id="manual-entry" className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-1 dark:bg-slate-900 dark:border-slate-700">
       <h2 className="text-sm font-semibold">Nhập chỉ số</h2>
       {isCritical && (
         <div data-testid="critical-banner" role="alert" className="animate-critical-pulse mt-4 rounded-xl border-2 border-red-600 bg-red-600 p-4 text-white shadow-xl">
@@ -308,6 +309,7 @@ export default function TrackerPage(){
         <MyTracker data={data} highlightId={highlightId} trend={trend} explainTrend={explainTrend} isCritical={isCritical} anomalySet={anomalySet} hasServerIds={hasServerIds} />
       </div>
       <FqgChat isCritical={isCritical} fqg={fqg} effectiveId={effectiveId} lastLogId={lastLogId} />
+      <VoiceWidget userId={effectiveId} />
       <TriageWidget effectiveId={effectiveId} />
     </div>
   );

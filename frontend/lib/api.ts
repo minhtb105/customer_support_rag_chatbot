@@ -326,3 +326,36 @@ export async function adminListTriageEvents(params: { page?: number; limit?: num
   return res.json();
 }
 export const API_BASE = API;
+
+// Micro-curriculum (learn): lessons + quiz + adaptive + 7-day today.
+export async function getLessons(userId: string) {
+  const res = await authFetch(`${API}/v1/lessons?user_id=${encodeURIComponent(userId)}`, { method: "GET" });
+  if (!res.ok) throw new Error(`lessons ${res.status}`);
+  return res.json();
+}
+export async function getLesson(lessonId: string, userId: string) {
+  const res = await authFetch(`${API}/v1/lessons/${encodeURIComponent(lessonId)}?user_id=${encodeURIComponent(userId)}`, { method: "GET" });
+  if (!res.ok) throw new Error(`lesson ${res.status}`);
+  return res.json();
+}
+export async function submitLessonQuiz(lessonId: string, userId: string, answer: number | string) {
+  const body = typeof answer === "string" ? { answer_text: answer } : { answer };
+  const res = await authFetch(`${API}/v1/lessons/${encodeURIComponent(lessonId)}/quiz?user_id=${encodeURIComponent(userId)}`, { method: "POST", body: JSON.stringify(body) });
+  if (!res.ok) throw new Error(`quiz ${res.status}: ${await res.text()}`);
+  return res.json();
+}
+export async function getNextLesson(userId: string) {
+  const res = await authFetch(`${API}/v1/lessons/next?user_id=${encodeURIComponent(userId)}`, { method: "GET" });
+  if (!res.ok) throw new Error(`next lesson ${res.status}`);
+  return res.json();
+}
+export async function getTodayLesson(userId: string) {
+  const res = await authFetch(`${API}/v1/lessons/today?user_id=${encodeURIComponent(userId)}`, { method: "GET" });
+  if (!res.ok) throw new Error(`today lesson ${res.status}`);
+  return res.json();
+}
+export async function saveLearnOnboarding(userId: string, data: { age?: number; meds?: string; has_meter?: number }) {
+  const res = await authFetch(`${API}/v1/lessons/onboarding?user_id=${encodeURIComponent(userId)}`, { method: "POST", body: JSON.stringify(data) });
+  if (!res.ok) throw new Error(`learn onboarding ${res.status}: ${await res.text()}`);
+  return res.json();
+}

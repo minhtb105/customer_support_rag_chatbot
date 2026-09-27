@@ -34,6 +34,7 @@ export default function Header() {
 
   const nav = [...baseNav];
   if (user) nav.push({ href: "/my/reviews", label: "Lịch sử" });
+  if (user) nav.push({ href: "/settings", label: "Cài đặt" });
   if (isExpert || isAdmin) nav.push({ href: "/expert/queue", label: "Duyệt" + (unread ? ` (${unread})` : "") });
   if (isExpert || isAdmin) nav.push({ href: "/expert/patients", label: "Bệnh nhân" });
   if (isAdmin) {
@@ -47,7 +48,7 @@ export default function Header() {
   }
 
   // Grouped by role (calm nav): patient / doctor / admin
-  const patientNav = nav.filter((n) => ["/", "/tracker", "/previsit", "/api-playground", "/my/reviews"].includes(n.href));
+  const patientNav = nav.filter((n) => ["/", "/tracker", "/previsit", "/api-playground", "/my/reviews", "/settings"].includes(n.href));
   const doctorNav = nav.filter((n) => ["/expert/queue", "/expert/patients", "/monitor/guidelines"].includes(n.href));
   const adminNav = nav.filter((n) => n.href.startsWith("/admin"));
   const renderGroup = (items: { href: string; label: string }[]) =>

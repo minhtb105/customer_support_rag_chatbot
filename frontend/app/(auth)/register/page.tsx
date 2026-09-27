@@ -18,7 +18,7 @@ export default function RegisterPage() {
     setMsg("");
     try {
       await register({ username, email: email || undefined, password, full_name: fullName || undefined });
-      router.push("/");
+      router.push("/onboarding/voice");
     } catch (err: any) {
       setMsg(err.message);
     }

@@ -103,6 +103,24 @@ except Exception as e:
     labs_router = None  # type: ignore
     print(f"[labs] disabled: {e}")
 
+# Voice service (STT/TTS providers + daily missing-metrics check)
+try:
+    from src.voice.router import router as voice_router
+    VOICE_ENABLED = True
+except Exception as e:
+    VOICE_ENABLED = False
+    voice_router = None  # type: ignore
+    print(f"[voice] disabled: {e}")
+
+# Learn service (micro-curriculum 30 lessons + 7-day voice script)
+try:
+    from src.learn.router import router as learn_router
+    LEARN_ENABLED = True
+except Exception as e:
+    LEARN_ENABLED = False
+    learn_router = None  # type: ignore
+    print(f"[learn] disabled: {e}")
+
 # Vitals service (BP / respiratory / mood)
 try:
     from src.vitals.router import router as vitals_router
@@ -178,6 +196,10 @@ if LABS_ENABLED and labs_router is not None:
     app.include_router(labs_router)
 if VITALS_ENABLED and vitals_router is not None:
     app.include_router(vitals_router)
+if VOICE_ENABLED and voice_router is not None:
+    app.include_router(voice_router)
+if LEARN_ENABLED and learn_router is not None:
+    app.include_router(learn_router)
 
 # ---------- health ----------
 @app.get("/health", tags=["system"])
