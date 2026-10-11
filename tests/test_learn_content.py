@@ -10,8 +10,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 DATA = Path(__file__).resolve().parents[1] / "data" / "curriculum" / "lessons.json"
 
-EXPECTED_COUNTS = {"hieu-benh": 5, "dinh-duong": 10, "van-dong": 5,
-                   "thuoc-theo-doi": 5, "bien-chung": 3, "tam-ly": 2}
+EXPECTED_COUNTS = {"dinh-duong": 14, "tam-soat": 8, "van-dong": 6,
+                   "hieu-benh": 5, "thuoc-theo-doi": 5, "tam-ly": 4,
+                   "bien-chung": 3, "ngay-om": 3, "tiem-insulin": 3,
+                   "loi-song": 3, "thong-tin": 3, "nguoi-nha": 3}
 
 
 def _load():
@@ -22,7 +24,7 @@ def _load():
 class TestLearnContent:
     def test_count_and_groups(self):
         lessons = _load()
-        assert len(lessons) == 30
+        assert len(lessons) == 60
         counts: dict[str, int] = {}
         for l in lessons:
             counts[l["group"]] = counts.get(l["group"], 0) + 1
@@ -79,6 +81,8 @@ class TestLearnContent:
                            "ngung thuoc", "doi lieu"):
                 for m in re.finditer(re.escape(banned), blob):
                     before = blob[max(0, m.start() - 30):m.start()]
-                    assert re.search(r"(khong|dung|tuyet|cho|tuyet doi)[\w\s]*$",
+                    # phủ định được đứng sát hoặc cách tối đa 2 từ
+                    # ("không tự tăng liều", "đừng tự tăng liều")
+                    assert re.search(r"(khong|dung|tuyet|cho|tuyet doi)(\s+\w+){0,2}\s*$",
                                      before), \
                         f'{l["id"]}: unnegated dose-advice phrase: {banned}'

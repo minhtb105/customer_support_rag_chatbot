@@ -143,7 +143,6 @@ def get_vector_retriever(strategy: str = "structure"):
 # --- food linker: tên món trong query -> pin chunk nutrition lên đầu ---
 _FOOD_ALIASES: dict | None = None  # alias lower -> source_id
 
-
 def _load_food_aliases() -> dict:
     global _FOOD_ALIASES
     if _FOOD_ALIASES is not None:
@@ -170,6 +169,17 @@ def _load_food_aliases() -> dict:
     return m
 
 
+def _alias_in_query(alias: str, q_padded: str) -> bool:
+    """Match alias dạng cụm từ; alias ngắn (<=3 ký tự) phải khớp nguyên từ
+    (tránh 'na' match trong 'nam', 'vietnam')."""
+    import re as _re
+    if not alias:
+        return False
+    if len(alias) <= 3:
+        return _re.search(r"(?<!\w)" + _re.escape(alias) + r"(?!\w)", q_padded) is not None
+    return alias in q_padded
+
+
 def _promote_linked_foods(query: str, merged_list: list) -> None:
     """Đưa chunk món ăn được nhắc tên trong query lên đầu (stable)."""
     aliases = _load_food_aliases()
@@ -178,7 +188,7 @@ def _promote_linked_foods(query: str, merged_list: list) -> None:
     q = " " + (query or "").lower() + " "
     rank: dict = {}
     for alias, sid in aliases.items():
-        if alias and alias in q and sid not in rank:
+        if _alias_in_query(alias, q) and sid not in rank:
             rank[sid] = len(alias)  # alias dài match trước khi sắp xếp ổn định
     if not rank:
         return
@@ -195,7 +205,7 @@ def pin_linked_foods(query: str, contexts: list, top_n: int = 3) -> list:
     q = " " + (query or "").lower() + " "
     linked = [c for c in contexts
               if getattr(c, "source_id", None) in
-              {sid for alias, sid in aliases.items() if alias and alias in q}]
+              {sid for alias, sid in aliases.items() if _alias_in_query(alias, q)}]
     rest = [c for c in contexts if c not in linked]
     # dedupe theo source_id giữ thứ tự linked trước
     seen, out = set(), []

@@ -36,6 +36,17 @@ def _norm(s: str) -> str:
     return " ".join((s or "").strip().lower().split())
 
 
+def _alias_in_query(alias: str, q_padded: str) -> bool:
+    """Như retriever._alias_in_query (copy để khỏi kéo langchain vào endpoint
+    nhẹ): alias <=3 ký tự phải khớp nguyên từ."""
+    import re as _re
+    if not alias:
+        return False
+    if len(alias) <= 3:
+        return _re.search(r"(?<!\w)" + _re.escape(alias) + r"(?!\w)", q_padded) is not None
+    return alias in q_padded
+
+
 def lookup_foods(query: str, top_n: int = 3) -> List[Dict[str, Any]]:
     """Match tên VI/EN/alias với query, 2 chiều (tên trong query hoặc query trong tên).
 
@@ -55,9 +66,9 @@ def lookup_foods(query: str, top_n: int = 3) -> List[Dict[str, Any]]:
             nl = _norm(n)
             if len(nl) < 2:
                 continue
-            if nl in q and len(nl) > best:
+            if _alias_in_query(nl, q) and len(nl) > best:
                 best, hit = len(nl) * 2, nl
-            elif qtokens and all(t in nl for t in qtokens):
+            elif qtokens and all(_alias_in_query(t, f" {nl} ") for t in qtokens):
                 s = len(_norm(query))
                 if s > best:
                     best, hit = s, nl

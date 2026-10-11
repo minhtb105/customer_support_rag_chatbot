@@ -26,6 +26,28 @@ from src.shared.config import GLUCOSE_DB_PATH
 NOTES_POOL = ["ngủ ngon", "ăn bún chả", "hơi mệt"]
 
 
+def resolve_user_id(user: str) -> str:
+    """username -> auth UUID để khớp app (app đọc theo UUID từ token).
+
+    Không tìm thấy (VD syn_patient_*) thì giữ nguyên chuỗi cũ.
+    Fix bug: trước đây seed ghi user_id=username nên baseline vô hình trong UI.
+    """
+    try:
+        from src.auth.db import get_user_by_username
+    except ImportError:
+        try:
+            from auth.db import get_user_by_username  # type: ignore
+        except ImportError:
+            return user
+    try:
+        u = get_user_by_username(user)
+        if u and u.get("id"):
+            return u["id"]
+    except Exception:
+        pass
+    return user
+
+
 def existing_count(user_id: str) -> int:
     init_glucose_db()
     conn = sqlite3.connect(str(GLUCOSE_DB_PATH))
@@ -71,12 +93,27 @@ def main() -> None:
     p.add_argument("--seed", type=int, default=42)
     args = p.parse_args()
 
-    n_existing = existing_count(args.user)
+    uid = resolve_user_id(args.user)
+    n_existing = existing_count(uid)
     if args.dry_run:
         plan = build_plan(args.days, args.end_offset, args.seed)
-        print(f"[dry-run] user={args.user} existing={n_existing} "
+        print(f"[dry-run] user={args.user} (id={uid[:8]}) existing={n_existing} "
               f"would_insert={len(plan)} days={args.days} end_offset={args.end_offset}")
         return
+    if uid != args.user:
+        # dọn hàng username-keyed cũ (bug cũ: seed ghi nhầm user_id=username)
+        try:
+            conn0 = sqlite3.connect(str(GLUCOSE_DB_PATH))
+            old = conn0.execute(
+                "SELECT COUNT(*) FROM glucose_logs WHERE user_id=?", (args.user,)
+            ).fetchone()[0]
+            if old:
+                conn0.execute("DELETE FROM glucose_logs WHERE user_id=?", (args.user,))
+                conn0.commit()
+                print(f"Dọn {old} rows username-keyed cũ cho user={args.user}")
+            conn0.close()
+        except Exception:
+            pass
     if n_existing and not args.reset:
         print(f"User {args.user} already has {n_existing} rows — "
               f"re-run with --reset to wipe-and-seed (scoped to this user only).")
@@ -84,16 +121,16 @@ def main() -> None:
     if args.reset:
         init_glucose_db()
         conn = sqlite3.connect(str(GLUCOSE_DB_PATH))
-        conn.execute("DELETE FROM glucose_logs WHERE user_id=?", (args.user,))
+        conn.execute("DELETE FROM glucose_logs WHERE user_id=?", (uid,))
         conn.commit()
         conn.close()
-        print(f"Wiped {n_existing} rows for user={args.user}")
+        print(f"Wiped rows for user={args.user} (id={uid[:8]})")
     plan = build_plan(args.days, args.end_offset, args.seed)
     n = 0
     for idx, (ts, ctx, val) in enumerate(plan):
         # ~10% of records carry a short VI note (distinct times keep ORDER BY stable)
         notes = NOTES_POOL[(idx // 10) % len(NOTES_POOL)] if idx % 10 == 0 else None
-        add_log(user_id=args.user, value_mgdl=val, measured_at=ts, context=ctx, notes=notes)
+        add_log(user_id=uid, value_mgdl=val, measured_at=ts, context=ctx, notes=notes)
         n += 1
     print(f"Seeded {n} logs for user={args.user} "
           f"({args.days} days ending {args.end_offset}d ago, db={GLUCOSE_DB_PATH})")

@@ -41,7 +41,7 @@ class TestLearnApi:
         assert body["day1_date"] == datetime.now(VN).date().isoformat()
         r = client.get("/v1/lessons?user_id=" + user["id"], headers=h)
         assert r.status_code == 200
-        assert len(r.json()["lessons"]) == 30
+        assert len(r.json()["lessons"]) == 60
 
     def test_403_cross_user(self, client, make_user, iso_learn):
         victim, _ = make_user(role="user")

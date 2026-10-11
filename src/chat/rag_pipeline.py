@@ -42,6 +42,30 @@ except ImportError:
         looks_like_stats_question = query_gho_stats = None  # type: ignore
 
 
+# Tín hiệu câu guideline (đối trọng với stats): câu hỏi ngưỡng/chẩn đoán/BYT
+# thì giữ thứ tự rerank, KHÔNG đẩy tool stats lên đầu (hợp đồng test
+# test_e2e_guideline_question_hits_byt; chấp nhận heuristic từ khóa).
+_GUIDELINE_SIGNALS = (
+    "bo y te", "byt", "boyte", "bộ y tế",
+    "chan doan", "chuan doan", "chẩn đoán",
+    "huong dan", "hướng dẫn", "khuyen cao", "khuyến cáo",
+    "dieu tri", "điều trị", "phac do", "phác đồ",
+)
+
+
+def _order_tool_evidence(question: str, reranked: list) -> list:
+    """Tool output (gho_stats) đứng đầu cho câu hỏi số liệu thuần túy;
+    câu guideline giữ thứ tự rerank (stats snippet chỉ là context phụ)."""
+    ql = (question or "").lower()
+    if any(s in ql for s in _GUIDELINE_SIGNALS):
+        return reranked
+    try:
+        reranked.sort(key=lambda c: 0 if getattr(c, "source_id", "") == "gho_stats" else 1)
+    except Exception:
+        pass
+    return reranked
+
+
 def maybe_inject_gho_stats(question: str, contexts: List[ContextItem]) -> List[ContextItem]:
     """Buoc 1b Dual-Storage (dung chung non-stream + stream): cau hoi so lieu
     -> chen context tu SQLite readonly, khong RAG so. Fail-open (khong bao gio crash)."""
@@ -151,6 +175,8 @@ def rag_chat(question: str, top_k: int = TOP_K, user_id: str = "default_user", u
     s_rer = start_span("rerank_contexts", inputs={"num_candidates": len(contexts)})
     t3 = time.perf_counter()
     reranked: list[ContextItem] = rerank_contexts(question, contexts, top_n=3)
+    # Tool evidence đứng đầu cho câu số liệu; câu guideline giữ thứ tự rerank.
+    reranked = _order_tool_evidence(question, reranked)
     timings['rerank_contexts'] = time.perf_counter() - t3
     # store rerank scores as metadata and also add top chunks again
     try:
@@ -365,6 +391,7 @@ def rag_chat_stream(question: str, top_k: int = TOP_K, user_id: str = "default_u
     s_rer = start_span("rerank_contexts", inputs={"num_candidates": len(contexts)})
     t3 = time.perf_counter()
     reranked: list[ContextItem] = rerank_contexts(question, contexts, top_n=3)
+    reranked = _order_tool_evidence(question, reranked)
     timings['rerank_contexts'] = time.perf_counter() - t3
     try:
         _add(s_rer, trace_id, [c.model_dump() for c in reranked])
