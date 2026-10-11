@@ -38,6 +38,20 @@ export function formatRawJson(text: string): string {
   }
 }
 
+// m5: một định dạng giờ duy nhất cho UI (vi-VN, Asia/Ho_Chi_Minh).
+// Nhận ISO "2026-10-07T03:21" hoặc có giây/múi giờ; parse lỗi -> trả chuỗi gốc.
+export function fmtDT(iso: any): string {
+  if (!iso) return "—";
+  const s = String(iso);
+  const d = new Date(s.length <= 16 ? s + ":00" : s);
+  if (isNaN(d.getTime())) return s;
+  return d.toLocaleString("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+}
+
 export async function queryRag(query: string, top_k = 5, user_id = "default_user", language = "vi") {
   const res = await authFetch(`${API}/v1/query`, {
     method: "POST",
@@ -135,6 +149,15 @@ export async function generateSoapMarkdown(user_id: string, days = 14, disease: 
 export async function getHealth() {
   const res = await fetch(`${API}/v1/health`, { cache: "no-store" });
   if (!res.ok) throw new Error("health failed");
+  return res.json();
+}
+
+// P3: tra cứu dinh dưỡng cấu trúc (không LLM) — món ăn VN cho tiểu đường.
+export async function lookupNutrition(query: string, profile: "mild" | "severe" | "both" = "both", top_k = 3) {
+  const res = await authFetch(`${API}/v1/nutrition/lookup`, {
+    method: "POST", body: JSON.stringify({ query, profile, top_k }),
+  });
+  if (!res.ok) throw new Error(`lookup failed ${res.status}`);
   return res.json();
 }
 export async function getGuidelinesStatus() {

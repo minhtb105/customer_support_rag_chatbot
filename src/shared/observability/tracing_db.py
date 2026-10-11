@@ -1,5 +1,6 @@
 """Tracing DB — SQLite metadata/tracing.db"""
 from __future__ import annotations
+import os
 import sqlite3
 import uuid
 import json
@@ -9,11 +10,12 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 try:
-    from src.shared.config import BASE_DIR
+    from src.shared.config import TRACING_DB_PATH as _DEFAULT_TRACING_DB_PATH
 except ImportError:
-    from shared.config import BASE_DIR  # type: ignore
+    from shared.config import TRACING_DB_PATH as _DEFAULT_TRACING_DB_PATH  # type: ignore
 
-TRACING_DB_PATH = BASE_DIR / "metadata" / "tracing.db"
+# Module-namespace patchable + env-overridable (tests cách ly DB dev)
+TRACING_DB_PATH = Path(os.getenv("TRACING_DB_PATH", str(_DEFAULT_TRACING_DB_PATH)))
 
 def _conn() -> sqlite3.Connection:
     TRACING_DB_PATH.parent.mkdir(parents=True, exist_ok=True)

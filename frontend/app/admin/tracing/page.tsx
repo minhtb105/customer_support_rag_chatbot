@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { adminListTraces, API_BASE } from "@/lib/api";
+import { adminListTraces, API_BASE, fmtDT } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -53,7 +53,7 @@ export default function TracingListPage(){
                 <td className="p-2"><span className="rounded-full bg-slate-100 border px-2 py-0.5">{t.tone}</span></td>
                 <td className="p-2">{t.has_ragas ? <span className="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5">có</span> : <span className="rounded-full bg-amber-50 text-amber-700 border px-2 py-0.5">chưa</span>}{t.is_low_confidence? " ⚠️ low":""}</td>
                 <td className="p-2">{t.total_latency_ms ? `${Math.round(t.total_latency_ms)}ms` : "—"}</td>
-                <td className="p-2 text-[11px] text-slate-500">{t.created_at?.slice(0,16).replace("T"," ")}</td>
+                <td className="p-2 text-[11px] text-slate-500">{fmtDT(t.created_at)}</td>
               </tr>
             ))}
             {!traces.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">Không có trace (30 ngày)</td></tr>}

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { logGlucose, getGlucose, queryRag, saveGlucoseFollowup, getDoctorPatients } from "@/lib/api";
+import { logGlucose, getGlucose, queryRag, saveGlucoseFollowup, getDoctorPatients, fmtDT } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from "recharts";
 import Link from "next/link";
@@ -8,6 +8,7 @@ import { useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
 import { useIsDark } from "@/components/ThemeToggle";
 import VoiceWidget from "@/components/VoiceWidget";
+import NutritionLookup from "@/components/NutritionLookup";
 
 const contexts = [
   { value: "fasting", label: "Đói (fasting)" },
@@ -235,7 +236,7 @@ const MyTracker = (p: any) => {
         <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Biểu đồ 14 ngày</h3>{!isCritical && !readOnly && <button data-testid="trend-explain" onClick={explainTrend} className="rounded-full bg-slate-900 px-4 py-2 text-xs text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900 min-h-[44px]">Diễn giải xu hướng (RAG)</button>}</div>
         <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-slate-500 dark:text-slate-400"><span>● Bình thường</span><span className="text-red-600">● Bất thường (spike/trend)</span><span>Ngưỡng 70 / 126 / 200</span></div>
         <div className="mt-4 h-56">
-          {chartData.length? <ResponsiveContainer width="100%" height="100%"><LineChart data={chartData}><CartesianGrid strokeDasharray="3 3" stroke={gridStroke} /><XAxis dataKey="time" tick={{fontSize:10}} stroke={gridStroke} /><YAxis domain={[40,320]} tick={{fontSize:10}} stroke={gridStroke} /><Tooltip contentStyle={dark?{backgroundColor:"#0f172a",borderColor:"#334155",color:"#e2e8f0"}:undefined} /><ReferenceLine y={126} stroke="#f59e0b" strokeDasharray="4 4" label={{value:"126",fontSize:10}} /><ReferenceLine y={200} stroke="#ef4444" strokeDasharray="4 4" label={{value:"200",fontSize:10}} /><ReferenceLine y={70} stroke="#f97316" strokeDasharray="4 4" /><Line type="monotone" dataKey="value" stroke={lineStroke} strokeWidth={2} dot={dot} /></LineChart></ResponsiveContainer> : <div className="flex h-full items-center justify-center text-sm text-slate-500">Chưa có dữ liệu — nhập chỉ số đầu tiên ở khung bên trái.</div>}
+          {chartData.length? <ResponsiveContainer width="100%" height="100%"><LineChart data={chartData}><CartesianGrid strokeDasharray="3 3" stroke={gridStroke} /><XAxis dataKey="time" tick={{fontSize:10}} interval="preserveStartEnd" minTickGap={40} stroke={gridStroke} /><YAxis domain={[40,320]} tick={{fontSize:10}} stroke={gridStroke} /><Tooltip contentStyle={dark?{backgroundColor:"#0f172a",borderColor:"#334155",color:"#e2e8f0"}:undefined} /><ReferenceLine y={126} stroke="#f59e0b" strokeDasharray="4 4" label={{value:"126",fontSize:10}} /><ReferenceLine y={200} stroke="#ef4444" strokeDasharray="4 4" label={{value:"200",fontSize:10}} /><ReferenceLine y={70} stroke="#f97316" strokeDasharray="4 4" /><Line type="monotone" dataKey="value" stroke={lineStroke} strokeWidth={2} dot={dot} /></LineChart></ResponsiveContainer> : <div className="flex h-full items-center justify-center text-sm text-slate-500">Chưa có dữ liệu — nhập chỉ số đầu tiên ở khung bên trái.</div>}
         </div>
         {data?.should_escalate && <div className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-800">⚠️ Khuyến nghị liên hệ bác sĩ</div>}
         {trend && <div className="mt-4 rounded-lg border bg-slate-50 p-4 text-xs leading-relaxed whitespace-pre-wrap">{trend}</div>}
@@ -246,7 +247,7 @@ const MyTracker = (p: any) => {
           {data?.logs?.length? data.logs.map((l:any)=>{
             const hl = String(l.id)===String(highlightId);
             const an = isAnom(l);
-            return <div key={l.id} id={`log-${l.id}`} className={`flex items-center justify-between gap-2 px-3 py-2 text-sm overflow-x-auto ${hl?"bg-yellow-100 ring-2 ring-yellow-400 dark:bg-yellow-950":""} ${an?"border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-950/40":""}`}><div className="min-w-0"><div className="font-mono text-[11px]">#{l.id} · {l.measured_at.slice(0,16).replace("T"," ")} · {l.value_mgdl} mg/dL</div><div className="text-slate-500 dark:text-slate-400 truncate">{l.context} {l.notes? `· ${l.notes}`:""}</div></div><StatusBadge level={l.classification} text={l.classification} /></div>;
+            return <div key={l.id} id={`log-${l.id}`} className={`flex items-center justify-between gap-2 px-3 py-2 text-sm overflow-x-auto ${hl?"bg-yellow-100 ring-2 ring-yellow-400 dark:bg-yellow-950":""} ${an?"border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-950/40":""}`}><div className="min-w-0"><div className="font-mono text-[11px]">#{l.id} · {fmtDT(l.measured_at)} · {l.value_mgdl} mg/dL</div><div className="text-slate-500 dark:text-slate-400 truncate">{l.context} {l.notes? `· ${l.notes}`:""}</div></div><StatusBadge level={l.classification} text={l.classification} /></div>;
           }): <div className="p-6 text-center text-sm text-slate-500">Chưa có log — dữ liệu sẽ hiện sau lần lưu đầu tiên.</div>}
         </div>
       </div>
@@ -334,6 +335,7 @@ export default function TrackerPage(){
       {!readOnly && (
       <>
       <FqgChat isCritical={isCritical} fqg={fqg} effectiveId={effectiveId} lastLogId={lastLogId} />
+      <NutritionLookup />
       <VoiceWidget userId={effectiveId} />
       <TriageWidget effectiveId={effectiveId} />
       </>

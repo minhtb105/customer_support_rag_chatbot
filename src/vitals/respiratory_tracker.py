@@ -5,15 +5,22 @@ Stores peak flow, GOLD, CAT, inhaler steps via BaseTracker.
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
 try:
-    from src.shared.config import RESPIRATORY_THRESHOLDS, VITALS_DB_PATH
+    from src.shared.config import RESPIRATORY_THRESHOLDS
+    from src.shared.config import VITALS_DB_PATH as _DEFAULT_VITALS_DB_PATH
     from src.vitals.base_tracker import get_conn as _base_get_conn, init_table, fetch_logs, classification_counts
 except ImportError:  # pragma: no cover
-    from shared.config import RESPIRATORY_THRESHOLDS, VITALS_DB_PATH  # type: ignore
+    from shared.config import RESPIRATORY_THRESHOLDS  # type: ignore
+    from shared.config import VITALS_DB_PATH as _DEFAULT_VITALS_DB_PATH  # type: ignore
     from vitals.base_tracker import get_conn as _base_get_conn, init_table, fetch_logs, classification_counts  # type: ignore
+
+# Module-namespace patchable + env-overridable (tests cách ly DB dev)
+VITALS_DB_PATH = Path(os.getenv("VITALS_DB_PATH", str(_DEFAULT_VITALS_DB_PATH)))
 
 def _get_conn():
     return _base_get_conn(VITALS_DB_PATH)

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { adminGetTrace, adminTriggerRagas, parseFailedMetrics, formatRawJson } from "@/lib/api";
+import { adminGetTrace, adminTriggerRagas, parseFailedMetrics, formatRawJson, fmtDT } from "@/lib/api";
 import { useParams } from "next/navigation";
 
 export default function TraceDetailPage(){
@@ -9,15 +9,20 @@ export default function TraceDetailPage(){
   const [data,setData]=useState<any>(null);
   const [msg,setMsg]=useState("");
   const [loading,setLoading]=useState(false);
+  const [expired,setExpired]=useState(false);
   const load=async()=>{
-    try{ const d=await adminGetTrace(traceId); setData(d);}catch(e:any){ setMsg(e.message); }
+    try{ const d=await adminGetTrace(traceId); setData(d); setExpired(false); }catch(e:any){ setMsg(e.message); }
   };
-  useEffect(()=>{ load(); },[traceId]);
+  useEffect(()=>{
+    load();
+    const id=setTimeout(()=>{ setExpired((v)=>{ if(!v) setMsg((m)=>m || "Tải quá 10s — có thể trace lớn hoặc backend chậm. Bấm Tải lại."); return true; }); },10000);
+    return ()=>clearTimeout(id);
+  },[traceId]);
   const trigger=async()=>{
     setLoading(true);
     try{ await adminTriggerRagas(traceId); await load(); setMsg("Đã tính RAGAS"); }catch(e:any){ setMsg(e.message); }finally{ setLoading(false); }
   };
-  if(!data) return <div className="p-6 text-sm space-y-2"><div>{msg || "Đang tải trace..."}</div><button onClick={load} className="rounded-full border px-4 py-2 text-xs hover:bg-slate-50 min-h-[44px]">Tải lại</button></div>;
+  if(!data) return <div className="p-6 text-sm space-y-2"><div>{msg || "Đang tải trace..."}</div>{!data && !msg && <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200" />}{!data && !msg && <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200" />}<button onClick={load} className="rounded-full border px-4 py-2 text-xs hover:bg-slate-50 min-h-[44px]">Tải lại</button></div>;
   const { trace, spans, chunks, ragas, review } = data;
   const MEMORY_DATASETS = ["short_term_memory", "episodic_memory", "long_term_memory"];
   const memoryRows = (chunks || []).filter((c: any) => MEMORY_DATASETS.includes(c.dataset));
@@ -25,7 +30,7 @@ export default function TraceDetailPage(){
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
-        <div className="text-xs text-slate-500">Trace {trace.id} · {trace.created_at?.slice(0,19).replace("T"," ")} · user {trace.username || trace.user_id.slice(0,8)}</div>
+        <div className="text-xs text-slate-500">Trace {trace.id} · {fmtDT(trace.created_at)} · user {trace.username || trace.user_id.slice(0,8)}</div>
         <h1 className="text-sm font-bold mt-1">{trace.query}</h1>
         <div className="mt-2 text-xs">Tone <span className="rounded-full bg-slate-100 border px-2 py-0.5">{trace.tone}</span> · Prompt {trace.prompt_version} · Model {trace.model} · Embedding {trace.embedding_model} · TopK {trace.top_k} · {trace.total_latency_ms? Math.round(trace.total_latency_ms)+"ms":""}</div>
         <div className="mt-3 rounded-lg bg-slate-50 border p-3 text-sm whitespace-pre-wrap">{trace.answer || "—"}</div>
@@ -46,7 +51,7 @@ export default function TraceDetailPage(){
             <Metric label="fluency" v={ragas.fluency} />
           </div>
         ) : <div className="mt-2 text-xs text-slate-500">Chưa có RAGAS — bấm “Tính RAGAS” (admin on-demand) để đánh giá 5 metrics, tốn 1 LLM call.</div>}
-        {ragas && <div className="mt-2 text-xs">Failed: {parseFailedMetrics(ragas.failed_metrics).join(", ") || "none"} · Confidence {ragas.confidence} · {ragas.evaluated_at?.slice(0,19)}</div>}
+        {ragas && <div className="mt-2 text-xs">Failed: {parseFailedMetrics(ragas.failed_metrics).join(", ") || "none"} · Confidence {ragas.confidence} · {fmtDT(ragas.evaluated_at)}</div>}
         {ragas?.raw_json && <details className="mt-2 text-xs"><summary>Raw</summary><pre className="mt-1 bg-slate-900 text-slate-100 p-3 rounded overflow-auto">{formatRawJson(ragas.raw_json)}</pre></details>}
       </div>
 

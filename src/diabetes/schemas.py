@@ -51,7 +51,6 @@ class SoapSection(BaseModel):
     assessment: str
     plan: str
 
-
 class SoapResponse(BaseModel):
     user_id: str
     generated_at: datetime
@@ -60,3 +59,17 @@ class SoapResponse(BaseModel):
     stats: Dict[str, Any]  # GlucoseStats | BpStats | RespiratoryStats | MoodStats (generic)
     pdf_url: Optional[str] = None  # nếu có export
     disease: str = "diabetes"
+
+
+class NutritionLookupRequest(BaseModel):
+    query: str = Field(..., min_length=2, description="Tên món ăn/đồ uống (VI/EN)")
+    profile: Literal["mild", "severe", "both"] = Field(
+        "both", description="mild=kiểm soát tốt, severe=kiểm soát kém")
+    top_k: int = Field(3, ge=1, le=5)
+
+
+class NutritionLookupResponse(BaseModel):
+    query: str
+    profile: str
+    matches: List[Dict[str, Any]]
+    count: int

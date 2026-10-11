@@ -36,7 +36,7 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold">Quản trị User & Expert</h1>
-      <p className="text-xs text-slate-600">Admin tạo/duyệt expert (doctor/pharmacist/specialist). Tự tạo admin qua CLI: python scripts/seed_admin.py</p>
+        <p className="text-xs text-slate-600">Admin tạo/duyệt expert (doctor/pharmacist/specialist).</p>
       {msg && <div className="rounded-lg border bg-amber-50 p-2 text-xs">{msg}</div>}
       <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Tạo expert mới (admin)</h2>
@@ -65,11 +65,12 @@ export default function AdminUsersPage() {
                       <option value="user">user</option><option value="doctor">doctor</option><option value="pharmacist">pharmacist</option><option value="specialist">specialist</option><option value="admin">admin</option>
                     </select>
                   </td>
-                  <td>{u.is_verified? "✅":"❌"}</td>
-                  <td>{u.is_active? "●":"○"}</td>
+                  <td>{u.is_verified? "Đã duyệt":"Chưa duyệt"}</td>
+                  <td>{u.is_active? "Hoạt động":"Đã khóa"}</td>
                   <td className="flex gap-1 py-1">
-                    {["doctor","pharmacist","specialist"].includes(u.role) && !u.is_verified && <button onClick={()=>verify(u)} className="rounded bg-emerald-600 text-white px-2 py-1">Verify</button>}
-                    <button onClick={()=>toggleVerify(u)} className="rounded border px-2 py-1">{u.is_verified? "Unverify":"Verify"}</button>
+                    {["doctor","pharmacist","specialist"].includes(u.role) && !u.is_verified && <button onClick={()=>verify(u)} className="rounded bg-emerald-600 text-white px-2 py-1">Duyệt</button>}
+                    <button onClick={()=>toggleVerify(u)} className="rounded border px-2 py-1">{u.is_verified? "Bỏ duyệt":"Duyệt"}</button>
+                    <button onClick={async ()=>{ try{ await adminUpdateUser(u.id, { is_active: !u.is_active }); load(); }catch(e:any){ setMsg(e.message);} }} className="rounded border px-2 py-1">{u.is_active? "Khóa":"Mở"}</button>
                   </td>
                 </tr>
               ))}

@@ -9,15 +9,22 @@ Hướng A — Trợ lý tuân thủ tự theo dõi đường huyết.
 
 from __future__ import annotations
 
+import os
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 
 try:
-    from src.shared.config import GLUCOSE_THRESHOLDS_MGDL, GLUCOSE_DB_PATH
+    from src.shared.config import GLUCOSE_THRESHOLDS_MGDL
+    from src.shared.config import GLUCOSE_DB_PATH as _DEFAULT_GLUCOSE_DB_PATH
     from src.vitals.base_tracker import get_conn as _base_get_conn, init_table, fetch_logs, classification_counts, calc_streak, calc_logs_per_week
 except ImportError:  # pragma: no cover
-    from shared.config import GLUCOSE_THRESHOLDS_MGDL, GLUCOSE_DB_PATH  # type: ignore
+    from shared.config import GLUCOSE_THRESHOLDS_MGDL  # type: ignore
+    from shared.config import GLUCOSE_DB_PATH as _DEFAULT_GLUCOSE_DB_PATH  # type: ignore
     from vitals.base_tracker import get_conn as _base_get_conn, init_table, fetch_logs, classification_counts, calc_streak, calc_logs_per_week  # type: ignore
+
+# Module-namespace patchable + env-overridable (tests cách ly DB dev)
+GLUCOSE_DB_PATH = Path(os.getenv("GLUCOSE_DB_PATH", str(_DEFAULT_GLUCOSE_DB_PATH)))
 
 # ---------- DB ----------
 

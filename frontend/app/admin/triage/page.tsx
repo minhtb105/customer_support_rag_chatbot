@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
-import { adminListTriageEvents } from "@/lib/api";
+import { adminListTriageEvents, fmtDT } from "@/lib/api";
 
 export default function TriageMonitorPage() {
   const { user, loading, isAdmin } = useAuth();
@@ -65,7 +65,7 @@ export default function TriageMonitorPage() {
                 {hot && <span className="rounded-full bg-red-600 px-2 py-0.5 font-bold text-white">🚨 KHẨN CẤP</span>}
                 {complex && <span className="rounded-full border border-amber-400 bg-amber-100 px-2 py-0.5 text-amber-800">Biến chứng ĐTĐ</span>}
                 {e.solver_used && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{e.solver_used}</span>}
-                <span className="text-slate-500">{e.ts?.slice(0, 19)?.replace("T", " ") || ""}</span>
+                <span className="text-slate-500">{fmtDT(e.ts)}</span>
               </div>
               <div className="mt-1 whitespace-pre-wrap">{e.excerpt || ""}</div>
             </div>

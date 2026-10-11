@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { listAlerts, decideAlert, triggerSafetyCheck } from "@/lib/api";
+import { listAlerts, decideAlert, triggerSafetyCheck, fmtDT } from "@/lib/api";
 
 type AItem = {
   id: string;
@@ -110,7 +110,7 @@ export default function AlertsPage() {
                     <div className="flex items-center gap-2">
                       <span className={`rounded-full border px-2 py-1 text-[11px] font-medium ${sevColor(it.severity)}`}>{it.severity}</span>
                       <span className="text-xs text-slate-500">
-                        {it.source} · {it.alert_type} · {it.fetched_at.slice(0, 16).replace("T", " ")}
+                        {it.source} · {it.alert_type} · {fmtDT(it.fetched_at)}
                       </span>
                     </div>
                     <div className="mt-2 text-sm font-semibold">{it.drug_name ? `${it.drug_name} — ` : ""}{it.alert_title}</div>

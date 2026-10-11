@@ -11,6 +11,7 @@ try:
     from src.diabetes.schemas import (
         GlucoseLogCreate, GlucoseLogOut, GlucoseStats,
         SoapGenerateRequest, SoapResponse, SoapSection,
+        NutritionLookupRequest, NutritionLookupResponse,
     )
     from src.diabetes.glucose_tracker import add_log, get_logs, get_stats, should_escalate_to_doctor
     from src.diabetes.soap_summary import generate_soap, soap_to_markdown
@@ -21,6 +22,7 @@ except ImportError:
     from diabetes.schemas import (  # type: ignore
         GlucoseLogCreate, GlucoseLogOut, GlucoseStats,
         SoapGenerateRequest, SoapResponse, SoapSection,
+        NutritionLookupRequest, NutritionLookupResponse,
     )
     from diabetes.glucose_tracker import add_log, get_logs, get_stats, should_escalate_to_doctor  # type: ignore
     from diabetes.soap_summary import generate_soap, soap_to_markdown  # type: ignore
@@ -173,3 +175,18 @@ def generate_soap_markdown(req: SoapGenerateRequest, current_user=Depends(get_cu
     data = generate_soap(user_id, days=req.days, language=req.language, disease=req.disease)
     md = soap_to_markdown(data)
     return md
+
+@router.post("/nutrition/lookup", response_model=NutritionLookupResponse)
+def nutrition_lookup(req: NutritionLookupRequest, current_user=Depends(get_current_user)):
+    """P3 — tra cứu dinh dưỡng cấu trúc theo tên món (không LLM, deterministic)."""
+    try:
+        try:
+            from src.diabetes.nutrition_lookup import lookup_foods, to_result
+        except ImportError:
+            from diabetes.nutrition_lookup import lookup_foods, to_result  # type: ignore
+        items = lookup_foods(req.query, top_n=req.top_k)
+        matches = [to_result(it, profile=req.profile) for it in items]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    return NutritionLookupResponse(query=req.query, profile=req.profile,
+                                   matches=matches, count=len(matches))

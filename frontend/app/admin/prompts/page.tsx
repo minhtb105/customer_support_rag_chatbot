@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { adminListPrompts, adminGetPromptTone, adminCreatePromptDraft, adminApprovePrompt, adminRejectPrompt, adminDryRun } from "@/lib/api";
+import { adminListPrompts, adminGetPromptTone, adminCreatePromptDraft, adminApprovePrompt, adminRejectPrompt, adminDryRun, fmtDT } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 
@@ -55,7 +55,7 @@ export default function PromptsPage(){
           <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
             <h2 className="text-sm font-semibold">Active — {tone} ({data.active?.version})</h2>
             <pre className="mt-2 bg-slate-50 border p-3 rounded text-xs whitespace-pre-wrap max-h-64 overflow-auto">{data.active?.text || "—"}</pre>
-            <div className="text-[11px] text-slate-500">Updated {data.active?.created_at?.slice(0,19)} by {data.active?.created_by?.slice(0,8)}</div>
+            <div className="text-[11px] text-slate-500">Updated {fmtDT(data.active?.created_at)} by {data.active?.created_by?.slice(0,8)}</div>
           </div>
           <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
             <h2 className="text-sm font-semibold">Tạo Draft (chỉnh sửa)</h2>
@@ -93,7 +93,7 @@ export default function PromptsPage(){
               <tr key={v.id} className="border-b">
                 <td className="p-2 font-mono">{v.version} {v.is_active? "● active":""}</td>
                 <td className="p-2"><span className={`rounded-full px-2 py-0.5 border text-[11px] ${v.status==="active"?"bg-emerald-50 border-emerald-200": v.status==="pending_approval"?"bg-amber-50 border-amber-200":"bg-slate-100"}`}>{v.status}</span></td>
-                <td className="p-2 text-[11px]">{v.created_at?.slice(0,19).replace("T"," ")}</td>
+                <td className="p-2 text-[11px]">{fmtDT(v.created_at)}</td>
                 <td className="p-2 flex gap-1">
                   {v.status==="pending_approval" && <><button onClick={()=>approve(v.version)} className="rounded bg-emerald-600 text-white px-2 py-1">Approve (2nd step)</button><button onClick={()=>reject(v.version)} className="rounded border px-2 py-1">Reject</button></>}
                   {v.status==="archived" && <button onClick={()=>approve(v.version)} className="rounded border px-2 py-1">Rollback → active</button>}

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth";
-import { listGuidelines, decideGuideline, triggerGuidelineCheck } from "@/lib/api";
+import { listGuidelines, decideGuideline, triggerGuidelineCheck, fmtDT } from "@/lib/api";
 
 type GItem = {
   id: string;
@@ -77,7 +77,7 @@ export default function GuidelinesPage() {
           Làm mới
         </button>
         <button onClick={trigger} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white hover:bg-black">
-          Kiểm tra ngay (HEAD)
+          Kiểm tra ngay
         </button>
         <span className="py-2 text-xs text-slate-500">Tổng: {total}</span>
       </div>
@@ -99,7 +99,7 @@ export default function GuidelinesPage() {
                       [{it.source}] {it.title}
                     </div>
                     <div className="text-xs text-slate-500">
-                      v: {it.version_label || "—"} · {it.status} · {it.fetched_at.slice(0, 16).replace("T", " ")} · {it.id.slice(0, 8)}
+                      v: {it.version_label || "—"} · {it.status} · {fmtDT(it.fetched_at)} · {it.id.slice(0, 8)}
                     </div>
                     {summary?.tom_tat_tieng_viet && <div className="mt-2 rounded-lg bg-blue-50 p-3 text-xs text-blue-900">{summary.tom_tat_tieng_viet}</div>}
                     {it.sha256 && <div className="mt-1 text-[11px] font-mono text-slate-500">sha256 {it.sha256.slice(0, 16)}…</div>}

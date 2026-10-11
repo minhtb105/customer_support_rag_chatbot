@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getReviews, getReviewDetail, decideReview, API_BASE, parseFailedMetrics } from "@/lib/api";
+import { getReviews, getReviewDetail, decideReview, API_BASE, parseFailedMetrics, fmtDT } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 
@@ -59,7 +59,7 @@ export default function ExpertQueuePage() {
             {reviews.length===0 && <div className="text-xs text-slate-500">Không có yêu cầu pending</div>}
             {reviews.map((r:any)=>(
               <div key={r.id} onClick={()=>open(r.id)} className={`rounded-xl border p-3 cursor-pointer hover:bg-slate-50 ${selected?.id===r.id? "bg-blue-50 border-blue-200":"bg-white"}`}>
-                <div className="text-xs font-mono text-slate-500">{r.routed_role} · {r.status} · {r.created_at?.slice(0,16)}</div>
+                <div className="text-xs font-mono text-slate-500">{r.routed_role} · {r.status} · {fmtDT(r.created_at)}</div>
                 <div className="text-sm font-medium line-clamp-2">{r.query}</div>
                 <div className="text-xs text-slate-600 line-clamp-2">{r.draft_answer?.slice(0,120)}</div>
                 <div className="text-[11px] text-slate-500">Failed: {parseFailedMetrics(r.failed_metrics).join(", ") || JSON.stringify(r.evaluation?.failed_metrics)}</div>
@@ -92,7 +92,7 @@ export default function ExpertQueuePage() {
                 <div className="rounded-lg border p-2 text-xs bg-white max-h-60 overflow-auto">
                   <div>Requester: {selected.requester?.username} ({selected.requester?.role})</div>
                   <div className="mt-1">Glucose: {(selected.vitals?.glucose_logs||[]).length} logs · avg {selected.vitals?.glucose_stats?.avg_mgdl}</div>
-                  {(selected.vitals?.glucose_logs||[]).slice(0,3).map((l:any)=><div key={l.id} className="text-[11px] text-slate-600">{l.measured_at?.slice(0,16)} {l.value_mgdl} mg/dL {l.classification}</div>)}
+                  {(selected.vitals?.glucose_logs||[]).slice(0,3).map((l:any)=><div key={l.id} className="text-[11px] text-slate-600">{fmtDT(l.measured_at)} {l.value_mgdl} mg/dL {l.classification}</div>)}
                   <div className="mt-1">BP: {(selected.vitals?.bp_logs||[]).length} logs</div>
                   <div>Mood: {(selected.vitals?.mood_logs||[]).length} logs</div>
                   <div>Respiratory: {(selected.vitals?.respiratory_logs||[]).length} logs</div>

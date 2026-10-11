@@ -54,3 +54,18 @@ def test_validator_catches_bad_sugars():
     }
     errs = validate(bad)
     assert any("sugars_g" in e for e in errs), errs
+
+
+def test_lookup_finds_foods_both_directions():
+    from src.diabetes.nutrition_lookup import lookup_foods, to_result
+    # tên dài trong query ngắn + query ngắn trong tên dài
+    hits = lookup_foods("Người tiểu đường ăn bao nhiêu ổi được?")
+    assert hits and hits[0]["food"]["food_id"] == "FRU001"
+    hits = lookup_foods("trà sữa")
+    assert hits and hits[0]["food"]["food_id"] == "BEV001"
+    hits = lookup_foods("mắc cọp")
+    assert {h["food"]["food_id"] for h in hits} >= {"FRU037"}
+    assert lookup_foods("xyzabc") == []
+    r = to_result(lookup_foods("ổi")[0], profile="severe")
+    assert r["recommendation"]["severe"]["serving_g"] == 70.0
+    assert "mild" not in r["recommendation"]

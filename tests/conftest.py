@@ -8,7 +8,12 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture(scope="session")
 def client():
-    """FastAPI TestClient with temp DB isolation for glucose + vitals + auth (4 diseases)."""
+    """FastAPI TestClient với cách ly DB đầy đủ (không rò rỉ vào DB dev).
+
+    Mẹo cũ (gán cfg.X_DB_PATH) vô tác dụng vì các module đã from-import
+    giá trị tại import-time. Ở đây patch thẳng module namespace TRƯỚC khi
+    import app — đúng pattern module-namespace patchable của repo.
+    """
     import src.shared.config as cfg
     tmp_glucose = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
     tmp_glucose.close()
@@ -16,12 +21,45 @@ def client():
     tmp_auth.close()
     tmp_vitals = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
     tmp_vitals.close()
-    original_glucose = cfg.GLUCOSE_DB_PATH
-    original_auth = cfg.AUTH_DB_PATH
-    original_vitals = cfg.VITALS_DB_PATH
-    cfg.GLUCOSE_DB_PATH = Path(tmp_glucose.name)
-    cfg.AUTH_DB_PATH = Path(tmp_auth.name)
-    cfg.VITALS_DB_PATH = Path(tmp_vitals.name)
+    tmp_monitoring = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+    tmp_monitoring.close()
+    tmp_tracing = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+    tmp_tracing.close()
+    tmp_paths = {
+        "glucose": Path(tmp_glucose.name), "auth": Path(tmp_auth.name),
+        "vitals": Path(tmp_vitals.name), "monitoring": Path(tmp_monitoring.name),
+        "tracing": Path(tmp_tracing.name),
+    }
+    # 1. cfg attrs (cho module nào đọc cfg.X lúc call-time)
+    original_cfg = {}
+    for attr, key in (("GLUCOSE_DB_PATH", "glucose"), ("AUTH_DB_PATH", "auth"),
+                      ("VITALS_DB_PATH", "vitals")):
+        original_cfg[attr] = getattr(cfg, attr)
+        setattr(cfg, attr, tmp_paths[key])
+    # 2. module namespaces (cho module đã from-import lúc import-time) —
+    #    PHẢI patch trước khi import app.
+    patched = []
+    try:
+        import src.auth.db as _auth_db
+        import src.diabetes.glucose_tracker as _gt
+        import src.vitals.bp_tracker as _bp
+        import src.vitals.respiratory_tracker as _resp
+        import src.vitals.mood_tracker as _mood
+        import src.monitors.db as _mon
+        import src.shared.observability.tracing_db as _trace
+        for mod, attr, key in (
+            (_auth_db, "AUTH_DB_PATH", "auth"),
+            (_gt, "GLUCOSE_DB_PATH", "glucose"),
+            (_bp, "VITALS_DB_PATH", "vitals"),
+            (_resp, "VITALS_DB_PATH", "vitals"),
+            (_mood, "VITALS_DB_PATH", "vitals"),
+            (_mon, "MONITORING_DB_PATH", "monitoring"),
+            (_trace, "TRACING_DB_PATH", "tracing"),
+        ):
+            patched.append((mod, attr, getattr(mod, attr, None)))
+            setattr(mod, attr, tmp_paths[key])
+    except ImportError:
+        pass
     # Re-init DBs (glucose legacy + unified vitals + auth)
     try:
         from src.diabetes.glucose_tracker import init_glucose_db
@@ -48,18 +86,24 @@ def client():
         init_auth_db()
     except Exception:
         pass
+    try:
+        from src.shared.observability.tracing_db import init_tracing_db
+        init_tracing_db()
+    except Exception:
+        pass
     from src.api.main import app
     with TestClient(app) as c:
         yield c
-    cfg.GLUCOSE_DB_PATH = original_glucose
-    cfg.AUTH_DB_PATH = original_auth
-    cfg.VITALS_DB_PATH = original_vitals
-    try:
-        os.unlink(tmp_glucose.name)
-        os.unlink(tmp_auth.name)
-        os.unlink(tmp_vitals.name)
-    except Exception:
-        pass
+    for attr, val in original_cfg.items():
+        setattr(cfg, attr, val)
+    for mod, attr, val in patched:
+        if val is not None:
+            setattr(mod, attr, val)
+    for p in tmp_paths.values():
+        try:
+            os.unlink(p)
+        except Exception:
+            pass
 
 @pytest.fixture
 def temp_user():

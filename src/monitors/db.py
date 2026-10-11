@@ -1,5 +1,6 @@
 """Monitoring DB — SQLite metadata/monitoring.db"""
 from __future__ import annotations
+import os
 import sqlite3
 import uuid
 import json
@@ -8,11 +9,12 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 try:
-    from src.shared.config import BASE_DIR
+    from src.shared.config import MONITORING_DB_PATH as _DEFAULT_MONITORING_DB_PATH
 except ImportError:
-    from shared.config import BASE_DIR  # type: ignore
+    from shared.config import MONITORING_DB_PATH as _DEFAULT_MONITORING_DB_PATH  # type: ignore
 
-MONITORING_DB_PATH = BASE_DIR / "metadata" / "monitoring.db"
+# Module-namespace patchable + env-overridable (tests cách ly DB dev)
+MONITORING_DB_PATH = Path(os.getenv("MONITORING_DB_PATH", str(_DEFAULT_MONITORING_DB_PATH)))
 
 # Allowlist for crawler SSRF protection
 ALLOWED_MONITOR_DOMAINS = {

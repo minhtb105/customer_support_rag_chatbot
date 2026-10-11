@@ -1,5 +1,6 @@
 """Auth DB — SQLite metadata/auth.db : users, refresh_tokens, notifications"""
 from __future__ import annotations
+import os
 import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -7,9 +8,12 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 try:
-    from src.shared.config import AUTH_DB_PATH
+    from src.shared.config import AUTH_DB_PATH as _DEFAULT_AUTH_DB_PATH
 except ImportError:
-    from shared.config import AUTH_DB_PATH  # type: ignore
+    from shared.config import AUTH_DB_PATH as _DEFAULT_AUTH_DB_PATH  # type: ignore
+
+# Module-namespace patchable + env-overridable (tests cách ly DB dev, xem labs/store.py)
+AUTH_DB_PATH = Path(os.getenv("AUTH_DB_PATH", str(_DEFAULT_AUTH_DB_PATH)))
 
 def _get_conn() -> sqlite3.Connection:
     AUTH_DB_PATH.parent.mkdir(parents=True, exist_ok=True)

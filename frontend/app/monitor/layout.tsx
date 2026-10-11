@@ -1,22 +1,23 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth";
 
 export default function MonitorLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const { user } = useAuth();
+  // m8: tab Cảnh báo thuốc chỉ hiện với pharmacist/admin (role khác vào là dead-end 403).
+  const canAlerts = !!user && (user.role === "pharmacist" || user.role === "admin");
   const tabs = [
     { href: "/monitor/guidelines", label: "Guidelines" },
-    { href: "/monitor/alerts", label: "Cảnh báo thuốc" },
+    ...(canAlerts ? [{ href: "/monitor/alerts", label: "Cảnh báo thuốc" }] : []),
   ];
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold">Giám sát — Guidelines & An toàn thuốc</h1>
         <p className="text-sm text-slate-600">
-          Agent tìm → tóm tắt VI → gắn cờ pending_review → chuyên gia duyệt → mới vào corpus (kèm version/ngày). Xem{" "}
-          <Link href="/docs/monitoring" className="underline">
-            docs/monitoring.md
-          </Link>
+          Agent tìm → tóm tắt VI → gắn cờ pending_review → chuyên gia duyệt → mới vào corpus (kèm version/ngày). Chi tiết kỹ thuật trong tài liệu monitoring của repo.
         </p>
       </div>
       <div className="flex gap-2">

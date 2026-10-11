@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { adminListCollections, adminListCollectionChunks, API_BASE } from "@/lib/api";
+import { adminListCollections, adminListCollectionChunks, API_BASE, fmtDT } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -91,7 +91,7 @@ export default function ChunksPage(){
                 <td className="p-2">{c.chunk_index ?? "—"}</td>
                 <td className="p-2 max-w-[380px]"><div className="line-clamp-3 whitespace-pre-wrap">{expanded[c.id] ? c.content_full : c.content_snippet}</div>
                   <button onClick={()=>toggle(c.id)} className="text-blue-700 hover:underline">{expanded[c.id] ? "Thu gọn" : "Expand"}</button></td>
-                <td className="p-2 text-[11px] text-slate-500">{c.updated_at ? String(c.updated_at).slice(0,16).replace("T"," ") : "—"}</td>
+                <td className="p-2 text-[11px] text-slate-500">{fmtDT(c.updated_at)}</td>
               </tr>
             ))}
             {!chunks.length && <tr><td colSpan={7} className="p-6 text-center text-slate-500">Không có chunk</td></tr>}
