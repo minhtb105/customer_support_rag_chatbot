@@ -24,3 +24,7 @@ src/embeddings/
 frontend/tsconfig.tsbuildinfo
 # Runtime triage event logs (never commit)
 logs/triage_events.jsonl
+logs/
+# Backend test + runtime logs (never commit)
+test-results/
+src/logs/
