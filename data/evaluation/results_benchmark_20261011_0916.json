@@ -1,0 +1,310 @@
+{
+  "meta": {
+    "timestamp": "2026-10-11T08:50:46.747215",
+    "k": 5,
+    "dataset": "retrieval_evaluation.json",
+    "n_questions": 20,
+    "strategies": [
+      "structure",
+      "sliding",
+      "semantic",
+      "hybrid_section_semantic"
+    ]
+  },
+  "b123_retrieval": {
+    "vector_only/structure": {
+      "Recall@K": 0.325,
+      "Hit@K": 0.4,
+      "MRR": 0.4
+    },
+    "vector_only/sliding": {
+      "Recall@K": 0.0,
+      "Hit@K": 0.0,
+      "MRR": 0.0
+    },
+    "vector_only/semantic": {
+      "Recall@K": 0.0,
+      "Hit@K": 0.0,
+      "MRR": 0.0
+    },
+    "vector_only/hybrid_section_semantic": {
+      "Recall@K": 0.0,
+      "Hit@K": 0.0,
+      "MRR": 0.0
+    },
+    "bm25_only/structure": {
+      "Recall@K": 0.3,
+      "Hit@K": 0.4,
+      "MRR": 0.3333
+    },
+    "hybrid/structure": {
+      "Recall@K": 0.325,
+      "Hit@K": 0.4,
+      "MRR": 0.4
+    },
+    "hybrid_reranked/structure": {
+      "Recall@K": 0.325,
+      "Hit@K": 0.4,
+      "MRR": 0.4,
+      "avg_latency_s": 8.714
+    }
+  },
+  "b4_latency": {
+    "retrieval_only": {
+      "n": 10,
+      "mean_s": 1.804,
+      "p50_s": 1.794,
+      "p95_s": 2.005,
+      "min_s": 1.673,
+      "max_s": 2.005
+    },
+    "e2e_fresh": {
+      "n": 10,
+      "mean_s": 29.317,
+      "p50_s": 34.889,
+      "p95_s": 39.766,
+      "min_s": 15.325,
+      "max_s": 39.766
+    },
+    "e2e_cache_hit": {
+      "n": 0,
+      "mean_s": null,
+      "p50_s": null,
+      "p95_s": null,
+      "min_s": null,
+      "max_s": null
+    },
+    "note": "E2E includes Groq/OpenAI LLM call; measured on CPU client."
+  },
+  "b5_judge": {
+    "summary": {
+      "n_scored": 20,
+      "avg_Faithfulness": 4.6,
+      "avg_Contextual_Precision": 4.45,
+      "avg_Contextual_Recall": 3.95,
+      "avg_Fluency": 4.95
+    },
+    "per_question": [
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved context from the World Health Organization's global recommendations on physical activity for health.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant and specific to the user question, providing detailed recommendations for adults aged 18-64 years old.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses relevant context to answer the question, but could have included more information on the benefits of physical activity for adults.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, making it suitable for a general audience.",
+        "Overall_Comment": "The chatbot's answer provides accurate and relevant information on the recommended amount of moderate-intensity physical activity for adults, but could benefit from more comprehensive contextual recall and consideration of additional health benefits."
+      },
+      {
+        "Faithfulness": 0,
+        "Faithfulness_comment": "The answer does not contain any information about WHO recommendations for physical activity for children under 5, as it is not present in the retrieved contexts.",
+        "Contextual_Precision": 0,
+        "Contextual_Precision_comment": "The retrieved contexts are not relevant to the user question, as they are about physical activity recommendations for different age groups, but not specifically for children under 5.",
+        "Contextual_Recall": 0,
+        "Contextual_Recall_comment": "The answer does not sufficiently use all relevant context needed to answer the question completely, as there is no information about physical activity recommendations for children under 5 in the retrieved contexts.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read.",
+        "Overall_Comment": "The chatbot's answer is not satisfactory, as it does not provide any information about WHO recommendations for physical activity for children under 5, despite having relevant contexts. The answer is fluent, but lacks faithfulness, contextual precision, and contextual recall."
+      },
+      {
+        "Faithfulness": 2,
+        "Faithfulness_comment": "The answer contains fabricated information about sleep durations for different age groups, which is not present in the retrieved context.",
+        "Contextual_Precision": 4,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant to the user question, but it does not directly address the question about sleep durations.",
+        "Contextual_Recall": 3,
+        "Contextual_Recall_comment": "The answer does not sufficiently use all relevant context needed to answer the question completely, as it only mentions the importance of sleep and circadian rhythms without providing specific recommended sleep durations.",
+        "Fluency": 4,
+        "Fluency_comment": "The answer is natural and grammatically correct, but it could be improved by providing a clear and concise summary of the relevant information.",
+        "Overall_Comment": "The chatbot's answer is partially accurate, but it fails to provide the correct information about sleep durations for different age groups, which is a critical aspect of the question. The answer could be improved by more carefully evaluating the retrieved context and providing a more comprehensive response."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved context and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant and specific to the user question, providing a clear understanding of the relationship between insufficient sleep and cardiovascular health.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses most of the relevant context needed to answer the question, but could have included more specific details about the mechanisms underlying the relationship between sleep and cardiovascular health.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, making it a pleasure to understand and follow.",
+        "Overall_Comment": "The chatbot provides a clear and accurate answer to the question, leveraging relevant context to explain the relationship between insufficient sleep and cardiovascular health. While it could have included more specific details, the answer is well-written and easy to understand."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the recommended maximum daily sodium intake for adults, as stated by the World Health Organization.",
+        "Contextual_Precision": 4,
+        "Contextual_Precision_comment": "The retrieved context is relevant to the question, but some of the sources provided are not directly related to the topic of sodium intake.",
+        "Contextual_Recall": 5,
+        "Contextual_Recall_comment": "The answer sufficiently uses all relevant context needed to answer the question completely, including the recommended intake and the source of the information.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, with clear and concise language.",
+        "Overall_Comment": "The chatbot provides an accurate and informative answer to the question about the recommended maximum daily sodium intake for adults, with a good balance of relevance and recall from the retrieved context."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the principles of sustainable healthy diets without any fabricated or incorrect information.",
+        "Contextual_Precision": 4,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant to the user question, but some of the sources are not directly related to the topic of sustainable healthy diets.",
+        "Contextual_Recall": 5,
+        "Contextual_Recall_comment": "The answer sufficiently uses all relevant context needed to answer the question completely, including the importance of limiting fat intake, eating enough fibre-rich foods, and promoting healthy dietary practices from an early age.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, with clear and concise language.",
+        "Overall_Comment": "The chatbot provides a comprehensive and accurate answer to the question about sustainable healthy diets, with a good balance of relevant context and clear language. However, some of the retrieved sources could be more directly related to the topic."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved context and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant and specific to the user question, providing detailed information on the relationship between food-based dietary guidelines and chronic diseases.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses most of the relevant context needed to answer the question, but could have included more specific examples or statistics to support the claims.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is well-structured, easy to read, and free of grammatical errors, making it a pleasure to read.",
+        "Overall_Comment": "The chatbot provides a comprehensive and accurate answer to the user's question, effectively utilizing the retrieved context to provide a clear and concise explanation of the relationship between food-based dietary guidelines and chronic diseases."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the definition and aim of SDG 6 without introducing any incorrect information.",
+        "Contextual_Precision": 4,
+        "Contextual_Precision_comment": "The retrieved context is somewhat relevant to the question, but it is not directly related to SDG 6, and the answer could have been more precise with more targeted context.",
+        "Contextual_Recall": 3,
+        "Contextual_Recall_comment": "The answer does not sufficiently use all relevant context needed to answer the question completely, as it only provides a brief definition of SDG 6 without discussing its broader implications or related topics.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, making it a well-written response.",
+        "Overall_Comment": "The chatbot provides a clear and accurate definition of SDG 6, but could improve by providing more targeted and relevant context to support its answer and provide a more comprehensive understanding of the topic."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved context and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant and specific to the user question, providing detailed information on the impact of safe drinking water on public health.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses most of the relevant context needed to answer the question, but could have included more specific examples or statistics to support its claims.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, making it a pleasure to follow and understand.",
+        "Overall_Comment": "The chatbot provides a comprehensive and accurate answer to the question, leveraging relevant context from the retrieved sources to support its claims. While it could have included more specific examples or statistics, the answer is well-written and easy to follow."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved contexts and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved contexts are highly relevant and specific to the user question, providing a comprehensive overview of cost-effective interventions for mental health at the community level.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses most of the relevant context needed to answer the question, but could have included more specific examples or case studies to support the interventions mentioned.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is well-structured, easy to read, and free of grammatical errors, making it a pleasure to read and understand.",
+        "Overall_Comment": "The answer provides a thorough and accurate overview of cost-effective interventions for mental health at the community level, drawing from a range of relevant sources and contexts. While it could benefit from more specific examples or case studies, the answer is well-written and easy to follow."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the WHO guidance on mental health during the COVID-19 pandemic, without any fabricated or incorrect information.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant and specific to the user question, covering various aspects of WHO guidance on mental health during the pandemic.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses most relevant context needed to answer the question, but could have included more specific examples or details from the retrieved context.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, with clear and concise language.",
+        "Overall_Comment": "The chatbot's answer provides a comprehensive and accurate summary of WHO guidance on mental health during the COVID-19 pandemic, with high faithfulness, contextual precision, and fluency."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately represents the retrieved context and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant and specific to the user question, providing detailed information about mhGAP.",
+        "Contextual_Recall": 5,
+        "Contextual_Recall_comment": "The answer sufficiently uses all relevant context needed to answer the question completely, covering the definition, objectives, and scope of mhGAP.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, making it suitable for a general audience.",
+        "Overall_Comment": "The chatbot's answer is well-informed, accurate, and easy to understand, providing a comprehensive overview of mhGAP and its objectives."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved contexts and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved contexts are highly relevant and specific to the user question, providing detailed information on lifestyle factors that reduce the risk of cognitive decline.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses most of the relevant context needed to answer the question, but could have included more information on the importance of social engagement and stress management.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, with clear and concise language.",
+        "Overall_Comment": "The chatbot provides a comprehensive and accurate answer to the user question, drawing on relevant and specific contexts from the retrieved sources. While it could have included more information on certain aspects, the answer is well-structured and easy to understand."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately represents the retrieved context and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant and specific to the user question, providing detailed information on heart rate variability and its measurement.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses most of the relevant context needed to answer the question, but could have included more information on the practical applications of HRV measurement.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, with clear explanations and concise definitions.",
+        "Overall_Comment": "The chatbot's answer provides a comprehensive and accurate overview of heart rate variability and its measurement, with a clear and concise explanation of the concepts and terminology. The retrieved context is highly relevant and specific to the user question, and the answer is well-written and easy to understand."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved context and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant and specific to the user question, providing a comprehensive understanding of the relationship between heart rate variability and stress.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses most of the relevant context needed to answer the question, but could have included more specific examples or studies to further support the relationship between HRV and stress.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, making it accessible to a general audience.",
+        "Overall_Comment": "The chatbot provides a clear and accurate explanation of the relationship between heart rate variability and stress, leveraging a comprehensive set of retrieved contexts to support its claims. While it could have included more specific examples or studies, the answer is well-written and easy to understand."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved context and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant and specific to the user question, providing detailed information on the relationship between physical activity and mental health.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses most of the relevant context needed to answer the question, but could have included more specific examples or studies to support the claims.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, making it a pleasure to follow and understand.",
+        "Overall_Comment": "The chatbot provides a comprehensive and accurate answer that effectively utilizes the retrieved context to explain the relationship between physical activity and mental health, with minor room for improvement in contextual recall."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved contexts and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved contexts are highly relevant and specific to the user question, providing detailed information on diet and physical activity in reducing noncommunicable diseases.",
+        "Contextual_Recall": 5,
+        "Contextual_Recall_comment": "The answer sufficiently uses all relevant context needed to answer the question completely, covering key dietary and physical activity recommendations for different age groups.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, making it suitable for a general audience.",
+        "Overall_Comment": "The chatbot's answer provides a comprehensive and accurate response to the user question, effectively utilizing the retrieved contexts to provide detailed information on diet and physical activity in reducing noncommunicable diseases."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved context and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 4,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant to the user question, but some of the information is not directly related to the question about water systems and ecosystem sustainability.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses all relevant context needed to answer the question, but some important details about the relationship between water systems and ecosystem sustainability are not fully explored.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, with clear and concise language.",
+        "Overall_Comment": "The answer provides a comprehensive overview of the relationship between water systems and ecosystem sustainability, but could benefit from more precise and relevant context to fully address the user question."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved context and does not contain any fabricated or incorrect information.",
+        "Contextual_Precision": 4,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant to the question, but some of the sources are not directly related to the topic of safe sanitation.",
+        "Contextual_Recall": 4,
+        "Contextual_Recall_comment": "The answer sufficiently uses all relevant context needed to answer the question, but some important details are missing.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read.",
+        "Overall_Comment": "The answer provides a comprehensive overview of the global challenges in achieving safe sanitation, but could benefit from more precise and relevant context."
+      },
+      {
+        "Faithfulness": 5,
+        "Faithfulness_comment": "The answer accurately reflects the retrieved context from the WHO publications, providing a comprehensive list of integrated strategies for improving public health outcomes.",
+        "Contextual_Precision": 5,
+        "Contextual_Precision_comment": "The retrieved context is highly relevant and specific to the user question, providing detailed information on the WHO's recommendations for public health outcomes.",
+        "Contextual_Recall": 5,
+        "Contextual_Recall_comment": "The answer sufficiently uses all relevant context needed to answer the question completely, covering various WHO publications and guidelines.",
+        "Fluency": 5,
+        "Fluency_comment": "The answer is natural, grammatically correct, and easy to read, with clear and concise language.",
+        "Overall_Comment": "The chatbot's answer demonstrates excellent faithfulness, contextual precision, and recall, providing a comprehensive and accurate response to the user question. The answer is also well-written and easy to read, making it a valuable resource for users seeking information on WHO's recommendations for public health outcomes."
+      }
+    ]
+  }
+}

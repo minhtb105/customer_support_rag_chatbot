@@ -55,7 +55,7 @@ export default function Header() {
     items.map((item) => {
       const active = pathname === item.href;
       return (
-        <Link key={item.href} href={item.href} className={`rounded-full px-3 py-1.5 text-sm transition min-h-[44px] inline-flex items-center ${active ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}>
+        <Link key={item.href} href={item.href} className={`rounded-full px-3 py-1.5 text-sm transition min-h-[44px] inline-flex items-center whitespace-nowrap shrink-0 ${active ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}>
           {item.label}
         </Link>
       );
@@ -71,18 +71,18 @@ export default function Header() {
             <div className="text-[11px] text-slate-500 dark:text-slate-400">WHO • ADA • BYT</div>
           </div>
         </Link>
-        <nav className="flex items-center gap-1" aria-label="Điều hướng chính">
+        <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-2" aria-label="Điều hướng chính">
           {renderGroup(patientNav)}
-          {doctorNav.length > 0 && <span aria-hidden className="mx-1 h-5 w-px bg-slate-200 dark:bg-slate-700" />}
+          {doctorNav.length > 0 && <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-slate-200 dark:bg-slate-700" />}
           {renderGroup(doctorNav)}
-          {adminNav.length > 0 && <span aria-hidden className="mx-1 h-5 w-px bg-slate-200 dark:bg-slate-700" />}
+          {adminNav.length > 0 && <span aria-hidden className="mx-1 h-5 w-px shrink-0 bg-slate-200 dark:bg-slate-700" />}
           {renderGroup(adminNav)}
         </nav>
         <div className="flex items-center gap-2 text-xs">
           <ThemeToggle />
           {loading ? <span className="text-slate-400">…</span> : user ? (
             <>
-              <span className="hidden sm:inline rounded-full bg-slate-100 px-2 py-1 border">{user.username} <span className="text-slate-500">· {user.role}</span></span>
+              <span className="hidden shrink-0 rounded-full bg-slate-100 px-2 py-1 border xl:inline">{user.username} <span className="text-slate-500">· {user.role}</span></span>
               {unread > 0 && <span className="rounded-full bg-red-500 text-white px-2 py-1">{unread}</span>}
               <button onClick={async () => { await logout(); router.push("/login"); }} className="rounded-full bg-slate-900 text-white px-3 py-1.5 hover:bg-black">Đăng xuất</button>
             </>

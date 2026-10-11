@@ -1,5 +1,5 @@
 "use client";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { getLesson, submitLessonQuiz } from "@/lib/api";
@@ -10,7 +10,7 @@ const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // Chunked playback (F3): split on sentence boundaries, pack to <=480 chars
 // so no single /speak call (truncate [:500]) ever cuts mid-sentence.
-export function splitScript(text: string): string[] {
+function splitScript(text: string): string[] {
   const t = (text || "").trim();
   if (!t) return [];
   const parts = t.match(/[^.!?…]+[.!?…]+/g);
@@ -38,8 +38,8 @@ export function splitScript(text: string): string[] {
   return chunks;
 }
 
-export default function LessonPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function LessonPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const { user, loading } = useAuth();
   const [lesson, setLesson] = useState<any>(null);
   const [picked, setPicked] = useState<number | null>(null);

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { adminGetTrace, adminTriggerRagas } from "@/lib/api";
+import { adminGetTrace, adminTriggerRagas, parseFailedMetrics, formatRawJson } from "@/lib/api";
 import { useParams } from "next/navigation";
 
 export default function TraceDetailPage(){
@@ -17,7 +17,7 @@ export default function TraceDetailPage(){
     setLoading(true);
     try{ await adminTriggerRagas(traceId); await load(); setMsg("Đã tính RAGAS"); }catch(e:any){ setMsg(e.message); }finally{ setLoading(false); }
   };
-  if(!data) return <div className="p-6 text-sm">{msg || "Đang tải trace..."}</div>;
+  if(!data) return <div className="p-6 text-sm space-y-2"><div>{msg || "Đang tải trace..."}</div><button onClick={load} className="rounded-full border px-4 py-2 text-xs hover:bg-slate-50 min-h-[44px]">Tải lại</button></div>;
   const { trace, spans, chunks, ragas, review } = data;
   const MEMORY_DATASETS = ["short_term_memory", "episodic_memory", "long_term_memory"];
   const memoryRows = (chunks || []).filter((c: any) => MEMORY_DATASETS.includes(c.dataset));
@@ -46,8 +46,8 @@ export default function TraceDetailPage(){
             <Metric label="fluency" v={ragas.fluency} />
           </div>
         ) : <div className="mt-2 text-xs text-slate-500">Chưa có RAGAS — bấm “Tính RAGAS” (admin on-demand) để đánh giá 5 metrics, tốn 1 LLM call.</div>}
-        {ragas && <div className="mt-2 text-xs">Failed: {(JSON.parse(ragas.failed_metrics||"[]")).join(", ") || "none"} · Confidence {ragas.confidence} · {ragas.evaluated_at?.slice(0,19)}</div>}
-        {ragas?.raw_json && <details className="mt-2 text-xs"><summary>Raw</summary><pre className="mt-1 bg-slate-900 text-slate-100 p-3 rounded overflow-auto">{JSON.stringify(JSON.parse(ragas.raw_json), null,2)}</pre></details>}
+        {ragas && <div className="mt-2 text-xs">Failed: {parseFailedMetrics(ragas.failed_metrics).join(", ") || "none"} · Confidence {ragas.confidence} · {ragas.evaluated_at?.slice(0,19)}</div>}
+        {ragas?.raw_json && <details className="mt-2 text-xs"><summary>Raw</summary><pre className="mt-1 bg-slate-900 text-slate-100 p-3 rounded overflow-auto">{formatRawJson(ragas.raw_json)}</pre></details>}
       </div>
 
       <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">

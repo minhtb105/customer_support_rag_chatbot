@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getReviews, getReviewDetail, decideReview, API_BASE } from "@/lib/api";
+import { getReviews, getReviewDetail, decideReview, API_BASE, parseFailedMetrics } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 
@@ -62,7 +62,7 @@ export default function ExpertQueuePage() {
                 <div className="text-xs font-mono text-slate-500">{r.routed_role} · {r.status} · {r.created_at?.slice(0,16)}</div>
                 <div className="text-sm font-medium line-clamp-2">{r.query}</div>
                 <div className="text-xs text-slate-600 line-clamp-2">{r.draft_answer?.slice(0,120)}</div>
-                <div className="text-[11px] text-slate-500">Failed: {(r.failed_metrics? JSON.parse(r.failed_metrics):[]).join(", ") || JSON.stringify(r.evaluation?.failed_metrics)}</div>
+                <div className="text-[11px] text-slate-500">Failed: {parseFailedMetrics(r.failed_metrics).join(", ") || JSON.stringify(r.evaluation?.failed_metrics)}</div>
                 <div className="text-[11px] text-slate-500">Requester: {r.requester_id?.slice(0,8)}</div>
               </div>
             ))}

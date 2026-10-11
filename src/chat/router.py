@@ -29,6 +29,8 @@ router = APIRouter(prefix=API_PREFIX, tags=["chat"])
 
 @router.post("/query")
 def rag_query(req: QueryRequest, current_user=Depends(get_current_user)):  # noqa: C901
+    if not req.query or not req.query.strip():
+        raise HTTPException(status_code=422, detail="query must be non-empty")
     # Safeguard gate (diabetes scope): hard early-return BEFORE any RAG/LLM call.
     try:
         try:
@@ -80,7 +82,7 @@ def rag_query(req: QueryRequest, current_user=Depends(get_current_user)):  # noq
     try:
         # pass username for tracing
         username = current_user.get("username") if isinstance(current_user, dict) else None
-        result = rag_chat(req.query, top_k=req.top_k, user_id=effective_user_id, username=username)
+        result = rag_chat(req.query, top_k=req.top_k, user_id=effective_user_id, username=username, language=req.language)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"RAG error: {e}") from e
     raw = result.get("raw_answer", {})
@@ -222,7 +224,7 @@ def rag_query_stream(req: QueryRequest, current_user=Depends(get_current_user)):
 
     def event_generator():
         try:
-            for evt in rag_chat_stream(req.query, top_k=req.top_k, user_id=effective_user_id, username=username):
+            for evt in rag_chat_stream(req.query, top_k=req.top_k, user_id=effective_user_id, username=username, language=req.language):
                 ev = evt.get("event", "message")
                 data = evt.get("data", {})
                 # SSE wire format

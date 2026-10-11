@@ -42,6 +42,12 @@ except ImportError:
 def _build_llm_client():
     if LLM_PROVIDER == "groq":
         return OpenAI(api_key=GROQ_API_KEY, base_url=GROQ_BASE_URL)
+    if LLM_PROVIDER == "nvidia":
+        try:
+            from shared.nvidia import RotatingNvidiaClient
+        except ImportError:
+            from src.shared.nvidia import RotatingNvidiaClient  # type: ignore
+        return RotatingNvidiaClient()
     return OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
 
 
@@ -50,6 +56,17 @@ def _normalize_model(model: str) -> str:
     if LLM_PROVIDER != "groq" and m.startswith("openai/"):
         return m.split("/", 1)[1]
     return m
+
+
+# Hard Vietnamese instruction (M1): the base prompts already say "Respond in
+# Vietnamese", but the model still answered in English on patient paths.
+# Belt + suspenders: strengthen system + pin the user-prompt tail (models
+# follow the tail better). Wiring-tested, not compliance-guaranteed.
+VI_SYS_SUFFIX = (
+    "\nQUAN TRỌNG: Toàn bộ câu trả lời (mọi câu, mọi citation) phải bằng tiếng Việt. "
+    "Không dùng tiếng Anh trừ thuật ngữ y khoa không có bản dịch chuẩn."
+)
+VI_USER_SUFFIX = "\nTrả lời HOÀN TOÀN bằng tiếng Việt."
 
 
 client = _build_llm_client()
@@ -101,12 +118,37 @@ def rerank_contexts(query: str, contexts: List[ContextItem], top_n=3):
         for ctx in contexts:
             if ctx.score is None:
                 ctx.score = 0.0
+        try:
+            from chat.retriever import pin_linked_foods as _pin
+        except ImportError:
+            try:
+                from src.chat.retriever import pin_linked_foods as _pin  # type: ignore
+            except ImportError:
+                _pin = None  # type: ignore
+        if _pin is not None:
+            try:
+                return _pin(query, list(contexts), top_n)
+            except Exception:
+                pass
         return contexts[:top_n]
     pairs = [(query, ctx.content) for ctx in contexts]
     scores = reranker.predict(pairs)
     for i, ctx in enumerate(contexts):
         ctx.score = float(scores[i])
     ranked = sorted(contexts, key=lambda x: x.score, reverse=True)
+    # food-linker: chunk món ăn được nhắc tên phải lọt top_n
+    try:
+        from chat.retriever import pin_linked_foods
+    except ImportError:
+        try:
+            from src.chat.retriever import pin_linked_foods  # type: ignore
+        except ImportError:
+            pin_linked_foods = None  # type: ignore
+    if pin_linked_foods is not None:
+        try:
+            return pin_linked_foods(query, ranked, top_n)
+        except Exception:
+            pass
     return ranked[:top_n]
 
 DIABETES_KEYWORDS = [
@@ -154,6 +196,9 @@ def generate_answer(input_data: LLMInput, model=DEFAULT_MODEL) -> LLMOutput:
     tone, temperature, max_tokens = detect_tone_and_temp(query)
     system_prompt = get_system_prompt(tone)
     user_prompt = (f"Context: \n{context_text}\n\n" f"Question: {query}\n\n" "Answer clearly and concisely")
+    if getattr(input_data, "language", "vi") == "vi":
+        system_prompt += VI_SYS_SUFFIX
+        user_prompt += VI_USER_SUFFIX
     # Per-user memory is injected via LLMInput.contexts by rag_pipeline._build_memory_context
     # (short/episodic/long-term) — no global history to avoid cross-user leak
     messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
@@ -193,6 +238,9 @@ def generate_answer_stream(input_data: LLMInput, model=DEFAULT_MODEL):
     tone, temperature, max_tokens = detect_tone_and_temp(query)
     system_prompt = get_system_prompt(tone)
     user_prompt = (f"Context: \n{context_text}\n\n" f"Question: {query}\n\n" "Answer clearly and concisely")
+    if getattr(input_data, "language", "vi") == "vi":
+        system_prompt += VI_SYS_SUFFIX
+        user_prompt += VI_USER_SUFFIX
     messages = [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
     resolved_model = _normalize_model(model)
     prompt_version = short_hash(system_prompt)

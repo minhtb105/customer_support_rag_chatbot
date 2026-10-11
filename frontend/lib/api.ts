@@ -13,10 +13,35 @@ async function authFetch(url: string, opts: RequestInit = {}) {
   return res;
 }
 
-export async function queryRag(query: string, top_k = 5, user_id = "default_user") {
+// DB stores failed_metrics as JSON in most rows, but some legacy rows hold
+// a Python-repr string — parse defensively so one bad row never crashes a list.
+export function parseFailedMetrics(v: any): string[] {
+  if (!v) return [];
+  if (Array.isArray(v)) return v.map(String);
+  if (typeof v === "string") {
+    try {
+      const p = JSON.parse(v);
+      return Array.isArray(p) ? p.map(String) : [String(p)];
+    } catch {
+      return v.replace(/^\[|\]$/g, "").split(",").map((s) => s.replace(/^['"\s]+|['"\s]+$/g, "")).filter(Boolean);
+    }
+  }
+  return [String(v)];
+}
+
+// Pretty-print a JSON blob, or return the raw text when it is not valid JSON.
+export function formatRawJson(text: string): string {
+  try {
+    return JSON.stringify(JSON.parse(text), null, 2);
+  } catch {
+    return String(text);
+  }
+}
+
+export async function queryRag(query: string, top_k = 5, user_id = "default_user", language = "vi") {
   const res = await authFetch(`${API}/v1/query`, {
     method: "POST",
-    body: JSON.stringify({ query, top_k, user_id, include_audit: true }),
+    body: JSON.stringify({ query, top_k, user_id, language, include_audit: true }),
   });
   if (!res.ok) {
     const txt = await res.text();

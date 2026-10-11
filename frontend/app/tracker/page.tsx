@@ -211,7 +211,7 @@ const TriageWidget = (p: any) => {
 };
 
 const MyTracker = (p: any) => {
-  const { data, highlightId, trend, explainTrend, isCritical, anomalySet, hasServerIds } = p;
+  const { data, highlightId, trend, explainTrend, isCritical, anomalySet, hasServerIds, readOnly } = p;
   const dark = useIsDark();
   const chartData = data?.logs ? [...data.logs].reverse().map((l: any)=>({ id: l.id, time: l.measured_at.slice(5,16).replace("T"," "), value: l.value_mgdl })) : [];
   const isAnom = (l: any) => hasServerIds ? anomalySet.has(Number(l.id)) : (l.value_mgdl > 250 || l.value_mgdl < 70);
@@ -232,7 +232,7 @@ const MyTracker = (p: any) => {
         </div>
       )}
       <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
-        <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Biểu đồ 14 ngày</h3>{!isCritical && <button data-testid="trend-explain" onClick={explainTrend} className="rounded-full bg-slate-900 px-4 py-2 text-xs text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900 min-h-[44px]">Diễn giải xu hướng (RAG)</button>}</div>
+        <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Biểu đồ 14 ngày</h3>{!isCritical && !readOnly && <button data-testid="trend-explain" onClick={explainTrend} className="rounded-full bg-slate-900 px-4 py-2 text-xs text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900 min-h-[44px]">Diễn giải xu hướng (RAG)</button>}</div>
         <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-slate-500 dark:text-slate-400"><span>● Bình thường</span><span className="text-red-600">● Bất thường (spike/trend)</span><span>Ngưỡng 70 / 126 / 200</span></div>
         <div className="mt-4 h-56">
           {chartData.length? <ResponsiveContainer width="100%" height="100%"><LineChart data={chartData}><CartesianGrid strokeDasharray="3 3" stroke={gridStroke} /><XAxis dataKey="time" tick={{fontSize:10}} stroke={gridStroke} /><YAxis domain={[40,320]} tick={{fontSize:10}} stroke={gridStroke} /><Tooltip contentStyle={dark?{backgroundColor:"#0f172a",borderColor:"#334155",color:"#e2e8f0"}:undefined} /><ReferenceLine y={126} stroke="#f59e0b" strokeDasharray="4 4" label={{value:"126",fontSize:10}} /><ReferenceLine y={200} stroke="#ef4444" strokeDasharray="4 4" label={{value:"200",fontSize:10}} /><ReferenceLine y={70} stroke="#f97316" strokeDasharray="4 4" /><Line type="monotone" dataKey="value" stroke={lineStroke} strokeWidth={2} dot={dot} /></LineChart></ResponsiveContainer> : <div className="flex h-full items-center justify-center text-sm text-slate-500">Chưa có dữ liệu — nhập chỉ số đầu tiên ở khung bên trái.</div>}
@@ -255,7 +255,7 @@ const MyTracker = (p: any) => {
 };
 
 export default function TrackerPage(){
-  const { user } = useAuth();
+  const { user, isExpert, isAdmin } = useAuth();
   const [value,setValue]=useState("110");
   const [context,setContext]=useState("fasting");
   const [notes,setNotes]=useState("");
@@ -269,14 +269,20 @@ export default function TrackerPage(){
   const effectiveId = user?.id || "";
   const searchParams = useSearchParams();
   const highlightId = searchParams?.get("highlight");
+  // Staff read-only patient view: ?patient=<user_id> only takes effect for expert/admin.
+  // Patients ignore the param entirely (fail-closed); the API 403s cross-user reads anyway.
+  const staffView = isExpert || isAdmin;
+  const viewPatient = staffView ? (searchParams?.get("patient") || "") : "";
+  const readOnly = !!viewPatient;
+  const fetchId = viewPatient || effectiveId;
   const isCritical = anomaly?.type === "spike";
   const anomalySet = new Set(((Array.isArray(data?.anomaly_ids) ? data.anomaly_ids : []) as any[]).map((x)=>Number(x)));
   const hasServerIds = Array.isArray(data?.anomaly_ids);
   const refresh = async ()=>{
-    if(!effectiveId) return;
-    try{ const d=await getGlucose(effectiveId,50,14); setData(d);}catch(e:any){ setMsg(e.message); }
+    if(!fetchId) return;
+    try{ const d=await getGlucose(fetchId,50,14); setData(d);}catch(e:any){ setMsg(e.message); }
   };
-  useEffect(()=>{ if(effectiveId) refresh(); },[effectiveId]);
+  useEffect(()=>{ if(fetchId) refresh(); },[fetchId]);
 
   const submit = async ()=>{
     if(!user){ setMsg("Cần đăng nhập"); return; }
@@ -303,14 +309,24 @@ export default function TrackerPage(){
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-xl font-bold">Hướng A — Nhật ký đường huyết</h1><p className="text-sm text-slate-600">User: {user.username} ({user.role}) · KPI ≥3 lần/tuần. Chỉ escalate khi critical hoặc 3×high.</p></div>
+      {readOnly && (
+        <div className="rounded-xl border-2 border-blue-600 bg-blue-50 p-4 text-sm text-blue-900 dark:bg-blue-950 dark:border-blue-700 dark:text-blue-100">
+          <span className="font-bold">Chế độ chỉ đọc</span> — bệnh nhân {viewPatient.slice(0,8)}. Dữ liệu bên dưới là của bệnh nhân, không phải của bạn; mọi thao tác nhập/gửi đã ẩn.{" "}
+          <Link href="/expert/patients" className="underline">← Danh sách bệnh nhân</Link>
+        </div>
+      )}
+      <div><h1 className="text-xl font-bold">Hướng A — Nhật ký đường huyết</h1><p className="text-sm text-slate-600">{readOnly ? `Bệnh nhân ${viewPatient.slice(0,8)} (chỉ đọc) · Chỉ escalate khi critical hoặc 3×high.` : `User: ${user.username} (${user.role}) · KPI ≥3 lần/tuần. Chỉ escalate khi critical hoặc 3×high.`}</p></div>
       <div className="grid gap-6 lg:grid-cols-3">
-        <EntryAlert value={value} setValue={setValue} context={context} setContext={setContext} notes={notes} setNotes={setNotes} msg={msg} anomaly={anomaly} isCritical={isCritical} submit={submit} />
-        <MyTracker data={data} highlightId={highlightId} trend={trend} explainTrend={explainTrend} isCritical={isCritical} anomalySet={anomalySet} hasServerIds={hasServerIds} />
+        {!readOnly && <EntryAlert value={value} setValue={setValue} context={context} setContext={setContext} notes={notes} setNotes={setNotes} msg={msg} anomaly={anomaly} isCritical={isCritical} submit={submit} />}
+        <MyTracker data={data} highlightId={highlightId} trend={trend} explainTrend={explainTrend} isCritical={isCritical} anomalySet={anomalySet} hasServerIds={hasServerIds} readOnly={readOnly} />
       </div>
+      {!readOnly && (
+      <>
       <FqgChat isCritical={isCritical} fqg={fqg} effectiveId={effectiveId} lastLogId={lastLogId} />
       <VoiceWidget userId={effectiveId} />
       <TriageWidget effectiveId={effectiveId} />
+      </>
+      )}
     </div>
   );
 }

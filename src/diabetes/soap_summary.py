@@ -131,8 +131,18 @@ def generate_soap(user_id: str, days: int = 14, language: str = "vi", disease: s
         except (TypeError, ValueError):
             return ""
 
+    def _fmt_counts(cc):
+        # Human-readable distribution (M4): never leak Python dict repr to UI.
+        # logs_per_week stays last-28d/4 by design (single definition); text labels the basis.
+        if not cc or not isinstance(cc, dict):
+            return "—"
+        _vi = {"critical": "nguy hiểm", "high": "cao", "elevated": "tăng nhẹ",
+               "normal": "bình thường", "low": "thấp"}
+        parts = [f"{_vi.get(str(k), str(k))} {v}" for k, v in cc.items() if v]
+        return " · ".join(parts) if parts else "—"
+
     def rule_based():
-        subj = f"- Người bệnh ghi nhận {len(logs)} lần đo trong {days} ngày (trung bình {stats.get('logs_per_week',0)}/tuần). "
+        subj = f"- Người bệnh ghi nhận {len(logs)} lần đo trong {days} ngày (trung bình 4 tuần gần nhất {stats.get('logs_per_week',0)}/tuần). "
         if stats.get("logs_per_week", 0) < 3:
             subj += "Tần suất chưa đạt KPI ≥3 lần/tuần (Hướng A). "
         if not logs:
@@ -158,17 +168,17 @@ def generate_soap(user_id: str, days: int = 14, language: str = "vi", disease: s
         # Objective
         if disease == "hypertension":
             obj = f"- Trung bình: {stats.get('avg_sys') or '—'}/{stats.get('avg_dia') or '—'} mmHg; 7 ngày: {stats.get('last_7_days_avg') or '—'}. "
-            obj += f"Phân bố: {stats.get('classification_counts') or '—'}. At-target: {stats.get('at_target_rate',0)*100:.0f}%. "
+            obj += f"Phân bố: {_fmt_counts(stats.get('classification_counts'))}. At-target: {stats.get('at_target_rate',0)*100:.0f}%. "
             obj += f"Chuỗi ngày đo: {stats.get('streak_days',0)} ngày."
         elif disease == "respiratory":
             obj = f"- Avg peak flow: {stats.get('avg_peak_flow') or '—'}%; red_rate: {stats.get('red_rate',0)}; incorrect_inhaler: {stats.get('incorrect_inhaler_rate',0)}. "
-            obj += f"Phân bố: {stats.get('classification_counts') or '—'}."
+            obj += f"Phân bố: {_fmt_counts(stats.get('classification_counts'))}."
         elif disease == "mental":
             obj = f"- Avg PHQ-9: {stats.get('avg_phq9') or '—'}; GAD-7: {stats.get('avg_gad7') or '—'}; Crisis: {stats.get('crisis_count',0)}. "
-            obj += f"Phân bố: {stats.get('classification_counts') or '—'}."
+            obj += f"Phân bố: {_fmt_counts(stats.get('classification_counts'))}."
         else:
             obj = f"- Chỉ số trung bình: {stats.get('avg_mgdl') or '—'} mg/dL; 7 ngày gần nhất: {stats.get('last_7_days_avg') or '—'} mg/dL. "
-            obj += f"Phân bố: {stats.get('classification_counts') or '—'}. "
+            obj += f"Phân bố: {_fmt_counts(stats.get('classification_counts'))}. "
             obj += f"Chuỗi ngày đo liên tiếp: {stats.get('streak_days',0)} ngày."
             _links = " ".join(_log_link(l) for l in logs[:3] if _log_link(l))
             if _links:

@@ -28,6 +28,7 @@ class LLMInput(BaseModel):
     query: str = Field(..., description="User's medical question.")
     contexts: List[ContextItem] = Field(
         ..., description="Retrieved passages relevant to the query.")
+    language: str = Field("vi", description="Answer language (vi|en); VI instruction appended when vi.")
 
 
 class LLMOutput(BaseModel):

@@ -61,8 +61,23 @@ def maybe_inject_gho_stats(question: str, contexts: List[ContextItem]) -> List[C
     return contexts
 
 
-def rag_chat(question: str, top_k: int = TOP_K, user_id: str = "default_user", username: str | None = None, model: str = DEFAULT_MODEL, **kwargs) -> Dict[str, Any]:
+def rag_chat(question: str, top_k: int = TOP_K, user_id: str = "default_user", username: str | None = None, model: str | None = None, **kwargs) -> Dict[str, Any]:
     timings = {}
+    language = kwargs.get("language", "vi")
+    if model is None:
+        # provider nvidia: routing easy/hard; provider khác: DEFAULT_MODEL
+        try:
+            from src.shared.config import LLM_PROVIDER as _PROV
+        except ImportError:
+            from shared.config import LLM_PROVIDER as _PROV  # type: ignore
+        if _PROV == "nvidia":
+            try:
+                from src.shared.nvidia import select_chat_model
+            except ImportError:
+                from shared.nvidia import select_chat_model  # type: ignore
+            model = select_chat_model(question)
+        else:
+            model = DEFAULT_MODEL
     # tone detection early for tracing
     try:
         tone, _, _ = detect_tone_and_temp(question)
@@ -148,7 +163,7 @@ def rag_chat(question: str, top_k: int = TOP_K, user_id: str = "default_user", u
     s_build = start_span("build_llm_input")
     t4 = time.perf_counter()
     memory_context = _build_memory_context(question, user_id)
-    llm_input = LLMInput(query=question, contexts=[c.model_dump() for c in reranked] + [m.model_dump() for m in memory_context])
+    llm_input = LLMInput(query=question, language=language, contexts=[c.model_dump() for c in reranked] + [m.model_dump() for m in memory_context])
     timings['build_llm_input'] = time.perf_counter() - t4
     try:
         add_span_chunks(s_build, trace_id, [m.model_dump() for m in memory_context])
@@ -228,18 +243,27 @@ def _get_memory_stats() -> Dict[str, Any]:
     return {'short_term': short_term_memory.get_stats(), 'episodic': episodic_memory.get_stats(), 'long_term': long_term_memory.get_stats()}
 
 
-def rag_chat_stream(question: str, top_k: int = TOP_K, user_id: str = "default_user", username: str | None = None, model: str = DEFAULT_MODEL, **kwargs):
-    """
-    SSE streaming variant of rag_chat — yields SSE event dicts:
-      {"event": "metadata", "data": {...}}
-      {"event": "token", "data": {"delta": str}}
-      {"event": "done", "data": {...final payload...}}
-      {"event": "error", "data": {"error": str}}
+def rag_chat_stream(question: str, top_k: int = TOP_K, user_id: str = "default_user", username: str | None = None, model: str | None = None, **kwargs):
+    """SSE streaming variant of rag_chat — yields SSE event dicts.
     Caller (FastAPI) formats to wire: f"event: {e}\\ndata: {json}\\n\\n"
     """
     import re
     import json as _json
     timings: Dict[str, float] = {}
+    language = kwargs.get("language", "vi")
+    if model is None:
+        try:
+            from src.shared.config import LLM_PROVIDER as _PROV2
+        except ImportError:
+            from shared.config import LLM_PROVIDER as _PROV2  # type: ignore
+        if _PROV2 == "nvidia":
+            try:
+                from src.shared.nvidia import select_chat_model as _select2
+            except ImportError:
+                from shared.nvidia import select_chat_model as _select2  # type: ignore
+            model = _select2(question)
+        else:
+            model = DEFAULT_MODEL
     try:
         tone, _, _ = detect_tone_and_temp(question)
     except Exception:
@@ -352,7 +376,7 @@ def rag_chat_stream(question: str, top_k: int = TOP_K, user_id: str = "default_u
     s_build = start_span("build_llm_input")
     t4 = time.perf_counter()
     memory_context = _build_memory_context(question, user_id)
-    llm_input = LLMInput(query=question, contexts=[c.model_dump() for c in reranked] + [m.model_dump() for m in memory_context])
+    llm_input = LLMInput(query=question, language=language, contexts=[c.model_dump() for c in reranked] + [m.model_dump() for m in memory_context])
     timings['build_llm_input'] = time.perf_counter() - t4
     try:
         add_span_chunks(s_build, trace_id, [m.model_dump() for m in memory_context])

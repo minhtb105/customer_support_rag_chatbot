@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getHealth, getGuidelinesStatus, API_BASE } from "@/lib/api";
+import { Play, ArrowRight, Check, ShieldCheck } from "lucide-react";
 
 export default function OverviewPage() {
   const [health, setHealth] = useState<any>(null);
@@ -15,6 +16,19 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-6">
+      {/* Sticky CTA bar (dan toi #thu). TODO(user): doi text/primary-href khi co pricing that */}
+      <div className="sticky top-[57px] z-30 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-blue-200 bg-white/90 px-4 py-2 shadow-sm backdrop-blur dark:bg-slate-900/90 dark:border-slate-700">
+        <div className="text-xs text-slate-600 dark:text-slate-300">Bản demo nội bộ — miễn phí dùng thử luồng bệnh nhân & bác sĩ</div>
+        <div className="flex gap-2">
+          <a href="#demo" className="inline-flex min-h-[44px] items-center gap-1 rounded-full border px-4 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800">
+            <Play size={14} /> Xem video demo
+          </a>
+          <Link href="/register" className="inline-flex min-h-[44px] items-center gap-1 rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900">
+            Dùng thử miễn phí <ArrowRight size={14} />
+          </Link>
+        </div>
+      </div>
+
       {/* Hero */}
       <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 p-6 text-white sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -153,6 +167,86 @@ export default function OverviewPage() {
         <a href="https://iris.who.int/handle/10665/334186" target="_blank" className="rounded-full border bg-white px-3 py-1 hover:bg-slate-50">WHO PEN 2020</a>
         <Link href="/api-playground" className="rounded-full bg-slate-900 px-3 py-1 text-white">Thử hỏi “dấu hiệu đái tháo đường type 2?” →</Link>
       </div>
+
+      {/* Video demo (file phuc vu tu /public/demo.webm, canonical giu o docs/demo/) */}
+      <section id="demo" className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+        <h2 className="text-sm font-semibold">Xem demo 4 phút: bệnh nhân → bác sĩ → audit</h2>
+        <p className="mt-1 text-xs text-slate-500">Nhập 280 → banner đỏ • trend 3 ngày → chat hỏi ngữ cảnh • safeguard kháng sinh • bác sĩ xem sparkline 90 ngày + SOAP</p>
+        <video controls preload="none" src="/demo.webm" className="mt-3 aspect-video w-full rounded-xl bg-black">
+          Trình duyệt không hỗ trợ video. Tải tại <a href="/demo.webm" className="underline">demo.webm</a>.
+        </video>
+        <div className="mt-2 text-xs text-slate-500">Kịch bản chi tiết: <code>docs/demo/script.md</code> • File gốc: <code>docs/demo/demo.webm</code></div>
+      </section>
+
+      {/* Social proof strip — TODO(user): thay 3 o placeholder bang doi tac that khi co */}
+      <section className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+        <h2 className="text-sm font-semibold">Đang thử nghiệm nội bộ cùng phòng khám đối tác</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <Proof logo="PK" name="Phòng khám đối tác (ẩn danh)" note="Bản nháp — chờ xác nhận" />
+          <Proof logo="BV" name="Bệnh viện thử nghiệm (ẩn danh)" note="Bản nháp — chờ xác nhận" />
+          <Proof logo="API" name="Đối tác tích hợp WHO-RAG API" note="Bản nháp — chờ xác nhận" />
+        </div>
+      </section>
+
+      {/* Pricing — TODO(user): dien gia that; hien tai la placeholder "Lien he", khong gia gia */}
+      <section id="thu" className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+        <h2 className="text-sm font-semibold">Gói sử dụng <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-normal text-amber-800">Giá dự kiến — liên hệ xác nhận</span></h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <PriceCard
+            name="Cá nhân"
+            price="Liên hệ"
+            desc="Người bệnh tự theo dõi đường huyết tại nhà."
+            feats={["Nhật ký đường huyết + cảnh báo", "Chat hỏi ngữ cảnh (FQG)", "Nhắc đo qua giọng nói"]}
+            href="/register"
+            cta="Dùng thử miễn phí"
+          />
+          <PriceCard
+            name="Phòng khám"
+            price="Liên hệ"
+            desc="Bác sĩ xem hàng đợi ưu tiên + hồ sơ trước tái khám."
+            feats={["Smart queue critical → safe", "Sparkline 90 ngày + SOAP", "Audit [Xem log] từng nhận định"]}
+            href="/register"
+            cta="Đăng ký demo"
+            hot
+          />
+          <PriceCard
+            name="API Doanh nghiệp"
+            price="Liên hệ"
+            desc="Tích hợp WHO-RAG đáng tin cho eDoctor/Medihome."
+            feats={["POST /v1/query có citation", "Faithfulness + tracing", "Tài liệu kỹ thuật đầy đủ"]}
+            href="/api-playground"
+            cta="Thử API"
+          />
+        </div>
+      </section>
+
+      {/* Testimonials — TODO(user): thay bang danh gia that co ten/vai tro khi co; hien an danh + nhan ban nhap */}
+      <section className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+        <h2 className="text-sm font-semibold">Người dùng thử nghiệm nói gì <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-normal text-slate-500">Bản nháp — chờ nội dung thật</span></h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <Quote who="Người bệnh thử nghiệm (ẩn danh)" text="Nhập chỉ số mỗi tối, khi đường huyết vọt lên là app hỏi ngay ăn gì — thấy yên tâm hơn giữa 2 lần tái khám." />
+          <Quote who="Bác sĩ thử nghiệm (ẩn danh)" text="Sparkline 90 ngày kèm chú thích [Xem log] giúp tôi nắm bệnh nhân trong 1 phút thay vì lật cả xấp giấy." />
+          <Quote who="Điều dưỡng thử nghiệm (ẩn danh)" text="Cụ già nói không cần gõ — tính năng giọng nói đọc bài học 60 giây rất hợp." />
+        </div>
+      </section>
+
+      {/* Final CTA + disclaimer demo-only */}
+      <section className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 p-6 text-white sm:p-8">
+        <h2 className="text-xl font-bold">Bắt đầu theo dõi đường huyết ngay hôm nay</h2>
+        <p className="mt-1 text-sm text-blue-100">Đăng ký 1 phút — nhập chỉ số đầu tiên, xem AI diễn giải trend, mời bác sĩ cùng theo dõi.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href="/register" className="inline-flex min-h-[44px] items-center gap-1 rounded-full bg-white px-5 py-2 text-sm font-medium text-slate-900 hover:bg-blue-50">
+            Dùng thử miễn phí <ArrowRight size={16} />
+          </Link>
+          <Link href="/tracker" className="inline-flex min-h-[44px] items-center rounded-full border border-white/40 px-5 py-2 text-sm hover:bg-white/10">
+            Mở nhật ký
+          </Link>
+        </div>
+        <p className="mt-4 flex items-start gap-1 text-[11px] text-blue-200">
+          <ShieldCheck size={14} className="mt-0.5 shrink-0" />
+          <span>Bản demo nội bộ — nội dung mang tính giáo dục, không thay thế chỉ định bác sĩ. Đánh giá đạt mục tiêu theo HbA1c &lt; 7% (BYT QĐ5481/2020 + ADA 2024); kế hoạch điều trị luôn để trống cho bác sĩ quyết định.</span>
+        </p>
+      </section>
     </div>
   );
 }
@@ -191,5 +285,44 @@ function TrackCard({ badge, title, desc, kpi, href, cta, color }: any) {
         {cta}
       </Link>
     </div>
+  );
+}
+function Proof({ logo, name, note }: { logo: string; name: string; note: string }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border bg-slate-50 p-3 dark:bg-slate-800 dark:border-slate-700">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-xs font-bold text-white dark:bg-slate-100 dark:text-slate-900">{logo}</div>
+      <div>
+        <div className="text-xs font-medium">{name}</div>
+        <div className="text-[11px] text-slate-500">{note}</div>
+      </div>
+    </div>
+  );
+}
+function PriceCard({ name, price, desc, feats, href, cta, hot }: { name: string; price: string; desc: string; feats: string[]; href: string; cta: string; hot?: boolean }) {
+  return (
+    <div className={`flex flex-col rounded-xl border p-4 ${hot ? "border-blue-500 bg-blue-50/50 dark:bg-slate-800 dark:border-blue-400" : "bg-white dark:bg-slate-900 dark:border-slate-700"}`}>
+      {hot && <div className="mb-2 w-fit rounded-full bg-blue-600 px-2 py-0.5 text-[11px] font-semibold text-white">Phổ biến nhất</div>}
+      <div className="text-sm font-semibold">{name}</div>
+      <div className="mt-1 text-lg font-bold">{price}</div>
+      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{desc}</p>
+      <ul className="mt-2 space-y-1">
+        {feats.map((f) => (
+          <li key={f} className="flex items-start gap-1 text-xs text-slate-600 dark:text-slate-300">
+            <Check size={14} className="mt-0.5 shrink-0 text-emerald-600" /> {f}
+          </li>
+        ))}
+      </ul>
+      <Link href={href} className="mt-4 inline-flex w-fit rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900 min-h-[44px] items-center">
+        {cta}
+      </Link>
+    </div>
+  );
+}
+function Quote({ who, text }: { who: string; text: string }) {
+  return (
+    <figure className="rounded-xl border bg-slate-50 p-4 dark:bg-slate-800 dark:border-slate-700">
+      <blockquote className="text-xs leading-relaxed text-slate-700 dark:text-slate-200">“{text}”</blockquote>
+      <figcaption className="mt-2 text-[11px] font-medium text-slate-500">— {who}</figcaption>
+    </figure>
   );
 }

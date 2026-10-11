@@ -1,19 +1,24 @@
 "use client";
 import { useState } from "react";
 import { generateSoap, generateSoapMarkdown, getGlucose } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import Link from "next/link";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useIsDark } from "./ThemeToggle";
 
 function isAnomalyPoint(v: number){ return v>250 || v<70; }
 
-// Render [Xem log #id] as clickable link to /tracker?highlight=id
-function renderWithLogLinks(text: string){
+// Render [Xem log #id] as clickable link. Experts land on a read-only
+// patient view (/tracker?highlight=id&patient=...); patients keep self-view.
+function renderWithLogLinks(text: string, patientId?: string, staffView?: boolean){
   if(!text) return text;
   const parts = String(text).split(/(\[Xem log #\d+\])/g);
   return parts.map((p,i)=>{
     const m = p.match(/\[Xem log #(\d+)\]/);
-    if(m) return <Link key={i} data-testid="log-link" href={`/tracker?highlight=${m[1]}`} className="font-medium text-blue-700 underline hover:text-blue-900 dark:text-blue-300">{p}</Link>;
+    if(m){
+      const href = (staffView && patientId) ? `/tracker?highlight=${m[1]}&patient=${encodeURIComponent(patientId)}` : `/tracker?highlight=${m[1]}`;
+      return <Link key={i} data-testid="log-link" href={href} className="font-medium text-blue-700 underline hover:text-blue-900 dark:text-blue-300">{p}</Link>;
+    }
     return <span key={i}>{p}</span>;
   });
 }
@@ -26,14 +31,15 @@ function AnomalyDot(props:any){
   return <circle cx={cx} cy={cy} r={anomaly?5:3} fill={anomaly?"#ef4444":"#0ea5e9"} stroke="#fff" strokeWidth={1} />;
 }
 
-export default function PrevisitView({ patientId, title, subtitle }: { patientId: string; title?: string; subtitle?: string }){
+export default function PrevisitView({ patientId, patientName, title, subtitle }: { patientId: string; patientName?: string; title?: string; subtitle?: string }){
+  const { isExpert, isAdmin } = useAuth();
+  const staffView = (isExpert || isAdmin) && !!patientId;
   const [days,setDays]=useState(14);
   const [data,setData]=useState<any>(null);
   const [md,setMd]=useState("");
   const [glucose,setGlucose]=useState<any>(null);
   const [loading,setLoading]=useState(false);
   const [err,setErr]=useState("");
-  const [sEdit,setSEdit]=useState<string | null>(null);
   const hasTriageSource = Array.isArray((glucose as any)?.logs)
     ? (glucose as any).logs.some((l: any) => String(l.notes || "").split(" | ").some((s: string) => s.trim() === "[AI Triage]"))
     : false;
@@ -44,7 +50,7 @@ export default function PrevisitView({ patientId, title, subtitle }: { patientId
       const g = await getGlucose(patientId,200,days).catch(()=>null);
       setGlucose(g);
       if(asMd){ const text=await generateSoapMarkdown(patientId,days); setMd(text); }
-      else { const j=await generateSoap(patientId,days); setData(j); setSEdit(j?.soap?.subjective ?? null); }
+      else { const j=await generateSoap(patientId,days); setData(j); }
     }catch(e:any){ setErr(e.message); } finally{ setLoading(false); }
   };
   const downloadMd=()=>{
@@ -64,7 +70,7 @@ export default function PrevisitView({ patientId, title, subtitle }: { patientId
       <div><h1 className="text-xl font-bold">{title || "Hồ sơ trước tái khám (SOAP)"}</h1>{subtitle && <p className="text-sm text-slate-600 dark:text-slate-300">{subtitle}</p>}</div>
       <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
         <div className="flex flex-wrap items-end gap-3">
-          <div className="text-xs">Patient: {patientId.slice(0,8)}</div>
+          <div className="text-xs">Patient: {patientName || patientId.slice(0,8)}</div>
           <div><label className="text-xs">Số ngày</label><select value={days} onChange={(e)=>setDays(Number(e.target.value))} className="mt-1 rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]"><option value={7}>7 ngày</option><option value={14}>14 ngày</option><option value={30}>30 ngày</option><option value={90}>90 ngày</option></select></div>
           <button data-testid="soap-json-btn" onClick={()=>gen(false)} disabled={loading} className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 min-h-[44px]">{loading?"Đang tạo...":"Tạo SOAP (JSON)"}</button>
           <button onClick={()=>gen(true)} disabled={loading} className="rounded-lg border bg-white px-5 py-2.5 text-sm hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 min-h-[44px]">Tạo Markdown</button>
@@ -83,9 +89,9 @@ export default function PrevisitView({ patientId, title, subtitle }: { patientId
               <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">Chấm đỏ = anomaly ({anomalySource === "server" ? "theo server: spike + trend cascade" : "spike >250 / <70"}). Click [Xem log #id] để xem log thô.</div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
-              <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800"><div className="flex items-center gap-2 text-xs font-bold">S — Subjective{hasTriageSource && <span className="rounded-full border border-violet-300 bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-800 dark:bg-violet-950 dark:text-violet-200">[Nguồn: AI Triage]</span>}</div><div className="mt-1 text-sm whitespace-pre-wrap">{renderWithLogLinks(data.soap.subjective)}</div><textarea aria-label="S-Subjective (chỉnh sửa)" value={sEdit ?? ""} onChange={(e)=>setSEdit(e.target.value)} rows={4} className="mt-2 w-full rounded-lg border bg-white p-2 text-sm whitespace-pre-wrap dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" /></div>
-              <div className="rounded-xl bg-blue-50 p-4 border border-blue-100 dark:bg-blue-950 dark:border-blue-900"><div className="text-xs font-bold text-blue-900 dark:text-blue-200">O — Objective</div><div className="mt-1 text-sm whitespace-pre-wrap">{renderWithLogLinks(data.soap.objective)}</div></div>
-              <div className="rounded-xl bg-amber-50 p-4 border border-amber-100 dark:bg-amber-950 dark:border-amber-900"><div className="text-xs font-bold">A — Assessment</div><div className="mt-1 text-sm whitespace-pre-wrap">{renderWithLogLinks(data.soap.assessment)}</div></div>
+              <div className="rounded-xl bg-slate-50 p-4 dark:bg-slate-800"><div className="flex items-center gap-2 text-xs font-bold">S — Subjective{hasTriageSource && <span className="rounded-full border border-violet-300 bg-violet-100 px-2 py-0.5 text-[10px] font-medium text-violet-800 dark:bg-violet-950 dark:text-violet-200">[Nguồn: AI Triage]</span>}</div><div className="mt-1 text-sm whitespace-pre-wrap">{renderWithLogLinks(data.soap.subjective, patientId, staffView)}</div></div>
+              <div className="rounded-xl bg-blue-50 p-4 border border-blue-100 dark:bg-blue-950 dark:border-blue-900"><div className="text-xs font-bold text-blue-900 dark:text-blue-200">O — Objective</div><div className="mt-1 text-sm whitespace-pre-wrap">{renderWithLogLinks(data.soap.objective, patientId, staffView)}</div></div>
+              <div className="rounded-xl bg-amber-50 p-4 border border-amber-100 dark:bg-amber-950 dark:border-amber-900"><div className="text-xs font-bold">A — Assessment</div><div className="mt-1 text-sm whitespace-pre-wrap">{renderWithLogLinks(data.soap.assessment, patientId, staffView)}</div></div>
               <div className="rounded-xl bg-emerald-50 p-4 border border-emerald-100 dark:bg-emerald-950 dark:border-emerald-900"><div className="text-xs font-bold">P — Plan</div>
                 {data.soap.plan? <div className="mt-1 text-sm whitespace-pre-wrap">{data.soap.plan}</div>
                 : <div className="mt-1 text-sm italic text-slate-400">Dành cho bác sĩ chỉ định</div>}

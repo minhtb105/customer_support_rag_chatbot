@@ -11,6 +11,7 @@ class QueryRequest(BaseModel):
     tone: Optional[Literal["strict", "friendly", "balanced"]] = Field(None, description="Tone trả lời; auto nếu None")
     user_id: str = Field("default_user", description="ID người dùng cho memory")
     include_audit: bool = Field(True, description="Có trả về audit trail (citations, faithfulness) không")
+    language: str = Field("vi", description="Ngôn ngữ trả lời (vi|en); mặc định tiếng Việt")
 
 
 class CitationItem(BaseModel):
