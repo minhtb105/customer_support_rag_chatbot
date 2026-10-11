@@ -105,6 +105,7 @@ def list_reviews(
     rows = conn.execute(q, params).fetchall()
     conn.close()
     out = []
+    _uname_cache: Dict[str, str] = {}
     for r in rows:
         d = dict(r)
         try:
@@ -113,6 +114,19 @@ def list_reviews(
             d["failed_metrics"] = json.loads(d.get("failed_metrics") or "[]")
         except Exception:
             pass
+        # M3: tên người yêu cầu thay vì UUID trơ trụi (best-effort, cache theo id)
+        rid = d.get("requester_id")
+        if rid and rid not in _uname_cache:
+            try:
+                from src.auth.db import get_user_by_id
+            except ImportError:
+                from auth.db import get_user_by_id  # type: ignore
+            try:
+                u = get_user_by_id(rid) or {}
+                _uname_cache[rid] = u.get("username") or ""
+            except Exception:
+                _uname_cache[rid] = ""
+        d["requester_username"] = _uname_cache.get(rid or "", "")
         out.append(d)
     return out
 

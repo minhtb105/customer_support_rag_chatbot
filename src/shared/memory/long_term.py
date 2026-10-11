@@ -54,25 +54,34 @@ class MedicalEntityExtractor:
             'medications': [
                 r'\b(paracetamol|ibuprofen|aspirin|antibiotic|insulin|metformin)\b',
                 r'\b(medication|drug|treatment|prescription|medicine)\b',
-                r'\b(dose|dosage|pill|tablet|capsule|injection)\b'
+                r'\b(dose|dosage|pill|tablet|capsule|injection)\b',
+                # Tiếng Việt (bệnh nhân ĐTĐ)
+                r'\b(thuốc|liều|viên|tiêm|uống thuốc|đơn thuốc|metformin|insulin)\b',
             ],
             'symptoms': [
                 r'\b(headache|fever|cough|pain|nausea|dizziness|fatigue)\b',
                 r'\b(symptom|discomfort|ache|illness|condition)\b',
-                r'\b(feeling|problem|issue|complaint)\b'
+                r'\b(feeling|problem|issue|complaint)\b',
+                # Tiếng Việt
+                r'\b(mệt|chóng mặt|khát nước|tiểu nhiều|mờ mắt|tê bì|đau đầu|hạ đường huyết|tăng đường huyết|đo đường huyết)\b',
             ],
             'conditions': [
                 r'\b(diabetes|hypertension|asthma|arthritis|depression|anxiety)\b',
                 r'\b(condition|disease|disorder|illness|syndrome)\b',
-                r'\b(diagnosis|medical issue|health problem)\b'
+                r'\b(diagnosis|medical issue|health problem)\b',
+                # Tiếng Việt
+                r'\b(tiểu đường|đái tháo đường|huyết áp|mỡ máu|béo phì|suy thận|tim mạch|gan nhiễm mỡ|tiền tiểu đường)\b',
             ],
             'allergies': [
                 r'\b(allergy|allergic|sensitivity|reaction)\b',
-                r'\b(penicillin|peanut|shellfish|pollen)\b'
+                r'\b(penicillin|peanut|shellfish|pollen)\b',
+                r'\b(dị ứng|mẩn ngứa|phát ban)\b',
             ],
             'lifestyle': [
                 r'\b(diet|exercise|sleep|stress|smoking|alcohol)\b',
-                r'\b(lifestyle|habits|routine|wellness)\b'
+                r'\b(lifestyle|habits|routine|wellness)\b',
+                # Tiếng Việt
+                r'\b(ăn ngọt|ăn kiêng|tập thể dục|chạy bộ|đi bộ|mất ngủ|rượu|bia|thuốc lá|trà sữa|chế độ ăn|giảm cân|bỏ bữa)\b',
             ]
         }
     
@@ -186,6 +195,16 @@ class LongTermMemory:
         """Store a medical fact in long-term memory."""
         if not text.strip():
             return ""
+
+        # Dedup M6: cùng nội dung chuẩn hóa của user -> trả fact_id cũ, không ghi trùng
+        norm = " ".join(text.strip().lower().split())
+        content_hash = hashlib.md5(f"{self.user_id}::{norm}".encode()).hexdigest()
+        try:
+            existing = self.vector_store.get(where={"fact_hash": content_hash})
+            if existing and existing.get("ids"):
+                return existing["ids"][0]
+        except Exception:
+            pass
         
         # Extract entities
         entities_dict = self.entity_extractor.extract_entities(text)
@@ -234,7 +253,10 @@ class LongTermMemory:
             'source': fact.source,
             'timestamp': fact.timestamp,
             'confidence': fact.confidence,
-            'text_length': len(fact.text)
+            'text_length': len(fact.text),
+            'fact_hash': hashlib.md5(
+                f"{fact.user_id}::{' '.join(fact.text.strip().lower().split())}"
+                .encode()).hexdigest(),
         }
         
         # Add to vector store

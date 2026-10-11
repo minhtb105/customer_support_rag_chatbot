@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { logGlucose, getGlucose, queryRag, saveGlucoseFollowup } from "@/lib/api";
+import { logGlucose, getGlucose, queryRag, saveGlucoseFollowup, getDoctorPatients } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from "recharts";
 import Link from "next/link";
@@ -36,7 +36,7 @@ const EntryAlert = (p: any) => {
       )}
       <div className="relative mt-4 space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <div><label className="text-xs text-slate-600">Giá trị (mg/dL)</label><input type="number" value={value} onChange={(e)=>setValue(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" /></div>
+          <div><label className="text-xs text-slate-600">Giá trị (mg/dL)</label><input type="number" value={value} onChange={(e)=>setValue(e.target.value)} placeholder="vd: 110" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" /></div>
           <div><label className="text-xs text-slate-600">Bối cảnh</label><select value={context} onChange={(e)=>setContext(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm">{contexts.map(c=> <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
         </div>
         <div><label className="text-xs text-slate-600">Ghi chú</label><input value={notes} onChange={(e)=>setNotes(e.target.value)} placeholder="vd: sau ăn phở" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" /></div>
@@ -256,7 +256,7 @@ const MyTracker = (p: any) => {
 
 export default function TrackerPage(){
   const { user, isExpert, isAdmin } = useAuth();
-  const [value,setValue]=useState("110");
+  const [value,setValue]=useState("");
   const [context,setContext]=useState("fasting");
   const [notes,setNotes]=useState("");
   const [data,setData]=useState<any>(null);
@@ -275,6 +275,15 @@ export default function TrackerPage(){
   const viewPatient = staffView ? (searchParams?.get("patient") || "") : "";
   const readOnly = !!viewPatient;
   const fetchId = viewPatient || effectiveId;
+  // M3: tên bệnh nhân thay UUID trơ trụi (best-effort, fallback slice).
+  const [viewPatientName, setViewPatientName] = useState("");
+  useEffect(() => {
+    if (!viewPatient) { setViewPatientName(""); return; }
+    getDoctorPatients().then((d: any) => {
+      const hit = (d.patients || []).find((p: any) => p.user_id === viewPatient);
+      if (hit?.username) setViewPatientName(hit.username);
+    }).catch(() => {});
+  }, [viewPatient]);
   const isCritical = anomaly?.type === "spike";
   const anomalySet = new Set(((Array.isArray(data?.anomaly_ids) ? data.anomaly_ids : []) as any[]).map((x)=>Number(x)));
   const hasServerIds = Array.isArray(data?.anomaly_ids);
@@ -286,9 +295,11 @@ export default function TrackerPage(){
 
   const submit = async ()=>{
     if(!user){ setMsg("Cần đăng nhập"); return; }
+    const v = Number(value);
+    if(!value.trim() || !Number.isFinite(v)){ setMsg("Nhập chỉ số đường huyết trước khi lưu (vd: 110)."); return; }
     setMsg(""); setTrend(""); setAnomaly(null); setFqg([]);
     try{
-      const rec:any=await logGlucose({ user_id: effectiveId, value_mgdl:Number(value), context, notes: notes||undefined });
+      const rec:any=await logGlucose({ user_id: effectiveId, value_mgdl:v, context, notes: notes||undefined });
       setMsg(`${rec.classification.toUpperCase()}: ${rec.message}`);
       if(rec.anomaly && rec.anomaly.type && rec.anomaly.type!=="none") setAnomaly(rec.anomaly);
       if(typeof rec.id === "number") setLastLogId(rec.id);
@@ -311,11 +322,11 @@ export default function TrackerPage(){
     <div className="space-y-6">
       {readOnly && (
         <div className="rounded-xl border-2 border-blue-600 bg-blue-50 p-4 text-sm text-blue-900 dark:bg-blue-950 dark:border-blue-700 dark:text-blue-100">
-          <span className="font-bold">Chế độ chỉ đọc</span> — bệnh nhân {viewPatient.slice(0,8)}. Dữ liệu bên dưới là của bệnh nhân, không phải của bạn; mọi thao tác nhập/gửi đã ẩn.{" "}
+          <span className="font-bold">Chế độ chỉ đọc</span> — bệnh nhân {viewPatientName || viewPatient.slice(0,8)}. Dữ liệu bên dưới là của bệnh nhân, không phải của bạn; mọi thao tác nhập/gửi đã ẩn.{" "}
           <Link href="/expert/patients" className="underline">← Danh sách bệnh nhân</Link>
         </div>
       )}
-      <div><h1 className="text-xl font-bold">Hướng A — Nhật ký đường huyết</h1><p className="text-sm text-slate-600">{readOnly ? `Bệnh nhân ${viewPatient.slice(0,8)} (chỉ đọc) · Chỉ escalate khi critical hoặc 3×high.` : `User: ${user.username} (${user.role}) · KPI ≥3 lần/tuần. Chỉ escalate khi critical hoặc 3×high.`}</p></div>
+      <div><h1 className="text-xl font-bold">Hướng A — Nhật ký đường huyết</h1><p className="text-sm text-slate-600">{readOnly ? `Bệnh nhân ${viewPatientName || viewPatient.slice(0,8)} (chỉ đọc) · Chỉ escalate khi critical hoặc 3×high.` : `User: ${user.username} (${user.role}) · KPI ≥3 lần/tuần. Chỉ escalate khi critical hoặc 3×high.`}</p></div>
       <div className="grid gap-6 lg:grid-cols-3">
         {!readOnly && <EntryAlert value={value} setValue={setValue} context={context} setContext={setContext} notes={notes} setNotes={setNotes} msg={msg} anomaly={anomaly} isCritical={isCritical} submit={submit} />}
         <MyTracker data={data} highlightId={highlightId} trend={trend} explainTrend={explainTrend} isCritical={isCritical} anomalySet={anomalySet} hasServerIds={hasServerIds} readOnly={readOnly} />

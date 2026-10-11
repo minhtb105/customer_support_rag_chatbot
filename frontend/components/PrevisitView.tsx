@@ -98,7 +98,7 @@ export default function PrevisitView({ patientId, patientName, title, subtitle }
               </div>
             </div>
           </div>
-          <div className="mt-4 rounded-lg bg-slate-900 p-3 text-xs text-slate-100 overflow-auto"><pre className="whitespace-pre-wrap break-words">{JSON.stringify(data,null,2)}</pre></div>
+          <details className="mt-4 rounded-lg bg-slate-900 p-3 text-xs text-slate-100"><summary className="cursor-pointer text-slate-300">Dữ liệu thô (kỹ thuật)</summary><pre className="mt-2 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify(data,null,2)}</pre></details>
         </div>
       )}
       {md && <div className="rounded-2xl border bg-white p-5 shadow-sm"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Markdown</h2><button onClick={downloadMd} className="rounded-full bg-slate-900 px-4 py-2 text-xs text-white">Tải .md</button></div><pre className="mt-3 overflow-auto rounded-lg bg-slate-50 p-4 text-xs whitespace-pre-wrap border">{md}</pre></div>}

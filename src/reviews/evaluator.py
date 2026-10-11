@@ -39,11 +39,37 @@ Return strictly JSON:
 """
 
 def _call_llm_eval(prompt: str) -> Dict[str, Any]:
+    # Provider-aware: OpenAI key đã chết -> dùng client theo LLM_PROVIDER
+    # (NVIDIA xoay key + model JUDGE sạch JSON, không thinking-spill).
     try:
-        from openai import OpenAI
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise RuntimeError("No OPENAI_API_KEY")
+        from src.shared.config import LLM_PROVIDER as _PROV
+    except ImportError:
+        from shared.config import LLM_PROVIDER as _PROV  # type: ignore
+    if _PROV == "nvidia":
+        try:
+            from src.shared.nvidia import RotatingNvidiaClient
+        except ImportError:
+            from shared.nvidia import RotatingNvidiaClient  # type: ignore
+        try:
+            from src.shared.config import NVIDIA_JUDGE_MODEL as _JM
+        except ImportError:
+            from shared.config import NVIDIA_JUDGE_MODEL as _JM  # type: ignore
+        client = RotatingNvidiaClient()
+        resp = client.chat.completions.create(
+            model=_JM,
+            messages=[
+                {"role": "system", "content": "You are a strict RAG evaluator. Output only JSON."},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0,
+            max_tokens=800,
+        )
+        return json.loads(resp.choices[0].message.content.strip())
+    from openai import OpenAI
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("No OPENAI_API_KEY")
+    try:
         client = OpenAI(api_key=api_key, base_url=os.getenv("OPENAI_BASE_URL") or "https://api.openai.com/v1")
         resp = client.chat.completions.create(
             model=os.getenv("OPENAI_MODEL", DEFAULT_MODEL),

@@ -63,7 +63,7 @@ export default function ExpertQueuePage() {
                 <div className="text-sm font-medium line-clamp-2">{r.query}</div>
                 <div className="text-xs text-slate-600 line-clamp-2">{r.draft_answer?.slice(0,120)}</div>
                 <div className="text-[11px] text-slate-500">Failed: {parseFailedMetrics(r.failed_metrics).join(", ") || JSON.stringify(r.evaluation?.failed_metrics)}</div>
-                <div className="text-[11px] text-slate-500">Requester: {r.requester_id?.slice(0,8)}</div>
+                <div className="text-[11px] text-slate-500">Requester: {r.requester_username || r.requester_id?.slice(0,8)}</div>
               </div>
             ))}
           </div>
