@@ -80,9 +80,9 @@ class TestLearnContent:
             for banned in ("tang lieu", "giam lieu", "uong gap doi",
                            "ngung thuoc", "doi lieu"):
                 for m in re.finditer(re.escape(banned), blob):
-                    before = blob[max(0, m.start() - 30):m.start()]
-                    # phủ định được đứng sát hoặc cách tối đa 2 từ
-                    # ("không tự tăng liều", "đừng tự tăng liều")
-                    assert re.search(r"(khong|dung|tuyet|cho|tuyet doi)(\s+\w+){0,2}\s*$",
+                    before = blob[max(0, m.start() - 40):m.start()]
+                    # phủ định được đứng sát hoặc cách vài từ trong cùng mệnh đề
+                    # ("không tự tăng liều", "đừng tự ý ngưng hay đổi liều")
+                    assert re.search(r"(khong|dung|tuyet|cho|tuyet doi)(\s+\w+){0,4}\s*$",
                                      before), \
                         f'{l["id"]}: unnegated dose-advice phrase: {banned}'

@@ -3,6 +3,7 @@ import json
 import re
 import pytest
 from fastapi.testclient import TestClient
+import src.monitors.db as _mon_db
 
 pytestmark = pytest.mark.security
 
@@ -86,7 +87,7 @@ def test_llm03_poisoned_pdf_not_indexed_without_approval(tmp_path, monkeypatch):
         # If vectorstore empty, also pass
         assert True
     # cleanup
-    conn = sqlite3.connect(str(BASE_DIR / "metadata" / "monitoring.db"))
+    conn = sqlite3.connect(str(_mon_db.MONITORING_DB_PATH))
     conn.execute("DELETE FROM guideline_versions WHERE id=?", (gv["id"],))
     conn.commit()
     conn.close()

@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from src.auth.security import create_access_token, hash_password
 from src.auth.db import create_user, get_user_by_username, _get_conn
 from src.shared.config import BASE_DIR
+import src.monitors.db as _mon_db
 from src.monitors.db import (
     create_guideline_version,
     create_safety_alert,
@@ -41,7 +42,7 @@ def users():
     conn.execute("DELETE FROM users WHERE username IN (?,?,?,?)", ("mon_test_admin", "mon_test_spec", "mon_test_pharm", "mon_test_user"))
     conn.commit()
     conn.close()
-    mconn = sqlite3.connect(str(BASE_DIR / "metadata" / "monitoring.db"))
+    mconn = sqlite3.connect(str(_mon_db.MONITORING_DB_PATH))
     mconn.execute("DELETE FROM guideline_versions WHERE source='ada' AND version_label='manual-required'")
     mconn.execute("DELETE FROM safety_alerts WHERE alert_title='Test safety for API'")
     mconn.execute("DELETE FROM guideline_versions WHERE title LIKE 'Test%'")
@@ -84,7 +85,7 @@ def test_guideline_db_create_list():
     assert total >= 1
     assert any(r["id"] == gv["id"] for r in rows)
     # cleanup
-    mconn = sqlite3.connect(str(BASE_DIR / "metadata" / "monitoring.db"))
+    mconn = sqlite3.connect(str(_mon_db.MONITORING_DB_PATH))
     mconn.execute("DELETE FROM guideline_versions WHERE id=?", (gv["id"],))
     mconn.commit()
     mconn.close()
@@ -95,7 +96,7 @@ def test_safety_db_dedup():
     sa2 = create_safety_alert(source="FDA", alert_type="recall", alert_title="Test dup safety", severity="high", drug_name="DupDrug", alert_url="https://api.fda.gov/test_dup_url_123", raw_json=json.dumps({"test": 1}))
     assert sa["id"] == sa2["id"]
     # cleanup
-    mconn = sqlite3.connect(str(BASE_DIR / "metadata" / "monitoring.db"))
+    mconn = sqlite3.connect(str(_mon_db.MONITORING_DB_PATH))
     mconn.execute("DELETE FROM safety_alerts WHERE id=?", (sa["id"],))
     mconn.commit()
     mconn.close()
@@ -169,7 +170,7 @@ def test_api_safety_approve_roles(users):
     assert resp2.status_code == 200
     assert resp2.json()["result"]["status"] == "approved"
     # cleanup
-    mconn = sqlite3.connect(str(BASE_DIR / "metadata" / "monitoring.db"))
+    mconn = sqlite3.connect(str(_mon_db.MONITORING_DB_PATH))
     mconn.execute("DELETE FROM safety_alerts WHERE id=?", (aid,))
     mconn.commit()
     mconn.close()
@@ -195,7 +196,7 @@ def test_promote_flow_staging_to_corpus(users):
         # cleanup corpus
         Path(res["corpus_path"]).unlink(missing_ok=True)
     # cleanup db
-    mconn = sqlite3.connect(str(BASE_DIR / "metadata" / "monitoring.db"))
+    mconn = sqlite3.connect(str(_mon_db.MONITORING_DB_PATH))
     mconn.execute("DELETE FROM guideline_versions WHERE id=?", (gv["id"],))
     mconn.commit()
     mconn.close()
@@ -209,7 +210,7 @@ def test_superseded_cleanup():
 
     gv = create_guideline_version(source="gold", title="Superseded Test", url="https://goldcopd.org/superseded", version_label="sup-1", sha256="hash-sup")
     # mark superseded with old reviewed_at
-    mconn = sqlite3.connect(str(BASE_DIR / "metadata" / "monitoring.db"))
+    mconn = sqlite3.connect(str(_mon_db.MONITORING_DB_PATH))
     old_date = (datetime.now(timezone.utc) - timedelta(days=31)).isoformat()
     mconn.execute("UPDATE guideline_versions SET status='superseded', reviewed_at=? WHERE id=?", (old_date, gv["id"]))
     mconn.commit()
@@ -219,7 +220,7 @@ def test_superseded_cleanup():
     deleted = cleanup_superseded()
     assert deleted >= 1
     # ensure deleted
-    mconn = sqlite3.connect(str(BASE_DIR / "metadata" / "monitoring.db"))
+    mconn = sqlite3.connect(str(_mon_db.MONITORING_DB_PATH))
     row = mconn.execute("SELECT * FROM guideline_versions WHERE id=?", (gv["id"],)).fetchone()
     mconn.close()
     assert row is None

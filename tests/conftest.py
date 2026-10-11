@@ -91,6 +91,11 @@ def client():
         init_tracing_db()
     except Exception:
         pass
+    try:
+        from src.monitors.db import init_monitoring_db
+        init_monitoring_db()
+    except Exception:
+        pass
     from src.api.main import app
     with TestClient(app) as c:
         yield c
