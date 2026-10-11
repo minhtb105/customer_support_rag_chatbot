@@ -19,13 +19,14 @@ try:
 except ImportError:
     from src.shared.config import EMBEDDING_MODEL, PDF_DB_DIR
 try:
-    from src.shared.config import EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL
+    from src.shared.config import EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL, NVIDIA_EMBEDDING_MODEL
 except ImportError:
     try:
-        from shared.config import EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL  # type: ignore
+        from shared.config import EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL, NVIDIA_EMBEDDING_MODEL  # type: ignore
     except ImportError:
         EMBEDDING_PROVIDER = "local"
         OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+        NVIDIA_EMBEDDING_MODEL = "nvidia/nemotron-3-embed-1b"
 
 
 @dataclass
@@ -138,17 +139,25 @@ class LongTermMemory:
     ):
         self.user_id = user_id
         self.embedding_model = embedding_model
-        # Separate DB for OpenAI (1536d) vs local (384d) to avoid dimension mismatch
+        # Separate DB per provider to avoid dimension mismatch
         if memory_db_dir is None:
-            if EMBEDDING_PROVIDER == "openai":
+            if EMBEDDING_PROVIDER == "nvidia":
+                memory_db_dir = "embeddings/memory_db_nvidia"
+            elif EMBEDDING_PROVIDER == "openai":
                 memory_db_dir = "embeddings/memory_db_openai"
             else:
                 memory_db_dir = "embeddings/memory_db"
         self.memory_db_dir = memory_db_dir
         self.temporal_weighting = TemporalWeighting(half_life_days)
-        
-        # Initialize vector store — OpenAI nếu cấu hình, fallback HuggingFace
-        if EMBEDDING_PROVIDER == "openai":
+
+        # Initialize vector store — NVIDIA / OpenAI nếu cấu hình, fallback HuggingFace
+        if EMBEDDING_PROVIDER == "nvidia":
+            try:
+                from src.shared.nvidia import NvidiaEmbeddings
+            except ImportError:
+                from shared.nvidia import NvidiaEmbeddings  # type: ignore
+            self.embeddings = NvidiaEmbeddings(model=NVIDIA_EMBEDDING_MODEL)
+        elif EMBEDDING_PROVIDER == "openai":
             try:
                 from langchain_openai import OpenAIEmbeddings
                 self.embeddings = OpenAIEmbeddings(model=OPENAI_EMBEDDING_MODEL)

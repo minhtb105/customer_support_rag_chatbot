@@ -1,0 +1,522 @@
+food_id,vi,en,aliases,category,serving_g,serving_desc,macro_src,gi,gi_tier,gi_ref,notes,is_local,review
+GRC001,Cơm trắng,White rice cooked,,grain,150,1 chén vừa,manual:130;28;0.4;0.1;2.7;0.3,73,proxy,Sydney white rice rows (48-115),Ăn vừa chén không xới đầy. Ưu tiên gạo lứt nếu được. Ăn kèm rau và đạm để giảm đỉnh đường huyết.,true,true
+GRC002,Bún tươi,Rice vermicelli fresh,,grain,200,1 tô vừa,vn:1020,40,table1,Sydney 674 Jiangxi rice vermicelli,Trụng kỹ nước sôi. Tính carbs cả tô bún kể cả nước dùng ngọt.,true,false
+GRC003,Bánh phở khô,Dried rice noodles,,grain,100,1 vắt khô (nấu được 1 tô),vn:1013,61,table1,Sydney 1463 rice noodles dried boiled,Phở ăn liền tính cả gói gia vị (nhiều muối đường).,true,false
+GRC004,Bánh mì,Baguette white,,grain,80,1 ổ nhỏ,vn:1012,70,proxy,Sydney baguette rows (73-95) lấy 70,Bánh mì đặc ruột ít xơ. Người tiểu đường nên chọn ổ nhỏ và ăn kèm trứng/thịt rau.,true,true
+GRC005,Mì tôm,Instant noodles,,grain,75,1 gói (ăn cả nước),manual:450;60;3;4;9;18,48,table1,Sydney instant noodles Maggi,Ăn cả nước dùng nạp nhiều muối và chất béo. Hạn chế tối đa.,true,true
+GRC006,Cháo trắng,Rice porridge,,grain,300,1 bát đầy,manual:50;10.5;0.3;0.2;1.5;0.3,75,proxy,Sydney porridge rows,Cháo loãng dễ làm tăng đường huyết nhanh dù nhạt miệng. Ăn kèm thịt rau.,true,true
+GRC007,Xôi mặn,Sticky rice with toppings,,grain,200,1 gói vừa,manual:210;36;1.5;1;6;5,80,proxy,Glutinous rice high-GI + mỡ hành,GI rất cao do nếp dẻo. Khẩu phần nhỏ. Không ăn xôi ngọt (đường) nếu đường huyết cao.,true,true
+TUB001,Khoai lang,Boiled sweet potato,,tuber,150,1 củ vừa,vn:2008,47,table1,Sydney 1885 sweet potato Dor,Luộc/hấp cả vỏ giữ xơ. Khoai nướng mật đường cao hơn luộc.,true,false
+TUB002,Khoai tây,Boiled potato,,tuber,150,1 củ vừa,vn:2014,66,table1,Sydney 1813 Charlotte boiled,Không chiên. Khoai tây nghiền và khoai chiên GI cao hơn nhiều.,true,false
+TUB003,Sắn luộc,Boiled cassava,,tuber,150,1 khúc vừa,vn:2004,46,table2,Sydney 3597 cassava boiled with salt,Phải luộc chín kỹ bỏ nước (độc tố). Không ăn sắn nướng chấm đường.,true,false
+TUB004,Khoai môn,Boiled taro,,tuber,150,1 củ vừa,vn:2010,72,table1,Sydney dasheen boiled 30min,Nấu chín kỹ. Canh khoai môn tính cả nước cốt dừa (nhiều béo).,true,false
+FRU001,Ổi,Guava,,fruit,100,1 quả vừa,usda:guava raw,29,table1,Sydney 1131 guava raw pieces,Ăn cả vỏ rửa sạch. Ổi là trái cây low-GI tốt cho tiểu đường.,true,false
+FRU002,Cam,Orange,,fruit,150,1 quả vừa,vn:5002,45,table1,Sydney 1150 oranges navel,Ăn múi cả tép xơ. Không uống nước cam ép bỏ xơ.,true,false
+FRU003,Bưởi,Pomelo,,fruit,150,2-3 múi,vn:5001,35,proxy,Proxy orange/citrus rows,Ăn múi tươi. Người dùng thuốc hạ mỡ máu/HA cần hỏi bác sĩ về tương tác bưởi.,true,true
+FRU004,Thanh long,Dragon fruit,,fruit,150,nửa quả vừa,vn:5044,48,table2,Sydney 3017 pitahaya pulp,Ăn trực tiếp. Thanh long ruột đỏ/tím tương đương.,true,false
+FRU005,Dưa hấu,Watermelon,,fruit,200,2 miếng vừa,usda:watermelon raw,51,table1,Sydney seedless watermelon,GI trung bình nhưng GL thấp ở khẩu phần vừa. Không ăn cả quả một lúc.,true,false
+FRU006,Xoài chín,Ripe mango,,fruit,150,nửa quả vừa,vn:5055,48,table1,Sydney 1142 mango raw,Ăn miếng vừa chín tới. Xoài cát ngọt đậm ăn ít hơn xoài tượng.,true,false
+FRU007,Chuối tiêu,Ripe banana,,fruit,100,1 quả vừa,vn:5007,47,table1,Sydney 1088 banana raw,Chuối càng chín đốm nâu GI càng cao. Ăn quả vừa không quá chín.,true,false
+FRU008,Nhãn,Longan,,fruit,100,1 chén nhỏ (~10 quả),vn:5035,57,proxy,Proxy lychee fresh (cùng họ),Ngọt đậm. Ăn ít một. Không ăn nhãn sấy khô (đường cô đặc).,true,true
+FRU009,Vải,Lychee,,fruit,100,1 chén nhỏ (~10 quả),vn:5052,57,table1,Sydney lychee fresh,Ngọt đậm. Ăn ít một. Không ăn vải đóng hộp nước đường.,true,false
+FRU010,Sầu riêng,Durian,,fruit,100,3 múi nhỏ,vn:5048,49,table2,Sydney 2953 durian,Nhiều năng lượng và đường. Ăn tối đa khẩu phần gợi ý. Không uống rượu kèm.,true,false
+FRU011,Mít dai,Ripe jackfruit,,fruit,100,5-6 múi,vn:5028,60,proxy,Jackfruit rows (porridge 65) lấy 60,Mít dai ngọt đậm. Ăn ít một. Không ăn mít sấy.,true,true
+FRU012,Dứa,Pineapple,,fruit,150,3-4 khoanh,vn:5015,66,table2,Sydney 3016 pineapple raw,Dứa tây ngọt hơn dứa ta. Không uống nước ép bỏ xơ.,true,false
+FRU013,Đu đủ chín,Ripe papaya,,fruit,150,1 miếng vừa,vn:5017,38,table1,Sydney papaya raw pieces,Ăn miếng vừa chín tới. Đu đủ xanh nấu canh khác (ít đường hơn).,true,false
+FRU014,Nho ngọt,Grapes,,fruit,100,1 chùm nhỏ,vn:5037,53,proxy,Grape rows (48-54) lấy 53,Nho khô đường cô đặc gấp nhiều lần. Ăn nho tươi ít một.,true,true
+FRU015,Bơ,Avocado,,fruit,100,nửa quả vừa,usda:avocado raw,15,proxy,Avocado minimal carbs (USDA ~8.5g/100g),Béo tốt. Ăn trực tiếp hoặc salad. Không thêm sữa đặc đường.,true,true
+VEG001,Rau muống,Water spinach,,vegetable,200,1 đĩa luộc/xào,vn:4083,15,proxy,Leafy greens minimal GI,Rau lá xanh ăn thoải mái trong giới hạn. Xào ít dầu.,true,true
+VEG002,Cải xanh,Mustard greens,,vegetable,200,1 đĩa luộc,vn:4016,15,proxy,Leafy greens minimal GI,Nấu canh hoặc luộc. Không xào quá nhiều dầu mỡ.,true,true
+VEG003,Bắp cải,Cabbage,,vegetable,200,1 đĩa luộc/xào,vn:4010,15,proxy,Leafy greens minimal GI,Ăn sống (gỏi) hoặc luộc giữ vitamin. Ít carbs nên khẩu phần lớn được.,true,true
+VEG004,Cà chua,Tomato,,vegetable,200,2 quả vừa,vn:4005,30,proxy,Tomato rows GI ~30,Ăn sống hoặc nấu. Tương cà đóng chai nhiều đường (khác hẳn).,true,true
+VEG005,Giá đỗ xanh,Mung bean sprouts,,vegetable,200,1 đĩa luộc,vn:4036,25,proxy,Sprouts rows,Trụng/xào nhanh. Giá sống cần nguồn sạch.,true,true
+VEG006,Mồng tơi,Malabar spinach,,vegetable,200,1 bát canh,vn:4080,15,proxy,Proxy rau muống (cùng nhóm lá),Nấu canh cua/tôm. Ít carbs.,true,true
+VEG007,Dưa leo,Cucumber,,vegetable,200,1 quả lớn,usda:cucumber raw,15,proxy,Cucumber minimal GI,Ăn sống mát. Không chấm quá nhiều đường/muối.,true,true
+VEG008,Đậu bắp,Okra,,vegetable,200,1 đĩa luộc,usda:okra raw,20,proxy,Okra rows GI ~20,Luộc/nướng. Nhớt đậu bắp tốt cho đường huyết (chất xơ hòa tan).,true,true
+PRO001,Thịt heo nạc,Lean pork,,protein,100,1 miếng vừa,vn:7017,,na,,Nạc ít mỡ. Ưu tiên luộc/hấp/nướng hơn chiên rán.,true,false
+PRO002,Ức gà,Chicken breast,,protein,100,1 miếng vừa,usda:chicken breast raw,,na,,Bỏ da. Luộc/hấp/nướng. Thịt chế biến sẵn (xúc xích) khác hẳn (nhiều muối).,true,false
+PRO003,Cá basa,Basa fish,,protein,100,1 khứa vừa,usda:catfish raw,,na,,Cá da trơn. Hấp/kho lạt. Cá chiên và cá tẩm bột khác hẳn.,true,false
+PRO004,Tôm,Shrimp,,protein,100,1 chén nhỏ,vn:8051,,na,,Hấp/luộc bỏ vỏ. Tôm khô mặn hơn nhiều. Dị ứng hải sản thì tránh.,true,false
+PRO005,Trứng gà,Chicken egg,,protein,60,1 quả,vn:9001,,na,,Luộc tốt nhất. Trứng ốp la/chiên thêm dầu mỡ. 1 quả/ngày thường ổn (hỏi bác sĩ nếu mỡ máu cao).,true,false
+PRO006,Đậu hũ,Tofu,,protein,100,1 bìa nhỏ,usda:tofu raw,15,proxy,Tofu/soy rows,Đậu hũ non/trắng. Đậu hũ chiên đã khác (hút dầu). Người bướu giáp hỏi bác sĩ về đậu nành.,true,true
+PRO007,Đậu đen hạt,Black beans dried,,protein,50,1 nắm khô (nấu chè/cháo),vn:3004,30,proxy,Bean rows GI ~30,Nấu chín kỹ. Nước đậu đen rang ít đường thì khác (gần như 0 carbs).,true,true
+PRO008,Lạc rang,Roasted peanuts,,protein,30,1 nắm nhỏ,vn:3017,14,proxy,Peanut rows GI ~14,Béo tốt nhưng calo cao. Ăn ít một. Lạc luộc ít béo hơn lạc rang dầu.,true,true
+DAI001,Sữa tươi không đường,Fresh milk unsweetened,,dairy,200,1 ly,vn:10001,28,proxy,Milk rows (26-31) lấy 28,Uống loại không đường. Sữa có đường khác hẳn (cộng ~10g đường/100ml).,true,true
+DAI002,Sữa chua không đường,Plain yogurt,,dairy,100,1 hũ,vn:10004,15,proxy,Plain yogurt rows,Ăn loại không đường. Sữa chua có đường/trái cây khác hẳn.,true,true
+DAI003,Sữa đậu nành ít đường,Soy milk low sugar,,dairy,200,1 ly,vn:3032,36,table1,Sydney 1065 soy milk full-fat,Tự nấu ít đường. Sữa đậu nành đóng hộp thường nhiều đường (đọc nhãn).,true,false
+DAI004,Sữa đặc,Sweetened condensed milk,,dairy,20,1 thìa canh,usda:sweetened condensed milk,60,proxy,High-sugar dairy,Đường rất cao. Pha cà phê/trà chỉ 1 thìa. Người tiểu đường nên tránh.,false,true
+BEV001,Trà sữa 500ml,Bubble tea 500ml,,beverage,500,1 cốc vừa,manual:80;10;0;9;1.5;3,60,proxy,Branded drinks + sucrose rows,Tối đa 1-2 cốc/tuần (người khỏe). Người tiểu đường nên tránh; nếu uống: size nhỏ 30% đường bớt topping.,true,true
+BEV002,Nước ngọt có ga,Cola,,beverage,330,1 lon,usda:cola,72,table1,Sydney 77 cola Pepsi,Đường hấp thu rất nhanh. Nước ngọt ăn kiêng (0 đường) khác nhưng vẫn nên hạn chế.,false,false
+BEV003,Trà xanh đóng chai,Bottled green tea sweetened,,beverage,500,1 chai,manual:30;7.5;0;7;0;0,40,proxy,Sweetened tea rows,Đọc nhãn: loại ít đường/không đường khác hẳn. Tự pha trà tươi tốt nhất.,false,true
+BEV004,Nước mía,Sugarcane juice,,beverage,300,1 ly vừa,manual:60;15;0;14;0;0,65,proxy,Cane sugar rows,Đường gần như tinh khiết. Người tiểu đường nên tránh. Không uống khi đói.,true,true
+BEV005,Nước dừa,Coconut water,,beverage,400,1 trái vừa,usda:coconut water,50,proxy,Coconut water rows,Ít đường hơn nước ngọt nhưng vẫn có đường. Uống dừa tươi không thêm đường.,true,true
+BEV006,Cà phê sữa đá,Milk coffee,,beverage,200,1 ly vừa,manual:60;10;0;9;1.5;1.5,55,proxy,Coffee+milk rows,Cà phê đen không đường khác hẳn (gần 0 carbs). Sữa đặc là nguồn đường chính.,true,true
+BEV007,Bia,Beer,,beverage,330,1 lon,usda:beer,66,proxy,Beer rows,Uống có chừng mực. Bia + mồi nhậu (carbs) dễ tăng đường huyết. Người tiểu đường hỏi bác sĩ.,false,true
+BEV008,Nước cam ép,Orange juice,,beverage,200,1 ly,usda:orange juice,50,proxy,Juice rows (whole fruit lower),Ép bỏ xơ nên GI cao hơn ăn múi. Ăn cam múi tốt hơn uống nước ép.,false,true
+SNK001,Kẹo cứng,Hard candy,,snack_sweet,20,2 viên,vn:12015,70,proxy,Sugar confectionery rows,Đường tinh khiết hấp thu nhanh. Chỉ dùng khi hạ đường huyết (theo hướng dẫn bác sĩ).,false,true
+SNK002,Kem vani,Vanilla ice cream,,snack_sweet,100,2 muỗng,usda:ice cream vanilla,55,proxy,Ice cream rows (27-61) lấy 55,Kem sữa nhiều đường+béo. Ăn ít một. Kem ít đường/light khác (đọc nhãn).,false,true
+SNK003,Socola sữa,Milk chocolate,,snack_sweet,25,1 thanh nhỏ,usda:milk chocolate,42,proxy,Milk chocolate rows,Ăn ít một. Socola đen trên 70% cacao ít đường hơn.,false,true
+SNK004,Bánh quy,Biscuits,,snack_sweet,30,3-4 cái,vn:12002,70,proxy,Biscuit/cookie rows,Bánh quy mặn/plain ít đường hơn bánh kem. Đọc nhãn dinh dưỡng.,false,true
+SNK005,Chè đậu đen,Black bean sweet soup,,snack_sweet,300,1 cốc vừa,manual:117;23;2.7;12;2.7;0.7,45,proxy,Bean + syrup rows,Đậu tốt nhưng nước đường nhiều. Nấu ít đường. Không ăn khi đường huyết cao.,true,true
+SNK006,Bánh chưng,Sticky rice cake,,snack_sweet,100,1/8 cái,manual:250;42;2;2;6;7,75,proxy,Glutinous rice rows,Nếp dẻo GI rất cao + thịt mỡ. Ăn miếng nhỏ ngày Tết. Rán lại càng nhiều béo.,true,true
+SNK007,Bánh bao nhân thịt,Steamed pork bun,,snack_sweet,100,1 cái vừa,vn:1009,60,proxy,Bun/dumpling rows,Vỏ bột mì + nhân thịt. 1 cái đã ~1.5 carb-choice. Không ăn kèm sữa đặc.,true,true
+MIX001,Phở bò,Beef noodle soup,,mixed_dish,500,1 bát đầy,manual:90;10.4;0.4;0.8;5.6;2,55,proxy,Rice noodle + beef rows,Húp ít nước béo. Thêm rau thơm/giá. Bánh phở khô cân theo gói.,true,true
+MIX002,Bún bò Huế,Spicy beef noodle soup,,mixed_dish,500,1 bát đầy,manual:96;11;0.4;1;5.2;2.4,55,proxy,Rice noodle rows,Nước dùng có mắm ruốc (mặn). Ăn rau kèm. Người HA cao ăn nhạt.,true,true
+MIX003,Cơm tấm sườn,Broken rice with pork,,mixed_dish,400,1 đĩa đầy,manual:155;18.5;0.5;2;7;4.5,70,proxy,White rice + pork rows,Mỡ hành + nước mắm đường cộng thêm carbs. Gọi ít mỡ hành ít cơm.,true,true
+MIX004,Bánh cuốn,Steamed rice rolls,,mixed_dish,200,1 đĩa (6-8 cuốn),manual:150;22;0.5;1.5;5;4,65,proxy,Rice flour rows,Vỏ bột gạo mỏng nhưng ăn nhiều cuốn cộng dồn. Nước mắm pha đường tính thêm.,true,true
+MIX005,Gỏi cuốn,Fresh spring rolls,,mixed_dish,150,2 cuốn,manual:130;20;1.5;2;5;2.5,50,proxy,Rice paper + shrimp rows,Tương đậu phộng chấm cộng carbs/béo. Chấm ít. Tốt hơn chả giò chiên.,true,true
+MIX006,Chả giò,Fried spring rolls,,mixed_dish,100,2 cái,manual:250;20;2;3;8;15,60,proxy,Fried wheat rows,Chiên hút dầu. Để ráo dầu. Gỏi cuốn là lựa chọn nhẹ hơn.,true,true
+GRC008,Gạo nếp cái,"Glutinous rice, milled",,grain,100.0,1 phần,vn:1001,86,proxy,ước tính theo nhóm (cần duyệt),"gạo nếp cái - GI cao do amylopectin gần tuyệt đối ~90 (Miller et al.), dùng 86",true,true
+GRC009,Gạo nếp máy,"Glutinous rice, milled",,grain,100.0,1 phần,vn:1002,86,proxy,ước tính theo nhóm (cần duyệt),"gạo nếp máy - như gạo nếp cái, xát máy",true,true
+GRC010,Gạo tẻ giã,"Under milled, home-pounded rice",,grain,100.0,1 phần,vn:1003,64,proxy,ước tính theo nhóm (cần duyệt),"gạo tẻ giã - xát ít, tương tự gạo lứt nhẹ GI thấp hơn gạo trắng xát kỹ",true,true
+GRC011,Gạo tẻ máy,Ordinary polished rice,,grain,100.0,1 phần,vn:1004,73,proxy,ước tính theo nhóm (cần duyệt),"gạo tẻ máy - gạo trắng xát kỹ, GI tham chiếu Sydney white rice avg ~73",true,true
+GRC012,Gạo lứt,"Rice, brown or hulled",,grain,100.0,1 phần,vn:1005,68,proxy,ước tính theo nhóm (cần duyệt),"gạo lứt - brown rice boiled, Sydney dao động 50-87 tùy giống, trung vị ~68",true,true
+GRC013,Kê,Foxtail millet,,grain,100.0,1 phần,vn:1006,71,proxy,ước tính theo nhóm (cần duyệt),kê - foxtail millet nấu chín GI 70-71 theo y văn quốc tế,true,true
+GRC014,Ngô bắp tươi,"Fresh maize seeds, raw",,grain,100.0,1 phần,vn:1007,52,table1,Sydney Int.Tables 2021,"ngô bắp tươi - sweet corn, Sydney table1 ~52",true,true
+GRC015,Ngô vàng hạt khô,"Yellow maize, dried seeds",,grain,100.0,1 phần,vn:1008,60,proxy,ước tính theo nhóm (cần duyệt),ngô vàng hạt khô - polenta/cornmeal dạng hạt GI ~60 theo y văn,true,true
+GRC016,Bánh đa nem,Rice paper for rollers,,grain,100.0,1 phần,vn:1010,61,proxy,ước tính theo nhóm (cần duyệt),"bánh đa nem - bánh tráng gạo, tương tự bánh phở khô (GRC003=61), bản chất bột gạo ép khô",true,true
+GRC017,Bánh đúc,Rice pudding,,grain,100.0,1 phần,vn:1011,75,proxy,ước tính theo nhóm (cần duyệt),"bánh đúc - bột gạo hồ hóa hoàn toàn (giống cháo đặc), GI cao",true,true
+GRC018,Bánh quẩy,Wheat fritters twisted fried,,grain,100.0,1 phần,vn:1014,75,proxy,ước tính theo nhóm (cần duyệt),"bánh quẩy - bột mì chiên (tương tự bánh mì/donut chiên), GI cao do bột mì tinh chế + chiên",true,true
+GRC019,Bỏng ngô,Corn flakes,,grain,100.0,1 phần,vn:1015,65,proxy,ước tính theo nhóm (cần duyệt),"bỏng ngô - ngô nổ/corn flakes dạng phồng GI 65-85 tùy loại, dùng trung bình thận trọng",true,true
+GRC020,Bột gạo nếp,Glutinous rice flour,,grain,100.0,1 phần,vn:1016,86,proxy,ước tính theo nhóm (cần duyệt),bột gạo nếp - cùng GI với gạo nếp nguyên hạt,true,true
+GRC021,Bột gạo tẻ,Rice ordinary flour,,grain,100.0,1 phần,vn:1017,73,proxy,ước tính theo nhóm (cần duyệt),bột gạo tẻ - tương tự gạo tẻ máy,true,true
+GRC022,Bột mì,Wheat flour,,grain,100.0,1 phần,vn:1018,70,proxy,ước tính theo nhóm (cần duyệt),bột mì tinh chế - GI tham chiếu bánh mì trắng/wheat flour products ~70,true,true
+GRC023,Bột ngô vàng,Yellow maize flour,,grain,100.0,1 phần,vn:1019,68,proxy,ước tính theo nhóm (cần duyệt),bột ngô vàng - cornmeal/cornflour GI 65-70 theo y văn,true,true
+GRC024,Cốm,"Rice, unriped. Raw",,grain,100.0,1 phần,vn:1021,60,proxy,ước tính theo nhóm (cần duyệt),"cốm lúa non dẹt - xơ tương đối cao hơn gạo thường, GI giảm nhẹ so với gạo trắng",true,true
+GRC025,Mì sợi,Wheat noodles,,grain,100.0,1 phần,vn:1022,55,proxy,ước tính theo nhóm (cần duyệt),"mì sợi bột mì - kết cấu đặc như pasta, GI thấp hơn bánh mì ~50-55",true,true
+GRC026,Ngô nếp luộc,"Glutinous maize, boiled",,grain,100.0,1 phần,vn:1023,73,proxy,ước tính theo nhóm (cần duyệt),"ngô nếp luộc - waxy corn tinh bột gần toàn amylopectin, GI cao hơn ngô thường",true,true
+TUB005,Củ ấu,Water-caltrops,,tuber,150.0,1 củ/khúc vừa,vn:2001,60,proxy,ước tính theo nhóm (cần duyệt),củ tinh bột - proxy trung bình,true,true
+TUB006,Củ cái,Yam winged,,tuber,150.0,1 củ/khúc vừa,vn:2002,54,proxy,ước tính theo nhóm (cần duyệt),khoai môn/yam,true,true
+TUB007,Củ dong,Bermuda tuber,,tuber,150.0,1 củ/khúc vừa,vn:2003,65,proxy,ước tính theo nhóm (cần duyệt),dong riềng/arrowroot - tinh bột dễ gelatin hóa,true,true
+TUB008,Củ sắn dây,Radix puerariae,,tuber,150.0,1 củ/khúc vừa,vn:2005,50,proxy,ước tính theo nhóm (cần duyệt),khoai mì/sắn - GI ~50,true,true
+TUB009,Củ súng khô (đã bỏ vỏ),"Nymphaea stellata wild, dried, unshelled",,tuber,150.0,1 củ/khúc vừa,vn:2006,60,proxy,ước tính theo nhóm (cần duyệt),củ tinh bột - proxy trung bình,true,true
+TUB010,Củ từ,"Igname Yam, Chinese",,tuber,150.0,1 củ/khúc vừa,vn:2007,54,proxy,ước tính theo nhóm (cần duyệt),khoai môn/yam,true,true
+TUB011,Khoai lang nghệ,"Sweet potato, yellow",,tuber,150.0,1 củ/khúc vừa,vn:2009,86,table1,Sydney Int.Tables 2021,"Khoai lang nghệ - Sydney match: ""Sweet potato (Ipomoea batatas), Yellow Belly cultivar, baked with skin on at 175oC for 45 min"" GI=86",true,true
+TUB012,Khoai nưịc,Water-taro,,tuber,150.0,1 củ/khúc vừa,vn:2011,55,proxy,ước tính theo nhóm (cần duyệt),khoai sọ/khoai môn - GI ~55,true,true
+TUB013,Khoai riềng,Edible canna,,tuber,150.0,1 củ/khúc vừa,vn:2012,60,proxy,ước tính theo nhóm (cần duyệt),củ tinh bột - proxy trung bình,true,true
+TUB014,Khoai sọ,Taro tuber,,tuber,150.0,1 củ/khúc vừa,vn:2013,55,proxy,ước tính theo nhóm (cần duyệt),khoai sọ/khoai môn - GI ~55,true,true
+TUB015,Miến dong,Vermicelli from Bermuda tuber,,tuber,150.0,1 củ/khúc vừa,vn:2015,65,proxy,ước tính theo nhóm (cần duyệt),dong riềng/arrowroot - tinh bột dễ gelatin hóa,true,true
+TUB016,Bột dong lọc,Bermuda flour,,tuber,150.0,1 củ/khúc vừa,vn:2016,65,proxy,ước tính theo nhóm (cần duyệt),dong riềng/arrowroot - tinh bột dễ gelatin hóa,true,true
+TUB017,Bột khoai lang,Sweet potato flour,,tuber,150.0,1 củ/khúc vừa,vn:2017,55,proxy,ước tính theo nhóm (cần duyệt),khoai lang - GI 50-60 tùy cách nấu,true,true
+TUB018,Bột khoai riềng (bột đao),"Canna edulis Ker, flour",,tuber,150.0,1 củ/khúc vừa,vn:2018,60,proxy,ước tính theo nhóm (cần duyệt),củ tinh bột - proxy trung bình,true,true
+TUB019,Bột khoai tây (lọc),"Potato flour, white",,tuber,150.0,1 củ/khúc vừa,vn:2019,53,table2,Sydney Int.Tables 2021,"Bột khoai tây (lọc) - Sydney match: ""Potato dumplings (60% white potatoes, 40% white wheat flour, boiled in salted water)"" GI=53",true,true
+TUB020,Bột sắn,Cassava flour,,tuber,150.0,1 củ/khúc vừa,vn:2020,93,table2,Sydney Int.Tables 2021,"Bột sắn - Sydney match: ""Bread, made from wheat flour and 10% cassava flour"" GI=93",true,true
+TUB021,Bột sắn dây,Radix puerariae flour,,tuber,150.0,1 củ/khúc vừa,vn:2021,50,proxy,ước tính theo nhóm (cần duyệt),khoai mì/sắn - GI ~50,true,true
+TUB022,Khoai lang khô,"Sweet potato, dried",,tuber,150.0,1 củ/khúc vừa,vn:2022,77,table1,Sydney Int.Tables 2021,"Khoai lang khô - Sydney match: ""Sweet potato, kumara, cooking method NS"" GI=77",true,true
+TUB023,Khoai tây khô,"Potato, white, dried",,tuber,150.0,1 củ/khúc vừa,vn:2023,72,table1,Sydney Int.Tables 2021,"Khoai tây khô - Sydney match: ""California white potatoes, cubed, roasted in soybean oil"" GI=72",true,true
+TUB024,Khoai tây lát chiên,"Potato crisp, fried",,tuber,150.0,1 củ/khúc vừa,vn:2024,78,proxy,ước tính theo nhóm (cần duyệt),khoai tây - GI cao đặc biệt khi nghiền,true,true
+TUB025,Sắn khô,Dried bitter cassava,,tuber,150.0,1 củ/khúc vừa,vn:2025,50,proxy,ước tính theo nhóm (cần duyệt),khoai mì/sắn - GI ~50,true,true
+TUB026,Trân châu sắn,"Tapioca, pearls E.P",,tuber,150.0,1 củ/khúc vừa,vn:2026,50,proxy,ước tính theo nhóm (cần duyệt),khoai mì/sắn - GI ~50,true,true
+PRO009,Cúi dừa già,"Coconut meat, mature, raw",,protein,100.0,1 phần,vn:3001,45,proxy,ước tính theo nhóm (cần duyệt),dừa - GI trung bình,true,true
+PRO010,Cúi dừa non,"Coconut meat, immature, raw",,protein,100.0,1 phần,vn:3002,45,proxy,ước tính theo nhóm (cần duyệt),dừa - GI trung bình,true,true
+PRO011,Đậu cô ve (hạt),"French bean seeds, dried",,protein,100.0,1 phần,vn:3003,25,proxy,ước tính theo nhóm (cần duyệt),hạt đậu/hạt dầu - GI thấp do protein+chất béo,true,true
+PRO012,Đậu đòa (hạt),"Cow pea whole seeds, dried",,protein,100.0,1 phần,vn:3005,48,proxy,ước tính theo nhóm (cần duyệt),đậu hà lan - GI trung bình,true,true
+PRO013,Đậu Hà lan (hạt),"Peas garden and field, seeds, dried",,protein,100.0,1 phần,vn:3006,48,proxy,ước tính theo nhóm (cần duyệt),đậu hà lan - GI trung bình,true,true
+PRO014,Đậu tương (đậu nành),"Yellow dried soybean seeds, dried",,protein,100.0,1 phần,vn:3007,20,proxy,ước tính theo nhóm (cần duyệt),đậu nành - GI rất thấp do protein+chất béo,true,true
+PRO015,Đậu trắng hạt (Đậu Tây),"Kidney bean whole seeds, dried",,protein,100.0,1 phần,vn:3008,30,proxy,ước tính theo nhóm (cần duyệt),đậu trắng - GI thấp,true,true
+PRO016,Đậu trứng cuốc,"Egg bird bean seeds, dried",,protein,100.0,1 phần,vn:3009,25,proxy,ước tính theo nhóm (cần duyệt),hạt đậu/hạt dầu - GI thấp do protein+chất béo,true,true
+PRO017,Đậu xanh (đậu tắt),"Mungo bean seeds, dried",,protein,100.0,1 phần,vn:3010,30,proxy,ước tính theo nhóm (cần duyệt),đậu xanh - GI thấp,true,true
+PRO018,Hạt dẻ to,"Chestnut, Chinese whole, raw",,protein,100.0,1 phần,vn:3011,25,proxy,ước tính theo nhóm (cần duyệt),hạt đậu/hạt dầu - GI thấp do protein+chất béo,true,true
+PRO019,Hạt dẻ tươi,"Chestnut, Chinese whole, raw",,protein,100.0,1 phần,vn:3012,25,proxy,ước tính theo nhóm (cần duyệt),hạt đậu/hạt dầu - GI thấp do protein+chất béo,true,true
+PRO020,Hạt dẻ khô,"Chestnut, dried",,protein,100.0,1 phần,vn:3013,54,table2,Sydney Int.Tables 2021,"Hạt dẻ khô - Sydney match: ""Chestnuts, baked for 30 min South"" GI=54",true,true
+PRO021,Hạt đen,Black seed,,protein,100.0,1 phần,vn:3014,14,proxy,ước tính theo nhóm (cần duyệt),lạc - GI rất thấp,true,true
+PRO022,Hạt điều,"Cashew nut, common",,protein,100.0,1 phần,vn:3015,22,proxy,ước tính theo nhóm (cần duyệt),hạt điều - GI thấp,true,true
+PRO023,Hạt mít,"Jack fruit, seed, raw",,protein,100.0,1 phần,vn:3016,53,table2,Sydney Int.Tables 2021,"Hạt mít - Sydney match: ""Jackfruit (Artocarpus heterophyllus), flesh (400 g) and seeds (10 g), boiled with water, consumed with 25 g coconut scrapings and 10 g onion sambal"" GI=53",true,true
+PRO024,Quả cọ tươi,Palm fruit fresh,,protein,100.0,1 phần,vn:3018,35,table2,Sydney Int.Tables 2021,"Quả cọ tươi - Sydney match: ""Peach palm fruit (Bactris gasipaes), red-orange peel, boiled at 96oC for 30 min, frozen, thawed at room temperature, peeled and deseeded"" GI=35",true,true
+PRO025,Quả đại hái tươi,Hodgsonia fruit,,protein,100.0,1 phần,vn:3019,25,proxy,ước tính theo nhóm (cần duyệt),hạt đậu/hạt dầu - GI thấp do protein+chất béo,true,true
+PRO026,"Vừng (đen, trắng)","Sesame oriental seeds, whole, dried black or white",,protein,100.0,1 phần,vn:3020,14,proxy,ước tính theo nhóm (cần duyệt),lạc - GI rất thấp,true,true
+PRO027,Bột đậu tương đã loại béo (đậu nành),"Soybeans flour, defatted",,protein,100.0,1 phần,vn:3021,20,proxy,ước tính theo nhóm (cần duyệt),đậu nành - GI rất thấp do protein+chất béo,true,true
+PRO028,Bột đậu tương rang chín,Roasted soybeans flour,,protein,100.0,1 phần,vn:3022,20,proxy,ước tính theo nhóm (cần duyệt),đậu nành - GI rất thấp do protein+chất béo,true,true
+PRO029,Bột đậu xanh,Mungo bean flour,,protein,100.0,1 phần,vn:3023,30,proxy,ước tính theo nhóm (cần duyệt),đậu xanh - GI thấp,true,true
+PRO030,Bột lạc,Peanut flour,,protein,100.0,1 phần,vn:3024,14,proxy,ước tính theo nhóm (cần duyệt),đậu phộng - GI rất thấp do chất béo cao,true,true
+PRO031,Đậu phô,"Soybean curt cake pressed, raw",,protein,100.0,1 phần,vn:3025,20,proxy,ước tính theo nhóm (cần duyệt),đậu nành - GI rất thấp do protein+chất béo,true,true
+PRO032,Đậu phô chúc,Curd tofu concentrated,,protein,100.0,1 phần,vn:3026,15,proxy,ước tính theo nhóm (cần duyệt),đậu phụ - GI rất thấp,true,true
+PRO033,Đậu phô nưịng,"Curd tofu, fried",,protein,100.0,1 phần,vn:3027,15,proxy,ước tính theo nhóm (cần duyệt),đậu phụ - GI rất thấp,true,true
+PRO034,Hạt bí đỏ rang,"Pumpkin seeds, fried",,protein,100.0,1 phần,vn:3028,25,proxy,ước tính theo nhóm (cần duyệt),hạt đậu/hạt dầu - GI thấp do protein+chất béo,true,true
+PRO035,Hạt dưa đỏ rang (dưa hấu),"Water melon seeds whole, fried",,protein,100.0,1 phần,vn:3029,25,proxy,ước tính theo nhóm (cần duyệt),hạt đậu/hạt dầu - GI thấp do protein+chất béo,true,true
+PRO036,"Hạt điều khô, chiên dầu","Cashew, common, roasted with oil",,protein,100.0,1 phần,vn:3030,22,proxy,ước tính theo nhóm (cần duyệt),hạt điều - GI thấp,true,true
+PRO037,Sữa bột đậu nành,"Milk flour, made from roasted soybeans",,protein,100.0,1 phần,vn:3031,20,proxy,ước tính theo nhóm (cần duyệt),đậu nành - GI rất thấp do protein+chất béo,true,true
+PRO038,Tào phớ,"Tofu in light syrup (Tofu 160g, sirup 65ml)",,protein,100.0,1 phần,vn:3033,15,proxy,ước tính theo nhóm (cần duyệt),đậu phụ - GI rất thấp,true,true
+VEG009,Bầu,"Calabash, Bottle gourd",,vegetable,100.0,Nửa bát 280 ml,vn:4001,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG010,Bí đao (bí xanh),"Asgourd Waxgoured, Winter melon",,vegetable,140.0,Miệng bát 280 ml,vn:4002,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG011,Bí ngô,Pumpkin squash,,vegetable,100.0,Nửa bát 280 ml,vn:4003,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG012,Cà bát,"Egg plant big, Brinja aubergine",,vegetable,200.0,1 đĩa/bát,vn:4004,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG013,Cà pháo,Egg plant - small,,vegetable,200.0,1 đĩa/bát,vn:4006,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG014,"Cà rốt (củ đỏ, vàng)",Carrots,,vegetable,200.0,1 đĩa/bát,vn:4007,32,table1,Sydney Int.Tables 2021,"Cà rốt (củ đỏ, vàng) - Sydney match: ""Carrots, unpeeled, boiled"" GI=32",true,true
+VEG015,Cà rốt khô,Dried carrot,,vegetable,200.0,1 đĩa/bát,vn:4008,32,table1,Sydney Int.Tables 2021,"Cà rốt khô - Sydney match: ""Carrots, unpeeled, boiled"" GI=32",true,true
+VEG016,Cà tím,Aubergine,,vegetable,200.0,1 đĩa/bát,vn:4009,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG017,Cải bắp đỏ,"Cabbage, red",,vegetable,200.0,1 đĩa/bát,vn:4011,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG018,Cải bắp khô,"Dried cabbage, white",,vegetable,200.0,1 đĩa/bát,vn:4012,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG019,Cải cúc,Chrysanthemum. crown-daisy,,vegetable,200.0,1 đĩa/bát,vn:4013,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG020,Cải soong,Watercress,,vegetable,65.0,Nửa bát 280 ml,vn:4014,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG021,Cải thìa (cải trắng),"Chinese cabbage, white",,vegetable,140.0,Miệng bát 280 ml,vn:4015,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG022,Cần ta,Water drop-wort; Celery water,,vegetable,126.0,Miệng bát 280 ml,vn:4017,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG023,Cần tây,"Celery, Chinese",,vegetable,200.0,1 đĩa/bát,vn:4018,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG024,Chuối xanh,"Banana common varieties, unripe",,vegetable,200.0,1 đĩa/bát,vn:4019,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG025,Củ cải đỏ,"Red radish oriental, raw",,vegetable,200.0,1 đĩa/bát,vn:4020,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG026,Củ cải trắng,"Radish garden while, raw",,vegetable,160.0,Miệng bát 280 ml,vn:4021,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG027,Củ cải trắng khô,"Dried radish, white",,vegetable,200.0,1 đĩa/bát,vn:4022,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG028,Củ đậu,Pachyrrhizus,,vegetable,200.0,1 đĩa/bát,vn:4023,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG029,Củ niÔng,"Manchurian water-rice, Manchurian Wild rice",,vegetable,200.0,1 đĩa/bát,vn:4024,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG030,Dọc củ cải (non),"Horse radish; dish - tree, drumstick leave",,vegetable,200.0,1 đĩa/bát,vn:4025,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG031,Dọc múng,Colocasia indica,,vegetable,200.0,1 đĩa/bát,vn:4026,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG032,Dưa chuột,Cucumber,,vegetable,200.0,1 đĩa/bát,vn:4027,61,table1,Sydney Int.Tables 2021,"Dưa chuột - Sydney match: ""White rice (Satou Co. Ltd, Japan) with pickled vinegar and pickled cucumber, consumed together16"" GI=61",true,true
+VEG033,Dưa gang,Large cucumber,,vegetable,200.0,1 đĩa/bát,vn:4028,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG034,Đậu cô ve,"Beans, kidney, in pod, French bean; Navy been",,vegetable,98.0,Nửa bát 280 ml,vn:4029,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG035,Đậu đòa,"Cow-peas, yard long, Chinese long bean",,vegetable,200.0,1 đĩa/bát,vn:4030,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG036,Đậu Hà Lan,Green peas; field pea; Peas garden,,vegetable,200.0,1 đĩa/bát,vn:4031,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG037,Đậu rồng (quả non),"Winged bean goabean, Indies, asparagus pea",,vegetable,200.0,1 đĩa/bát,vn:4032,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG038,Đu đủ xanh,"Papaya, unripe, raw",,vegetable,200.0,1 đĩa/bát,vn:4033,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG039,Gấc,"Gac fruit, whole",,vegetable,200.0,1 đĩa/bát,vn:4034,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG040,Giá đậu tương,Sprout of soybeans,,vegetable,200.0,1 đĩa/bát,vn:4035,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG041,Hành củ tươi,"Onion, Welsh",,vegetable,200.0,1 đĩa/bát,vn:4037,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG042,Hành lá (hành hoa),"Onion, Welsh",,vegetable,200.0,1 đĩa/bát,vn:4038,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG043,Hành tây,"Onion, common, garden",,vegetable,200.0,1 đĩa/bát,vn:4039,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG044,Hạt sen tươi,"Lotus seed, raw",,vegetable,200.0,1 đĩa/bát,vn:4040,40,table1,Sydney Int.Tables 2021,"Hạt sen tươi - Sydney match: ""Moon cake, Maxim’s Low Sugar Lotus Seed Paste (with pine nut) (Maxim’s Caterers Limited, Hong Kong)"" GI=40",true,true
+VEG045,Hạt sen khô,Dried lotus seed,,vegetable,200.0,1 đĩa/bát,vn:4041,40,table1,Sydney Int.Tables 2021,"Hạt sen khô - Sydney match: ""Moon cake, Maxim’s Low Sugar Lotus Seed Paste (with pine nut) (Maxim’s Caterers Limited, Hong Kong)"" GI=40",true,true
+VEG046,Hẹ lá,"Onion, fragrant, Chinese leek",,vegetable,200.0,1 đĩa/bát,vn:4042,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG047,Hoa chuối,"Banana, buds and flowers",,vegetable,200.0,1 đĩa/bát,vn:4043,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG048,Hoa lý,"Daylily, lemon flowers, Pergularia, raw",,vegetable,200.0,1 đĩa/bát,vn:4044,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG049,Khế,Carambola; Star fruit,,vegetable,200.0,1 đĩa/bát,vn:4045,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG050,Lá lốt,Lolot,,vegetable,200.0,1 đĩa/bát,vn:4046,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG051,Lá me,"Tamarind, leaves",,vegetable,200.0,1 đĩa/bát,vn:4047,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG052,Lá mơ lông,Wild plant,,vegetable,200.0,1 đĩa/bát,vn:4048,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG053,Lá sắn tươi,Cassava leaves,,vegetable,200.0,1 đĩa/bát,vn:4049,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG054,Măng chua,"Bamboo shoot, unspecified",,vegetable,200.0,1 đĩa/bát,vn:4050,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG055,Măng khô,Dried bamboo shoots,,vegetable,200.0,1 đĩa/bát,vn:4051,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG056,Măng tây,"Asparagus, white",,vegetable,200.0,1 đĩa/bát,vn:4052,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG057,Măng tre,"Bamboo shoots, spring variety",,vegetable,200.0,1 đĩa/bát,vn:4053,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG058,Mưịp,"Gourd, sponge gourd",,vegetable,200.0,1 đĩa/bát,vn:4054,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG059,Mưịp đắng,"Balsam-pear, balsam-apple, bitter melon, bitter gourd",,vegetable,200.0,1 đĩa/bát,vn:4055,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG060,Mưịp Nhật bản,"Gourd, sponge gourd, Japanese",,vegetable,200.0,1 đĩa/bát,vn:4056,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG061,Ngải cứu,"Mugwort, common sagebrush",,vegetable,200.0,1 đĩa/bát,vn:4057,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG062,Ngô bao tử,"Corn, small variety immature, baby corn",,vegetable,200.0,1 đĩa/bát,vn:4058,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG063,Ngã sen,"Lotus, stem underground",,vegetable,200.0,1 đĩa/bát,vn:4059,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG064,Nô mưịp,"Sponge gourd, rag, young flower",,vegetable,200.0,1 đĩa/bát,vn:4060,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG065,ịt đỏ to,"Chili pepper, peppers red",,vegetable,200.0,1 đĩa/bát,vn:4061,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG066,ịt vàng to,"Peppers, yellow",,vegetable,200.0,1 đĩa/bát,vn:4062,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG067,ịt xanh to,"Peppers, green",,vegetable,200.0,1 đĩa/bát,vn:4063,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG068,Quả dọc,Thành phần dinh dưỡng trong 100g phần ăn được (100 grams edible portion),,vegetable,200.0,1 đĩa/bát,vn:4064,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG069,Quả me chua,"Tamarind fruit, pulp raw",,vegetable,200.0,1 đĩa/bát,vn:4065,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG070,Rau bí,Pumpkin leaves,,vegetable,150.0,Miệng bát 280 ml,vn:4066,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG071,Rau câu khô,Dried seaweed,,vegetable,200.0,1 đĩa/bát,vn:4067,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG072,Rau câu tươi,Seaweed fresh,,vegetable,200.0,1 đĩa/bát,vn:4068,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG073,Rau diếp,Lettuce garden,,vegetable,200.0,1 đĩa/bát,vn:4069,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG074,Rau đay,Jute potherb,,vegetable,200.0,1 đĩa/bát,vn:4070,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG075,"Rau giấp cá, diếp cá",Wild plant,,vegetable,200.0,1 đĩa/bát,vn:4071,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG076,Rau giền cơm,"Amaranth, spineless",,vegetable,200.0,1 đĩa/bát,vn:4072,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG077,Rau giền đỏ,"Amaranth, sp. Red",,vegetable,108.0,Miệng bát 280 ml,vn:4073,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG078,Rau giền trắng,"Amaranth, sp White",,vegetable,200.0,1 đĩa/bát,vn:4074,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG079,Rau húng,"Basil sweet leaves, raw",,vegetable,200.0,1 đĩa/bát,vn:4075,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG080,Rau khoai lang,"Sweet potato, leaves",,vegetable,200.0,1 đĩa/bát,vn:4076,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG081,Rau kinh giịi,Sweet marjoram,,vegetable,200.0,1 đĩa/bát,vn:4077,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG082,Rau má rừng,Wild plant,,vegetable,200.0,1 đĩa/bát,vn:4078,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG083,"Rau má, má mơ","Wort, India penny",,vegetable,200.0,1 đĩa/bát,vn:4079,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG084,Rau mồng tơi,"Malabar night shade, Vinespinach, Ceylon spinach",,vegetable,88.0,Nửa bát 280 ml,vn:4080,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG085,Rau múi,Coriander,,vegetable,200.0,1 đĩa/bát,vn:4081,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG086,Rau múi tàu,"Parsley, curley",,vegetable,200.0,1 đĩa/bát,vn:4082,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG087,Rau muống khô,"Water spinach, dried",,vegetable,200.0,1 đĩa/bát,vn:4084,67,table1,Sydney Int.Tables 2021,"Rau muống khô - Sydney match: ""Vegie Pumpkin & Spinach Linguine, Latina™ Fresh, made from durum semolina, 25% pumpkin puree and 5% spinach puree, boiled in water for 2 min"" GI=67",true,true
+VEG088,Rau ngæ,Limnophila aromatic,,vegetable,200.0,1 đĩa/bát,vn:4085,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG089,Rau ngãt,"Sauropus, sp. leaves",,vegetable,82.0,Nửa bát 280 ml,vn:4086,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG090,Rau ngãt khô,"Sauropus, dried",,vegetable,200.0,1 đĩa/bát,vn:4087,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG091,Rau răm,Polygonum odoratum,,vegetable,200.0,1 đĩa/bát,vn:4088,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG092,Rau rút,"Neptunia, dismanthus",,vegetable,200.0,1 đĩa/bát,vn:4089,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG093,Rau sà lách,"Lettuce, garden asparagus",,vegetable,200.0,1 đĩa/bát,vn:4090,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG094,Rau sam,"Purslane, common",,vegetable,200.0,1 đĩa/bát,vn:4091,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG095,Rau sắng (chúa Hương),Perfume pagoda wild plant,,vegetable,200.0,1 đĩa/bát,vn:4092,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG096,Rau tàu bay,Gynura crepidioides,,vegetable,200.0,1 đĩa/bát,vn:4093,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG097,Rau thơm,Mint leaves,,vegetable,200.0,1 đĩa/bát,vn:4094,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG098,Sấu xanh,"Dracontomelum fruit, unripe, raw",,vegetable,200.0,1 đĩa/bát,vn:4095,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG099,Su hào,Kohlrabi,,vegetable,146.0,Miệng bát 280 ml,vn:4096,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG100,Su hào khô,Dried kohlrabi,,vegetable,200.0,1 đĩa/bát,vn:4097,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG101,"Su su, quả","Chayote, fruit raw",,vegetable,160.0,Miệng bát 280 ml,vn:4098,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG102,Súp lơ trắng,"Cauliflower, white",,vegetable,90.0,Nửa bát 280 ml,vn:4099,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG103,Súp lơ xanh,"Cauliflower, green",,vegetable,200.0,1 đĩa/bát,vn:4100,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG104,Thìa là,Dill,,vegetable,200.0,1 đĩa/bát,vn:4101,36,table2,Sydney Int.Tables 2021,"Thìa là - Sydney match: ""Quesadillas (made from low-fat cheese, avocado, boiled pinto beans and flour tortilla)"" GI=36",true,true
+VEG105,Tía tô,"Balm-mint, garden- balm",,vegetable,200.0,1 đĩa/bát,vn:4102,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG106,Tỏi ta,Garlic bulbs,,vegetable,200.0,1 đĩa/bát,vn:4103,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG107,Tỏi tây (cả lá),"Chinese Leek, Onion fragrant",,vegetable,200.0,1 đĩa/bát,vn:4104,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG108,Trám đen chín,Variety of canarium,,vegetable,200.0,1 đĩa/bát,vn:4105,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG109,"Trám xanh sống, trám trắng",Chinese olive,,vegetable,200.0,1 đĩa/bát,vn:4106,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG110,Xương sông,Edible herbaceous plant,,vegetable,200.0,1 đĩa/bát,vn:4107,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG111,Cà chua muối,"Tomato, pickled",,vegetable,200.0,1 đĩa/bát,vn:4108,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG112,Cà muối nén,"Eggplant, garden, brinjan; aubergine, pickled",,vegetable,200.0,1 đĩa/bát,vn:4109,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG113,Cà muối sæi,"Eggplant, garden, brinjan; aubergine, pickled",,vegetable,200.0,1 đĩa/bát,vn:4110,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG114,Dưa cải bắp,"Cabbage Chinese, pickled",,vegetable,200.0,1 đĩa/bát,vn:4111,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG115,Dưa cải bẹ,"Mustard green, pickled",,vegetable,200.0,1 đĩa/bát,vn:4112,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG116,Dưa cải sen,"Rape bird, pickled",,vegetable,200.0,1 đĩa/bát,vn:4113,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG117,Dưa chuột muối,"Cucumber, pickled",,vegetable,200.0,1 đĩa/bát,vn:4114,61,table1,Sydney Int.Tables 2021,"Dưa chuột muối - Sydney match: ""White rice (Satou Co. Ltd, Japan) with pickled vinegar and pickled cucumber, consumed together16"" GI=61",true,true
+VEG118,Dưa giá (đậu xanh),"Mung bean sprouts, pickled",,vegetable,200.0,1 đĩa/bát,vn:4115,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG119,Hành củ muối,"Onion, pickled",,vegetable,200.0,1 đĩa/bát,vn:4116,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG120,Kiệu muối,"Onion shallot, scallion, pickled",,vegetable,200.0,1 đĩa/bát,vn:4117,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG121,"Nhút (muối từ mít non, ngọn đậu xanh non...)",Mix pickled from young jack fruit,,vegetable,200.0,1 đĩa/bát,vn:4118,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG122,Men bia khô,"Brewer's yeast, fried",,vegetable,200.0,1 đĩa/bát,vn:4119,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG123,Men bia tươi,"Baker's yeast, fresh",,vegetable,200.0,1 đĩa/bát,vn:4120,60,table1,Sydney Int.Tables 2021,"Men bia tươi - Sydney match: ""Rye, made with 30% wholemeal wheat, 20% kibbled rye, 30% wheat flour, and baker’s yeast13"" GI=60",true,true
+VEG124,Mộc nhÜ,"Jew's ear, Juda's ear, dried, Wood-ear, Tender variety",,vegetable,200.0,1 đĩa/bát,vn:4121,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG125,Nấm hương khô,"Mushroom Chinese, dried",,vegetable,200.0,1 đĩa/bát,vn:4122,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG126,Nấm hương tươi,"Mushroom, Chinese, raw",,vegetable,200.0,1 đĩa/bát,vn:4123,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG127,Nấm mỡ (Nấm tây),Mushroom,,vegetable,200.0,1 đĩa/bát,vn:4124,46,table2,Sydney Int.Tables 2021,"Nấm mỡ (Nấm tây) - Sydney match: ""Chicken and mushroom soup"" GI=46",true,true
+VEG128,Nấm rơm,"Mushroom, straw",,vegetable,200.0,1 đĩa/bát,vn:4125,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+VEG129,Nấm thường tươi,"Mushroom, common",,vegetable,200.0,1 đĩa/bát,vn:4126,15,proxy,ước tính theo nhóm (cần duyệt),rau lá/rau củ ít tinh bột - GI rất thấp theo y văn,true,true
+FRU016,Chanh,Lemon,,fruit,100.0,1 phần,vn:5003,67,table1,Sydney Int.Tables 2021,"Chanh - Sydney match: ""Yoghurt, lemon curd (Finest, UK)"" GI=67",true,true
+FRU017,Chôm chôm,Rambutan,,fruit,100.0,1 phần,vn:5004,86,table2,Sydney Int.Tables 2021,"Chôm chôm - Sydney match: ""Rice, white, polished (Cap Rambutan, Malaysia), cooked in an electronic rice cooker with 2 mL water/g rice"" GI=86",true,true
+FRU018,Chuối khô,"Banana, dried",,fruit,100.0,1 phần,vn:5005,47,table1,Sydney Int.Tables 2021,"Chuối khô - Sydney match: ""Banana, raw"" GI=47",true,true
+FRU019,Chuối tây,Banana,,fruit,100.0,1 phần,vn:5006,47,table1,Sydney Int.Tables 2021,"Chuối tây - Sydney match: ""Banana, raw"" GI=47",true,true
+FRU020,Dâu gia,Blackberry,,fruit,100.0,1 phần,vn:5008,43,table1,Sydney Int.Tables 2021,"Dâu gia - Sydney match: ""Snack Right Fruit Pillow, Apple and blackberry (Arnotts, Australia)"" GI=43",true,true
+FRU021,Dâu tây,Strawberry,,fruit,100.0,1 phần,vn:5009,51,table1,Sydney Int.Tables 2021,"Dâu tây - Sydney match: ""Strawberry jam"" GI=51",true,true
+FRU022,Dưa bở,"Musk melon, Spanish melon, Cantaloupe",,fruit,100.0,1 phần,vn:5010,65,proxy,ước tính theo nhóm (cần duyệt),dưa lưới - GI trung bình-cao,true,true
+FRU023,Dưa hấu,Watermelon,,fruit,100.0,1 phần,vn:5011,55,table1,Sydney Int.Tables 2021,"Dưa hấu - Sydney match: ""Watermelon, raw (Citrullus vulgaris-red variety)"" GI=55",true,true
+FRU024,Dưa hồng,Honey dew melon,,fruit,100.0,1 phần,vn:5012,65,proxy,ước tính theo nhóm (cần duyệt),dưa lưới - GI trung bình-cao,true,true
+FRU025,Dưa lê,Magiê,,fruit,100.0,1 phần,vn:5013,38,proxy,ước tính theo nhóm (cần duyệt),lê - GI thấp,true,true
+FRU026,Dứa ta,"Pineapple, wild",,fruit,100.0,1 phần,vn:5014,48,table1,Sydney Int.Tables 2021,"Dứa ta - Sydney match: ""Apple, pineapple and passionfruit juice, unsweetened (The Wild About Fruit Company, Australia)"" GI=48",true,true
+FRU027,Đào,Peach,,fruit,100.0,1 phần,vn:5016,76,table1,Sydney Int.Tables 2021,"Đào - Sydney match: ""Peach (Prunus persica)19"" GI=76",true,true
+FRU028,Đu đủ chín,"Papaya, ripe",,fruit,100.0,1 phần,vn:5017,60,table2,Sydney Int.Tables 2021,"Đu đủ chín - Sydney match: ""Paw paw (papaya), ripe"" GI=60",true,true
+FRU029,Gioi,Ohia; Malaya roseapple,,fruit,100.0,1 phần,vn:5018,12,proxy,ước tính theo nhóm (cần duyệt),"ổi - GI rất thấp, xơ cao",true,true
+FRU030,Hồng bì,"Wampee, Chinese; Wampi",,fruit,100.0,1 phần,vn:5019,50,proxy,ước tính theo nhóm (cần duyệt),trái cây nhiệt đới - proxy trung bình,true,true
+FRU031,Hồng đỏ,"Persimmon kaki, soft type, ripe",,fruit,100.0,1 phần,vn:5020,50,proxy,ước tính theo nhóm (cần duyệt),trái cây nhiệt đới - proxy trung bình,true,true
+FRU032,Hồng ngâm,"Persimmon kaki, Hard-type, ripe",,fruit,100.0,1 phần,vn:5021,50,proxy,ước tính theo nhóm (cần duyệt),trái cây nhiệt đới - proxy trung bình,true,true
+FRU033,Hồng xiêm,"Sapodilla, sapota ponderosa",,fruit,100.0,1 phần,vn:5022,40,proxy,ước tính theo nhóm (cần duyệt),hồng xiêm - GI trung bình,true,true
+FRU034,Lê,Pear,,fruit,100.0,1 phần,vn:5023,33,table1,Sydney Int.Tables 2021,"Lê - Sydney match: ""Pear, Williams, raw, ripe/soft"" GI=33",true,true
+FRU035,Lựu,Pome granate,,fruit,100.0,1 phần,vn:5024,53,table1,Sydney Int.Tables 2021,"Lựu - Sydney match: ""POM Pomegranate juice (POM Wonderful LLC, USA)"" GI=53",true,true
+FRU036,Mãng cầu xiêm,"Siamese custard apple, soursop",,fruit,100.0,1 phần,vn:5025,36,proxy,ước tính theo nhóm (cần duyệt),táo - GI thấp,true,true
+FRU037,Mắc coọc,Pyrus pashia Ham,,fruit,100.0,1 phần,vn:5026,50,proxy,ước tính theo nhóm (cần duyệt),trái cây nhiệt đới - proxy trung bình,true,true
+FRU038,Mận,"Japanese, plum",,fruit,100.0,1 phần,vn:5027,39,proxy,ước tính theo nhóm (cần duyệt),mận - GI thấp,true,true
+FRU039,Mít khô,Dried jackfruit,,fruit,100.0,1 phần,vn:5029,65,table1,Sydney Int.Tables 2021,"Mít khô - Sydney match: ""Jackfruit365 Green Jackfruit, prepared as a porridge with water"" GI=65",true,true
+FRU040,Mít mật,"Jack fruit, honey",,fruit,100.0,1 phần,vn:5030,75,proxy,ước tính theo nhóm (cần duyệt),mít chín - GI cao do fructose+sucrose cao,true,true
+FRU041,Mơ,"Apricot, Apricot nectar",,fruit,100.0,1 phần,vn:5031,57,proxy,ước tính theo nhóm (cần duyệt),mơ - GI trung bình,true,true
+FRU042,Mơ khô,"Apricot dried, unsulfured",,fruit,100.0,1 phần,vn:5032,57,proxy,ước tính theo nhóm (cần duyệt),mơ - GI trung bình,true,true
+FRU043,"Muçm, quéo","Mango, common; Indian mango, unripe",,fruit,100.0,1 phần,vn:5033,51,proxy,ước tính theo nhóm (cần duyệt),xoài - GI tương đương chuối ~51,true,true
+FRU044,Na,"Sugarapple, sweetsop",,fruit,100.0,1 phần,vn:5034,36,proxy,ước tính theo nhóm (cần duyệt),táo - GI thấp,true,true
+FRU045,Nhãn khô,"Longan, dried",,fruit,100.0,1 phần,vn:5036,52,proxy,ước tính theo nhóm (cần duyệt),nhãn - GI trung bình nhiệt đới,true,true
+FRU046,Nho ta (nho chua),"Grape fruit, sour",,fruit,100.0,1 phần,vn:5038,45,proxy,ước tính theo nhóm (cần duyệt),nho - GI trung bình,true,true
+FRU047,Nhãt,Silver berry,,fruit,100.0,1 phần,vn:5039,25,proxy,ước tính theo nhóm (cần duyệt),dâu - berry GI thấp,true,true
+FRU048,æ,"Guava, common",,fruit,100.0,1 phần,vn:5040,12,proxy,ước tính theo nhóm (cần duyệt),"ổi - GI rất thấp, xơ cao",true,true
+FRU049,Quả bơ vỏ tím,"Avocado, purple",,fruit,100.0,1 phần,vn:5041,10,proxy,ước tính theo nhóm (cần duyệt),bơ - GI rất thấp do chất béo cao,true,true
+FRU050,Quả bơ vỏ xanh,"Avocado, green",,fruit,100.0,1 phần,vn:5042,10,proxy,ước tính theo nhóm (cần duyệt),bơ - GI rất thấp do chất béo cao,true,true
+FRU051,Quả cãc,-,,fruit,100.0,1 phần,vn:5043,50,proxy,ước tính theo nhóm (cần duyệt),trái cây nhiệt đới - proxy trung bình,true,true
+FRU052,Quả trứng gà,-,,fruit,100.0,1 phần,vn:5045,50,proxy,ước tính theo nhóm (cần duyệt),trái cây nhiệt đới - proxy trung bình,true,true
+FRU053,Quất chín (cả vỏ),"Mandarin, whole fruit",,fruit,100.0,1 phần,vn:5046,47,proxy,ước tính theo nhóm (cần duyệt),quýt - tương tự cam,true,true
+FRU054,Quít,Tangerine; Orange; Mandarin,,fruit,100.0,1 phần,vn:5047,40,proxy,ước tính theo nhóm (cần duyệt),cam - citrus GI ~40,true,true
+FRU055,Sấu chín,"Sanpidus, ripe",,fruit,100.0,1 phần,vn:5049,50,proxy,ước tính theo nhóm (cần duyệt),trái cây nhiệt đới - proxy trung bình,true,true
+FRU056,Táo ta,"Jujube, common or Chinese; Chinese date",,fruit,100.0,1 phần,vn:5050,36,proxy,ước tính theo nhóm (cần duyệt),táo - GI thấp,true,true
+FRU057,Táo tây,"Apple, common, domestic",,fruit,100.0,1 phần,vn:5051,36,proxy,ước tính theo nhóm (cần duyệt),táo - GI thấp,true,true
+FRU058,Vải khô,"Litchi, dried with shells",,fruit,100.0,1 phần,vn:5053,57,proxy,ước tính theo nhóm (cần duyệt),vải thiều - GI trung bình,true,true
+FRU059,Vú sữa,"Starapple, cainito",,fruit,100.0,1 phần,vn:5054,36,proxy,ước tính theo nhóm (cần duyệt),táo - GI thấp,true,true
+FRU060,Quả kiwi,Kiwi fruit,,fruit,100.0,1 phần,vn:5056,58,table2,Sydney Int.Tables 2021,"Quả kiwi - Sydney match: ""Kiwi fruit, NS"" GI=58",true,true
+PRO039,Thịt bê mỡ,"Veal meat, lean and fat",,protein,100.0,1 phần,vn:7001,,na,không áp dụng,"Thịt bê mỡ: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO040,Thịt bê nạc,"Veal meat, lean only",,protein,100.0,1 phần,vn:7002,,na,không áp dụng,"Thịt bê nạc: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO041,Thịt bò loại I,"Beef, grade I",,protein,100.0,1 phần,vn:7003,,na,không áp dụng,"Thịt bò loại I: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO042,Thịt bò loại II,"Beef, grade II",,protein,100.0,1 phần,vn:7004,,na,không áp dụng,"Thịt bò loại II: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO043,"Thịt bò, lưng, nạc","Beef, top loin, seperable lean only, trimmed to 1/8"" fat, prime, raw",,protein,100.0,1 phần,vn:7005,,na,không áp dụng,"Thịt bò, lưng, nạc: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO044,"Thịt bò, lưng, nạc và mỡ","Beef, top loin, seperable lean only, trimmed to 1/4"" fat, prime, raw",,protein,100.0,1 phần,vn:7006,,na,không áp dụng,"Thịt bò, lưng, nạc và mỡ: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO045,Thịt bồ câu ra ràng,Pigeon young bird flesh skin and giblets,,protein,100.0,1 phần,vn:7007,,na,không áp dụng,"Thịt bồ câu ra ràng: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO046,Thịt chã sấn,Dog meat,,protein,100.0,1 phần,vn:7008,,na,không áp dụng,"Thịt chã sấn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO047,Thịt chã vai,"Dog, shoulder",,protein,100.0,1 phần,vn:7009,,na,không áp dụng,"Thịt chã vai: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO048,"Thịt cừu, nạc","Mutton meat, lean",,protein,100.0,1 phần,vn:7010,,na,không áp dụng,"Thịt cừu, nạc: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO049,"Thịt dê, nạc","Goat, meat, lean",,protein,100.0,1 phần,vn:7011,,na,không áp dụng,"Thịt dê, nạc: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO050,Thịt gà rừng,Grouse field chicken,,protein,100.0,1 phần,vn:7012,,na,không áp dụng,"Thịt gà rừng: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO051,Thịt gà ta,"Chicken meat, average",,protein,100.0,1 phần,vn:7013,,na,không áp dụng,"Thịt gà ta: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO052,Thịt gà tây,Turkey raw flesh and skin giblets,,protein,100.0,1 phần,vn:7014,,na,không áp dụng,"Thịt gà tây: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO053,Thịt hươu,Deer meat,,protein,100.0,1 phần,vn:7015,,na,không áp dụng,"Thịt hươu: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO054,Thịt lợn mỡ,"Pork, lean and fat",,protein,100.0,1 phần,vn:7016,,na,không áp dụng,"Thịt lợn mỡ: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO055,Thịt lợn nạc,"Pork, lean",,protein,100.0,1 phần,vn:7017,,na,không áp dụng,"Thịt lợn nạc: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO056,"Thịt lợn nửa nạc, nửa mỡ","Pork, medium fat",,protein,100.0,1 phần,vn:7018,,na,không áp dụng,"Thịt lợn nửa nạc, nửa mỡ: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO057,Thịt ngçng,Goose,,protein,100.0,1 phần,vn:7019,,na,không áp dụng,"Thịt ngçng: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO058,Thịt ngựa,Horse meat,,protein,100.0,1 phần,vn:7020,,na,không áp dụng,"Thịt ngựa: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO059,Thịt thỏ nhà,"Rabbit meat, raw",,protein,100.0,1 phần,vn:7021,,na,không áp dụng,"Thịt thỏ nhà: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO060,Thịt thỏ rừng,Hare rabbit (field or wild),,protein,100.0,1 phần,vn:7022,,na,không áp dụng,"Thịt thỏ rừng: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO061,Thịt trâu,"Buffalo meat, average",,protein,100.0,1 phần,vn:7023,,na,không áp dụng,"Thịt trâu: glucid=0.9g/100g, GI không áp dụng",true,true
+PRO062,Thịt trâu bắp,Buffalo meat (shoulder),,protein,100.0,1 phần,vn:7024,,na,không áp dụng,"Thịt trâu bắp: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO063,Thịt trâu cæ,"Buffalo meat, neck",,protein,100.0,1 phần,vn:7025,,na,không áp dụng,"Thịt trâu cæ: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO064,Thịt trâu đúi,"Buffalo meat, leg",,protein,100.0,1 phần,vn:7026,,na,không áp dụng,"Thịt trâu đúi: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO065,Thịt trâu thăn,"Buffalo meat, lean (loin)",,protein,100.0,1 phần,vn:7027,,na,không áp dụng,"Thịt trâu thăn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO066,Thịt vịt,"Duck meat, average",,protein,100.0,1 phần,vn:7028,,na,không áp dụng,"Thịt vịt: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO067,Bầu dôc bò,"Beef, kidney",,protein,100.0,1 phần,vn:7029,,na,không áp dụng,"Bầu dôc bò: glucid=0.3g/100g, GI không áp dụng",true,true
+PRO068,Bầu dôc lợn,"Pork, kidney",,protein,100.0,1 phần,vn:7030,,na,không áp dụng,"Bầu dôc lợn: glucid=0.3g/100g, GI không áp dụng",true,true
+PRO069,Bì lợn,Pork skin,,protein,100.0,1 phần,vn:7031,,na,không áp dụng,"Bì lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO070,Chân giò lợn,"Pork, leg",,protein,100.0,1 phần,vn:7032,,na,không áp dụng,"Chân giò lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO071,Dạ dày bò,"Stomach, beef",,protein,100.0,1 phần,vn:7033,,na,không áp dụng,"Dạ dày bò: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO072,Dạ dày lợn,"Stomach, hog",,protein,100.0,1 phần,vn:7034,,na,không áp dụng,"Dạ dày lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO073,Đầu bò,"Head beef (without tongue, brain, ears).",,protein,100.0,1 phần,vn:7035,,na,không áp dụng,"Đầu bò: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO074,Đầu lợn,"Hog, head",,protein,100.0,1 phần,vn:7036,,na,không áp dụng,"Đầu lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO075,Đuôi bò,"Beef, tail",,protein,100.0,1 phần,vn:7037,,na,không áp dụng,"Đuôi bò: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO076,Đuôi lợn,"Hog, tail",,protein,100.0,1 phần,vn:7038,,na,không áp dụng,"Đuôi lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO077,Gan bò,"Beef, liver",,protein,100.0,1 phần,vn:7039,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO078,Gan gà,Chicken liver,,protein,100.0,1 phần,vn:7040,,na,không áp dụng,"Gan gà: glucid=2.0g/100g, GI không áp dụng",true,true
+PRO079,Gan lợn,Pork liver,,protein,100.0,1 phần,vn:7041,,na,không áp dụng,"Gan lợn: glucid=2.0g/100g, GI không áp dụng",true,true
+PRO080,Gan vịt,Duck liver,,protein,100.0,1 phần,vn:7042,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO081,Gân chân bò,Thành phần dinh dưỡng trong 100g phần ăn được (100 grams edible portion),,protein,100.0,1 phần,vn:7043,,na,không áp dụng,"Gân chân bò: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO082,Lưỡi bò,Beef tongue,,protein,100.0,1 phần,vn:7044,,na,không áp dụng,"Lưỡi bò: glucid=0.2g/100g, GI không áp dụng",true,true
+PRO083,Lưỡi lợn,"Hog, tongue",,protein,100.0,1 phần,vn:7045,,na,không áp dụng,"Lưỡi lợn: glucid=1.4g/100g, GI không áp dụng",true,true
+PRO084,Lòng lợn (ruột già),"Hog, intestine large raw",,protein,100.0,1 phần,vn:7046,,na,không áp dụng,"Lòng lợn (ruột già): glucid=0.8g/100g, GI không áp dụng",true,true
+PRO085,Lòng lợn (ruột non),Hog intestine small raw without fat,,protein,100.0,1 phần,vn:7047,,na,không áp dụng,"Lòng lợn (ruột non): glucid=0.8g/100g, GI không áp dụng",true,true
+PRO086,Mề gà,Chicken gizzard,,protein,100.0,1 phần,vn:7048,,na,không áp dụng,"Mề gà: glucid=0.6g/100g, GI không áp dụng",true,true
+PRO087,ãc bò,Brain beef,,protein,100.0,1 phần,vn:7049,,na,không áp dụng,"ãc bò: glucid=0.5g/100g, GI không áp dụng",true,true
+PRO088,ãc lợn,Hog brain,,protein,100.0,1 phần,vn:7050,,na,không áp dụng,"ãc lợn: glucid=0.4g/100g, GI không áp dụng",true,true
+PRO089,Phæi bò,"Beef, lung",,protein,100.0,1 phần,vn:7051,,na,không áp dụng,"Phæi bò: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO090,Phæi lợn,"Hog lung, raw",,protein,100.0,1 phần,vn:7052,,na,không áp dụng,"Phæi lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO091,Sườn lợn,"Pork, ribs",,protein,100.0,1 phần,vn:7053,,na,không áp dụng,"Sườn lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO092,Tai lợn,Hog ears,,protein,100.0,1 phần,vn:7054,,na,không áp dụng,"Tai lợn: glucid=1.3g/100g, GI không áp dụng",true,true
+PRO093,Tim bò,"Beef, heart",,protein,100.0,1 phần,vn:7055,,na,không áp dụng,"Tim bò: glucid=0.6g/100g, GI không áp dụng",true,true
+PRO094,Tim gà,Chicken heart,,protein,100.0,1 phần,vn:7056,,na,không áp dụng,"Tim gà: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO095,Tim lợn,Hog heart,,protein,100.0,1 phần,vn:7057,,na,không áp dụng,"Tim lợn: glucid=1.2g/100g, GI không áp dụng",true,true
+PRO096,Tiết bò,"Beef, blood",,protein,100.0,1 phần,vn:7058,,na,không áp dụng,"Tiết bò: glucid=0.4g/100g, GI không áp dụng",true,true
+PRO097,Tiết lợn luộc,"Hog blood, boiled",,protein,100.0,1 phần,vn:7059,,na,không áp dụng,"Tiết lợn luộc: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO098,Tiết lợn sống,"Hog blood, raw",,protein,100.0,1 phần,vn:7060,,na,không áp dụng,"Tiết lợn sống: glucid=0.2g/100g, GI không áp dụng",true,true
+PRO099,Tủy xương bò,Beef bone marrow,,protein,100.0,1 phần,vn:7061,,na,không áp dụng,"Tủy xương bò: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO100,Tủy xương lợn,"Hog, bone marrow",,protein,100.0,1 phần,vn:7062,,na,không áp dụng,"Tủy xương lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO101,Ba tê,Pa tê,,protein,100.0,1 phần,vn:7063,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO102,Chả lợn,"Pork, mince fat meat grilled",,protein,100.0,1 phần,vn:7064,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO103,Chả quế lợn,"Pork, cinnamon mince grilled",,protein,100.0,1 phần,vn:7065,,na,không áp dụng,"Chả quế lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO104,Dăm bông lợn,"Ham, pork",,protein,100.0,1 phần,vn:7066,,na,không áp dụng,"Dăm bông lợn: glucid=0.3g/100g, GI không áp dụng",true,true
+PRO105,Dồi lợn,Blood mix-pudding with viscera in large intestine,,protein,100.0,1 phần,vn:7067,,na,không áp dụng,"Dồi lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO106,Giò bò,Beef dumpling,,protein,100.0,1 phần,vn:7068,,na,không áp dụng,"Giò bò: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO107,Giò lôa,"Pork, mince lean meat steamed",,protein,100.0,1 phần,vn:7069,,na,không áp dụng,"Giò lôa: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO108,Giò thủ lợn,"Pork, head meat, steamed",,protein,100.0,1 phần,vn:7070,,na,không áp dụng,"Giò thủ lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO109,Lạp xường,Chinese sausage,,protein,100.0,1 phần,vn:7071,,na,không áp dụng,"Lạp xường: glucid=1.7g/100g, GI không áp dụng",true,true
+PRO110,Nem chạo,Thành phần dinh dưỡng trong 100g phần ăn được (100 grams edible portion),,protein,100.0,1 phần,vn:7072,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO111,Nem chua,"Pork mince, fermented",,protein,100.0,1 phần,vn:7073,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO112,Ruốc thịt lợn,Thành phần dinh dưỡng trong 100g phần ăn được (100 grams edible portion),,protein,100.0,1 phần,vn:7074,,na,không áp dụng,"Ruốc thịt lợn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO113,Thịt bò khô,Dried beef,,protein,100.0,1 phần,vn:7075,42,table1,Sydney Int.Tables 2021,"Thịt bò khô - Sydney match: ""Harees, beef (whole wheat served with meat)"" GI=42",true,true
+PRO114,Thịt trâu khô,"Buffalo meat, dried",,protein,100.0,1 phần,vn:7076,,na,không áp dụng,"Thịt trâu khô: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO115,Xúc xích,Pork sausage,,protein,100.0,1 phần,vn:7077,,na,không áp dụng,"Xúc xích: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO116,Bột cãc,Toad meat powder,,protein,100.0,1 phần,vn:7078,,na,không áp dụng,"Bột cãc: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO117,Châu chấu,Locust,,protein,100.0,1 phần,vn:7079,,na,không áp dụng,"Châu chấu: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO118,ếch (thịt đúi),Frog,,protein,100.0,1 phần,vn:7080,,na,không áp dụng,"ếch (thịt đúi): glucid=0.0g/100g, GI không áp dụng",true,true
+PRO119,Nhộng,Silk worm,,protein,100.0,1 phần,vn:7081,,na,không áp dụng,"Nhộng: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO120,Lòng gà (cả bộ),Chicken giblets,,protein,100.0,1 phần,vn:7082,,na,không áp dụng,"Lòng gà (cả bộ): glucid=1.8g/100g, GI không áp dụng",true,true
+PRO121,Cá bống,"Goby, gudgeon",,protein,100.0,1 phần,vn:8001,,na,không áp dụng,"Cá bống: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO122,Cá chày,Pond fish,,protein,100.0,1 phần,vn:8002,,na,không áp dụng,"Cá chày: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO123,Cá chép,Carp,,protein,100.0,1 phần,vn:8003,,na,không áp dụng,"Cá chép: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO124,Cá dưa,Conger pike,,protein,100.0,1 phần,vn:8004,,na,không áp dụng,"Cá dưa: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO125,Cá dầu,Mã số:,,protein,100.0,1 phần,vn:8005,,na,không áp dụng,"Cá dầu: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO126,Cá diếc,"Mullet, harder",,protein,100.0,1 phần,vn:8006,,na,không áp dụng,"Cá diếc: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO127,Cá đao,"Sawfish, wolfherring",,protein,100.0,1 phần,vn:8007,,na,không áp dụng,"Cá đao: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO128,Cá đé,Chinese herring,,protein,100.0,1 phần,vn:8008,,na,không áp dụng,"Cá đé: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO129,Cá đối,"Mullet, gray mullet",,protein,100.0,1 phần,vn:8009,,na,không áp dụng,"Cá đối: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO130,Cá đồng tiền,Goby,,protein,100.0,1 phần,vn:8010,,na,không áp dụng,"Cá đồng tiền: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO131,Cá hồi,Salmon,,protein,100.0,1 phần,vn:8011,,na,không áp dụng,"Cá hồi: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO132,"Cá khô (chim, thu, nô, đé)","Dried fish, miscellaneous",,protein,100.0,1 phần,vn:8012,,na,không áp dụng,"Cá khô (chim, thu, nô, đé): glucid=0.0g/100g, GI không áp dụng",true,true
+PRO133,Cá lác,Mã số:,,protein,100.0,1 phần,vn:8013,,na,không áp dụng,"Cá lác: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO134,Cá mè,"Hypophthalmichthys, chub, dory, tench bream",,protein,100.0,1 phần,vn:8014,,na,không áp dụng,"Cá mè: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO135,Cá mòi,Sardin,,protein,100.0,1 phần,vn:8015,,na,không áp dụng,"Cá mòi: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO136,Cá mỡ,Mã số:,,protein,100.0,1 phần,vn:8016,,na,không áp dụng,"Cá mỡ: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO137,Cá mối,Mã số:,,protein,100.0,1 phần,vn:8017,,na,không áp dụng,"Cá mối: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO138,Cá nạc,Fish low fat,,protein,100.0,1 phần,vn:8018,,na,không áp dụng,"Cá nạc: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO139,Cá ngừ,"Flying fish, tuna",,protein,100.0,1 phần,vn:8019,,na,không áp dụng,"Cá ngừ: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO140,Cá nôc,"Scad, anchovy",,protein,100.0,1 phần,vn:8020,,na,không áp dụng,"Cá nôc: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO141,Cá phèn,"Goatfish, surmullet, red mullet",,protein,100.0,1 phần,vn:8021,,na,không áp dụng,"Cá phèn: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO142,Cá quả,"Fish, snake head",,protein,100.0,1 phần,vn:8022,,na,không áp dụng,"Cá quả: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO143,Cá rô đồng,Anabas,,protein,100.0,1 phần,vn:8023,,na,không áp dụng,"Cá rô đồng: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO144,Cá rô phi,"Tilapia, African carp",,protein,100.0,1 phần,vn:8024,,na,không áp dụng,"Cá rô phi: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO145,Cá thờn bơn (cá bơn),"Flounder, sole, turbot",,protein,100.0,1 phần,vn:8025,,na,không áp dụng,"Cá thờn bơn (cá bơn): glucid=0.0g/100g, GI không áp dụng",true,true
+PRO146,Cá thu,"Mackerel, codfish, kingfish",,protein,100.0,1 phần,vn:8026,,na,không áp dụng,"Cá thu: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO147,Cá thu đao,Mã số:,,protein,100.0,1 phần,vn:8027,,na,không áp dụng,"Cá thu đao: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO148,Cá trạch (cá chạch),Loach,,protein,100.0,1 phần,vn:8028,,na,không áp dụng,"Cá trạch (cá chạch): glucid=0.0g/100g, GI không áp dụng",true,true
+PRO149,Cá trắm cỏ,"Carp, amur",,protein,100.0,1 phần,vn:8029,,na,không áp dụng,"Cá trắm cỏ: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO150,Cá trê,"Catfish, silurus, sheatfish, hito",,protein,100.0,1 phần,vn:8030,,na,không áp dụng,"Cá trê: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO151,Cá trích,Herring,,protein,100.0,1 phần,vn:8031,,na,không áp dụng,"Cá trích: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO152,Cá trôi,"Major carp, mud carp; cirrhina molitorella",,protein,100.0,1 phần,vn:8032,,na,không áp dụng,"Cá trôi: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO153,Cua bể,"Crab, sea water",,protein,100.0,1 phần,vn:8033,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO154,Cua đồng,"Crab, fresh water",,protein,100.0,1 phần,vn:8034,,na,không áp dụng,"Cua đồng: glucid=2.0g/100g, GI không áp dụng",true,true
+PRO155,ghẹ,Crab,,protein,100.0,1 phần,vn:8035,,na,không áp dụng,"ghẹ: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO156,Hải sâm,"Sea slug, sea cucumber",,protein,100.0,1 phần,vn:8036,,na,không áp dụng,"Hải sâm: glucid=0.2g/100g, GI không áp dụng",true,true
+PRO157,Hến,Clam,,protein,100.0,1 phần,vn:8037,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO158,Lươn,"Eel, silver - pike",,protein,100.0,1 phần,vn:8038,,na,không áp dụng,"Lươn: glucid=0.2g/100g, GI không áp dụng",true,true
+PRO159,Mực khô,"Dried cuttle fish, squid",,protein,100.0,1 phần,vn:8039,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO160,Mực tươi,"Cuttle fish, raw (Squid)",,protein,100.0,1 phần,vn:8040,,na,không áp dụng,"Mực tươi: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO161,ốc bươu,"Snail medium - size, edible",,protein,100.0,1 phần,vn:8041,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO162,ốc đá,"Marble snail, edible",,protein,100.0,1 phần,vn:8042,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO163,ốc nhồi,"Snail large, edible",,protein,100.0,1 phần,vn:8043,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO164,ốc vÆn,Helix,,protein,100.0,1 phần,vn:8044,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO165,"Rạm (muối, đồ)","Small sea - crab bicled, steamed",,protein,100.0,1 phần,vn:8045,,na,không áp dụng,"Rạm (muối, đồ): glucid=0.0g/100g, GI không áp dụng",true,true
+PRO166,Rạm tươi,Small sea - crab,,protein,100.0,1 phần,vn:8046,,na,không áp dụng,"Rạm tươi: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO167,Rươi,Tylorhynchus sinensis,,protein,100.0,1 phần,vn:8047,,na,không áp dụng,"Rươi: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO168,Sò,Oyster,,protein,100.0,1 phần,vn:8048,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO169,Tép gạo,Tiny shrimp,,protein,100.0,1 phần,vn:8049,,na,không áp dụng,"Tép gạo: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO170,Tép khô,"Tiny shrimp, dried",,protein,100.0,1 phần,vn:8050,,na,không áp dụng,"Tép khô: glucid=0.7g/100g, GI không áp dụng",true,true
+PRO171,Tôm đồng,Fresh-water shrimp,,protein,100.0,1 phần,vn:8052,,na,không áp dụng,"Tôm đồng: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO172,Tôm khô,"Shrimp, dried",,protein,100.0,1 phần,vn:8053,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO173,Trai,Manodonta,,protein,100.0,1 phần,vn:8054,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO174,Bánh phồng tôm rán,Deep fried shrimp paste,,protein,100.0,1 phần,vn:8055,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO175,Bánh phồng tôm sống,Shrimp paste,,protein,100.0,1 phần,vn:8056,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO176,Bột cá,Fish flour with bones,,protein,100.0,1 phần,vn:8057,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO177,Ruốc cá quả,"Shredded snake-head fish, salted and dried",,protein,100.0,1 phần,vn:8058,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO178,Ruốc tôm,"Shredded shrimp, salted and dried",,protein,100.0,1 phần,vn:8059,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO179,Trứng gà,"Hen egg, raw, whole",,protein,100.0,1 phần,vn:9001,,na,không áp dụng,"Trứng gà: glucid=0.5g/100g, GI không áp dụng",true,true
+PRO180,Lòng đỏ trứng gà,"Hen egg, yolk",,protein,100.0,1 phần,vn:9002,,na,không áp dụng,"Lòng đỏ trứng gà: glucid=1.0g/100g, GI không áp dụng",true,true
+PRO181,Lòng trắng trứng gà,"Hen egg, white",,protein,100.0,1 phần,vn:9003,,na,không áp dụng,"Lòng trắng trứng gà: glucid=1.0g/100g, GI không áp dụng",true,true
+PRO182,Trứng vịt,"Duck egg, whole",,protein,100.0,1 phần,vn:9004,,na,không áp dụng,"Trứng vịt: glucid=1.0g/100g, GI không áp dụng",true,true
+PRO183,Lòng đỏ trứng vịt,"Duck egg, yolk",,protein,100.0,1 phần,vn:9005,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO184,Lòng trắng trứng vịt,"Duck egg, white",,protein,100.0,1 phần,vn:9006,,na,không áp dụng,"Lòng trắng trứng vịt: glucid=0.8g/100g, GI không áp dụng",true,true
+PRO185,Trứng chim cút,Quail egg,,protein,100.0,1 phần,vn:9007,,na,không áp dụng,"Trứng chim cút: glucid=0.4g/100g, GI không áp dụng",true,true
+PRO186,Trứng cá,Fish roe,,protein,100.0,1 phần,vn:9008,,na,không áp dụng,"Trứng cá: glucid=0.0g/100g, GI không áp dụng",true,true
+PRO187,Trứng cá muối,"Fish caviar, black and red, granule",,protein,100.0,1 phần,vn:9009,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO188,Trứng vịt lộn,"Duck egg, embryonated",,protein,100.0,1 phần,vn:9010,,na,không áp dụng,"thịt/hải sản/trứng - không có glucid đáng kể, GI không áp dụng",true,true
+PRO189,Bột trứng,Chicken egg powder,,protein,100.0,1 phần,vn:9011,,na,không áp dụng,"Bột trứng: glucid=1.8g/100g, GI không áp dụng",true,true
+DAI005,Sữa dê tươi,"Milk goat's, whole",,dairy,200.0,1 ly/hũ,vn:10002,30,proxy,ước tính theo nhóm (cần duyệt),sữa - proxy trung bình nhóm sữa,true,true
+DAI006,Sữa mẹ (sữa người),"Breast milk (Human milk, whole).",,dairy,200.0,1 ly/hũ,vn:10003,30,proxy,ước tính theo nhóm (cần duyệt),sữa - proxy trung bình nhóm sữa,true,true
+DAI007,Sữa chua vịt béo,"Yogurt, chocolate, nonfat milk",,dairy,200.0,1 ly/hũ,vn:10005,36,proxy,ước tính theo nhóm (cần duyệt),sữa chua - GI thấp do axit lactic,true,true
+DAI008,Sữa bột toàn phần,"Milk powder, whole",,dairy,200.0,1 ly/hũ,vn:10006,35,table1,Sydney Int.Tables 2021,"Sữa bột toàn phần - Sydney match: ""No Bake Egg Custard, prepared from powder with whole milk (Nestlé, Australia)"" GI=35",true,true
+DAI009,Sữa bột tách béo,Skimmed milk powder,,dairy,200.0,1 ly/hũ,vn:10007,40,proxy,ước tính theo nhóm (cần duyệt),sữa bột - GI trung bình,true,true
+DAI010,Sữa đÆc cã đường Việt Nam,"Milk condensed, sweetened",,dairy,200.0,1 ly/hũ,vn:10008,61,table1,Sydney Int.Tables 2021,"Sữa đÆc cã đường Việt Nam - Sydney match: ""Milk, condensed, sweetened (Nestlé, Australia)"" GI=61",true,true
+DAI011,Pho mát,Cheese (whole fat),,dairy,200.0,1 ly/hũ,vn:10009,0,proxy,ước tính theo nhóm (cần duyệt),phô mai - glucid gần 0,true,true
+CON001,Chuối nưịc đường,"Banana, canned, sweetened",,canned,100.0,1 phần,vn:11001,65,proxy,ước tính theo nhóm (cần duyệt),"chuối nước đường - fruit+syrup combo, GI trái cây có đường thêm ~65",true,true
+CON002,Dưa chuột hộp,Cucumber (canned),,canned,100.0,1 phần,vn:11002,,na,không áp dụng,"dưa chuột hộp - glucid=1.2g/100g, gia vị/rau, GI không áp dụng",true,true
+CON003,Dứa hộp,"Pineapple, canned, sweetened",,canned,100.0,1 phần,vn:11003,65,proxy,ước tính theo nhóm (cần duyệt),"dứa hộp nước đường - canned pineapple in syrup, GI cao hơn dứa tươi (59) do syrup đường ~65",true,true
+CON004,Lạc chao dầu,"Peanut, oil fried",,canned,100.0,1 phần,vn:11004,14,proxy,ước tính theo nhóm (cần duyệt),"lạc chiên dầu - GI rất thấp như đậu phộng, chất béo cao",true,true
+CON005,Mắc coọc nước đường,Pyrus pachis in syrup,,canned,100.0,1 phần,vn:11005,65,proxy,ước tính theo nhóm (cần duyệt),"mắc coọc nước đường - quả nước đường, proxy canned fruit in syrup",true,true
+CON006,Mận nưịc đường,"Plum, canned, sweetened",,canned,100.0,1 phần,vn:11006,52,proxy,ước tính theo nhóm (cần duyệt),"mận nước đường - canned plum sweetened, GI mận ~39 + syrup → ~52",true,true
+CON007,Mứt bí ngô,Dried preserved squash,,canned,100.0,1 phần,vn:11007,68,proxy,ước tính theo nhóm (cần duyệt),"mứt bí ngô - jam/preserve sucrose-concentrated, GI cao ~65-70",true,true
+CON008,Mứt cam cã vỏ,"Orange marmalade, jellies",,canned,100.0,1 phần,vn:11008,65,proxy,ước tính theo nhóm (cần duyệt),"mứt cam có vỏ - orange marmalade, GI tương tự jam ~65",true,true
+CON009,Mứt chuối,Banana jam,,canned,100.0,1 phần,vn:11009,65,proxy,ước tính theo nhóm (cần duyệt),"mứt chuối - banana jam, sucrose-concentrated GI ~65",true,true
+CON010,Mứt dứa,Pineapple jam,,canned,100.0,1 phần,vn:11010,65,proxy,ước tính theo nhóm (cần duyệt),"mứt dứa - pineapple jam, sucrose-concentrated GI ~65",true,true
+CON011,Nhãn nưịc đường,"Longan, canned, sweetened",,canned,100.0,1 phần,vn:11012,65,proxy,ước tính theo nhóm (cần duyệt),"nhãn nước đường - canned longan in syrup, GI ~65",true,true
+CON012,Nưịc dứa hộp,Pineapple juice,,canned,100.0,1 phần,vn:11013,46,table1,Sydney Int.Tables 2021,"nước dứa hộp - pineapple juice, Sydney table1 ~46",true,true
+CON013,Vải nưịc đường,"Litchi, canned, sweetened",,canned,100.0,1 phần,vn:11014,65,proxy,ước tính theo nhóm (cần duyệt),"vải nước đường - canned lychee in syrup, GI ~65",true,true
+CON014,Cá thu hộp,"Mackerel, canned",,canned,100.0,1 phần,vn:11015,,na,không áp dụng,"cá thu hộp - glucid=0g, protein+fat, GI không áp dụng",true,true
+CON015,Cá trích hộp,"Herring, canned",,canned,100.0,1 phần,vn:11016,,na,không áp dụng,"cá trích hộp - glucid=3.5g (từ sauce), protein chính, GI không áp dụng",true,true
+CON016,Thịt bò hộp,"Beef, canned",,canned,100.0,1 phần,vn:11017,,na,không áp dụng,"thịt bò hộp - glucid=0g, GI không áp dụng",true,true
+CON017,Thịt gà hộp,"Chicken, canned",,canned,100.0,1 phần,vn:11018,,na,không áp dụng,"thịt gà hộp - glucid=0g, GI không áp dụng",true,true
+CON018,Thịt lợn hộp,"Pork, canned",,canned,100.0,1 phần,vn:11019,,na,không áp dụng,"thịt lợn hộp - glucid=2.7g nhỏ, protein+fat chính, GI không áp dụng",true,true
+CON019,"Thịt lợn, thịt bò xay hộp","Pork and beef, minced canned",,canned,100.0,1 phần,vn:11020,,na,không áp dụng,"thịt lợn+bò xay hộp - glucid=0g, GI không áp dụng",true,true
+CON020,Thịt vịt hầm,"Duck, stewed meat",,canned,100.0,1 phần,vn:11021,,na,không áp dụng,"thịt vịt hầm - glucid=0g, GI không áp dụng",true,true
+SPC001,Cary bột,"Cari powder (Mix, turmeric, red pepper and other spices)",,spice,5.0,1 thìa cà phê,vn:13001,,na,không áp dụng,"cary bột - dùng lượng nhỏ làm gia vị, GI không thực tiễn",true,true
+SPC002,Gừng khô (bột),"Ginger root, dried powder",,spice,5.0,1 thìa cà phê,vn:13002,,na,không áp dụng,"gừng khô bột - gia vị dùng lượng rất nhỏ, GI không áp dụng",true,true
+SPC003,Gừng tươi,"Ginger root, fresh",,spice,5.0,1 thìa cà phê,vn:13003,,na,không áp dụng,"gừng tươi - glucid=5.1g nhưng dùng gia vị lượng nhỏ, GI không thực tiễn",true,true
+SPC004,Hạt tiêu,"Peppercorn, seeds",,spice,5.0,1 thìa cà phê,vn:13004,,na,không áp dụng,"hạt tiêu - gia vị lượng nhỏ, GI không áp dụng",true,true
+SPC005,Muối,Table salt,,spice,5.0,1 thìa cà phê,vn:13005,,na,không áp dụng,"muối - glucid=0g, GI không áp dụng",true,true
+SPC006,"Nghệ khô, bột","Turmeric rhizome, dried powder",,spice,5.0,1 thìa cà phê,vn:13006,,na,không áp dụng,"nghệ khô bột - gia vị lượng nhỏ, GI không áp dụng",true,true
+SPC007,Nghệ tươi,"Turmeric, rhizome, fresh",,spice,5.0,1 thìa cà phê,vn:13007,,na,không áp dụng,"nghệ tươi - gia vị lượng nhỏ, glucid=4.4g, GI không thực tiễn",true,true
+SPC008,ịt khô bột,"Red pepper, dried powder",,spice,5.0,1 thìa cà phê,vn:13008,,na,không áp dụng,"ớt khô bột - gia vị lượng nhỏ, GI không áp dụng",true,true
+SPC009,Riềng,"Alpinia root, fresh",,spice,5.0,1 thìa cà phê,vn:13009,,na,không áp dụng,"riềng - gia vị lượng nhỏ, GI không áp dụng",true,true
+SPC010,Magi,Soybean sauce,,spice,5.0,1 thìa cà phê,vn:13010,20,proxy,ước tính theo nhóm (cần duyệt),"magi/xì dầu nâu - soy-based sauce, glucid=5.6g/100ml, GI thấp ~20 (soy sauce)",true,true
+SPC011,Mắm tôm đÆc,Shrimp sauce concentrate,,spice,5.0,1 thìa cà phê,vn:13011,,na,không áp dụng,"mắm tôm đặc - glucid=0g, protein+muối, GI không áp dụng",true,true
+SPC012,Mắm tôm loãng,"Shrimp sauce, diluted",,spice,5.0,1 thìa cà phê,vn:13012,,na,không áp dụng,"mắm tôm loãng - glucid=2.1g, gia vị, GI không áp dụng",true,true
+SPC013,Mắm tép chua,"Tiny shrimp, sour sauce",,spice,5.0,1 thìa cà phê,vn:13013,,na,không áp dụng,"mắm tép chua - gia vị lên men, glucid nhỏ, GI không áp dụng",true,true
+SPC014,Nưịc mắm cá (loại đÆc biệt),Fish - sauce (super quality).,,spice,5.0,1 thìa cà phê,vn:13014,,na,không áp dụng,"nước mắm đặc biệt - glucid=0g, GI không áp dụng",true,true
+SPC015,Nưịc mắm cá loại I,"Fish sauce, grade I",,spice,5.0,1 thìa cà phê,vn:13015,,na,không áp dụng,"nước mắm loại I - glucid=0g, GI không áp dụng",true,true
+SPC016,Nưịc mắm loại II,"Fish sauce, grade II",,spice,5.0,1 thìa cà phê,vn:13016,,na,không áp dụng,"nước mắm loại II - glucid=0g, GI không áp dụng",true,true
+SPC017,Nưịc mắm cá,"Fish sauce, ready-to-serve",,spice,5.0,1 thìa cà phê,vn:13017,,na,không áp dụng,"nước mắm - glucid=3.6g, gia vị, GI không áp dụng",true,true
+SPC018,Nưịc mắm cô,"Fish sauce, concentrated",,spice,5.0,1 thìa cà phê,vn:13018,,na,không áp dụng,"nước mắm cô - glucid=0g, GI không áp dụng",true,true
+SPC019,Tương ngô,Soybean sauce with rice and maize,,spice,5.0,1 thìa cà phê,vn:13019,55,proxy,ước tính theo nhóm (cần duyệt),"tương ngô - soybean sauce với ngô/gạo, glucid=14.5g/100g, GI trung bình ~55",true,true
+SPC020,Tương nếp,Soybean sauce with glutinous rice,,spice,5.0,1 thìa cà phê,vn:13020,55,proxy,ước tính theo nhóm (cần duyệt),"tương nếp - soybean sauce với gạo nếp, glucid=15.7g/100g, GI trung bình ~55",true,true
+SPC021,Tương ịt,Red pepper sauce concentrate,,spice,5.0,1 thìa cà phê,vn:13021,35,proxy,ước tính theo nhóm (cần duyệt),"tương ớt - chili sauce, glucid=7.6g/100g, GI thấp-trung bình ~35",true,true
+SPC022,Xì dầu,Soybean sauce,,spice,5.0,1 thìa cà phê,vn:13022,20,proxy,ước tính theo nhóm (cần duyệt),"xì dầu - soy sauce, glucid=6.8g/100g, GI thấp ~20 theo y văn",true,true
+SPC023,Sốt mayonnaise,Mayonnaise,,spice,5.0,1 thìa cà phê,vn:13023,,na,không áp dụng,"sốt mayonnaise - glucid=0.1g, chất béo >77%, GI không áp dụng",true,true
+BEV009,"Bia (cồn: 4,5 g)","Beer light (4,5 % Alcohol)",,beverage,250.0,1 ly,vn:14001,66,table2,Sydney Int.Tables 2021,"bia - beer, Sydney table2 GI=66 (carbonated, maltose/glucose)",true,true
+BEV010,Cô nhắc (cồn 32 g),Cognac,,beverage,250.0,1 ly,vn:14002,,na,không áp dụng,"cognac - glucid=0g, cồn nguyên chất, GI không áp dụng",true,true
+BEV011,Cốc tai (cồn 13 g),"Cocktail, vermouth sweet",,beverage,250.0,1 ly,vn:14003,55,proxy,ước tính theo nhóm (cần duyệt),"cocktail/vermouth ngọt - glucid=15.7g/100ml, đồ uống có đường ~55",true,true
+BEV012,Coca cola,Coca Cola,,beverage,250.0,1 ly,vn:14004,63,table1,Sydney Int.Tables 2021,"Coca Cola - soft drink, Sydney table1 ~63",true,true
+BEV013,Nưịc cam tươi,"Orange juice, fresh",,beverage,250.0,1 ly,vn:14005,50,table2,Sydney Int.Tables 2021,"nước cam tươi - orange juice fresh, Sydney table2 ~50",true,true
+BEV014,Nưịc dừa non tươi,"Coconut milk, immature",,beverage,250.0,1 ly,vn:14006,,na,không áp dụng,"nước dừa non - glucid=4.8g thấp, điện giải chủ yếu, GI không thực tiễn so với glucose load",true,true
+BEV015,Nưịc ép cà chua,Tomato juice,,beverage,250.0,1 ly,vn:14007,38,table1,Sydney Int.Tables 2021,"nước ép cà chua - tomato juice, Sydney table1 ~38",true,true
+BEV016,Nưịc khoáng,Mineral water,,beverage,250.0,1 ly,vn:14008,,na,không áp dụng,"nước khoáng - glucid=0g, GI không áp dụng",true,true
+BEV017,Nưịc quít tươi,Mandarins juice (fresh),,beverage,250.0,1 ly,vn:14009,47,proxy,ước tính theo nhóm (cần duyệt),"nước quýt tươi - mandarin juice, tương tự orange juice ~47-50",true,true
+BEV018,"Rượu cam, chanh (cồn 24,2 g)","Liqueur, orange flavor",,beverage,250.0,1 ly,vn:14010,,na,không áp dụng,"rượu cam chanh - cồn cao, glucid=0g, GI không áp dụng",true,true
+BEV019,Rượu nếp (80g/ 24 ml) (cồn 5 g),Rice glutinous (Alcohol fermentation rice 80 g water 24 ml),,beverage,250.0,1 ly,vn:14011,78,proxy,ước tính theo nhóm (cần duyệt),"rượu nếp - lên men gạo nếp, còn glucid=37.7g/100ml cao (bán lên men), GI cao ~78",true,true
+BEV020,Rượu trắng (cồn 39 g),Vodka,,beverage,250.0,1 ly,vn:14012,,na,không áp dụng,"rượu trắng/vodka - glucid=0g, cồn nguyên chất",true,true
+BEV021,"Rượu vang đỏ (cồn 9,5 g)",Red wine,,beverage,250.0,1 ly,vn:14013,,na,không áp dụng,"rượu vang đỏ - glucid=2.0g thấp, cồn chủ yếu, GI không áp dụng lâm sàng",true,true
+BEV022,"Rượu vang trắng (cồn 9,5 g)",White wine,,beverage,250.0,1 ly,vn:14014,,na,không áp dụng,"rượu vang trắng - glucid=0.2g gần bằng 0, GI không áp dụng",true,true
+BEV023,Rượu vang trắng ngọt (cồn 10.2 g),"White wine, sweet",,beverage,250.0,1 ly,vn:14015,,na,không áp dụng,"rượu vang trắng ngọt - glucid=5.9g, cồn chủ yếu, GI không thực tiễn",true,true
+BEV024,"Rượu Whisky (cồn 35,2 g)",Whisky liqueur,,beverage,250.0,1 ly,vn:14016,,na,không áp dụng,"whisky - glucid=0g, cồn nguyên chất, GI không áp dụng",true,true

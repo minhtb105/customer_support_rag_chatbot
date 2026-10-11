@@ -114,8 +114,9 @@ class CAGHybridCache:
         for ctx in output.contexts:
             if self._is_poisoned(getattr(ctx, "content", "")):
                 return
-        context_ids = [ctx.source_id for ctx in output.contexts]
-        key = self._compose_key(query, context_ids)
+        # Key query-only để đối xứng với get() (get chưa có contexts lúc gọi).
+        # Mọi caller hiện tại đều dùng query-only nên ctx_part luôn rỗng.
+        key = self._compose_key(query, [])
 
         # Exact cache insert
         exact_entry = CacheEntry(

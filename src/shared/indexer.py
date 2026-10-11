@@ -119,6 +119,10 @@ def compute_file_fingerprint(path: str, sample_size=512 * 512) -> str:
 
 
 def _make_embeddings():
+    if EMBEDDING_PROVIDER == "nvidia":
+        from src.shared.nvidia import NvidiaEmbeddings
+        from src.shared.config import NVIDIA_EMBEDDING_MODEL
+        return NvidiaEmbeddings(model=NVIDIA_EMBEDDING_MODEL)
     if EMBEDDING_PROVIDER == "openai" and _HAS_OPENAI_EMB:
         try:
             return OpenAIEmbeddings(model=OPENAI_EMBEDDING_MODEL)
@@ -131,6 +135,8 @@ def _make_embeddings():
 
 
 def _resolve_index_db_dir(strategy_value: str) -> str:
+    if EMBEDDING_PROVIDER == "nvidia":
+        return str(BASE_DIR / "embeddings" / "pdf_db_nvidia" / strategy_value)
     if EMBEDDING_PROVIDER == "openai":
         return str(BASE_DIR / "embeddings" / "pdf_db_openai" / strategy_value)
     return os.path.join(PDF_DB_DIR, strategy_value)
@@ -285,8 +291,12 @@ def main():
 
         vector_db = get_or_create_vectorstore(strategy_db_dir)
 
-        # EmbeddingAdapter: nếu OpenAI, dùng OpenAIEmbeddings + tokenizer fake (không cần truncate HF)
-        if EMBEDDING_PROVIDER == "openai" and _HAS_OPENAI_EMB:
+        # EmbeddingAdapter: OpenAI/NVIDIA dùng embedder API + tokenizer truncate;
+        # local dùng HuggingFace.
+        if EMBEDDING_PROVIDER == "nvidia":
+            embedder = _make_embeddings()
+            tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_MODEL)
+        elif EMBEDDING_PROVIDER == "openai" and _HAS_OPENAI_EMB:
             from langchain_openai import OpenAIEmbeddings as _OE
             embedder = _OE(model=OPENAI_EMBEDDING_MODEL)
             # tokenizer cho truncate: dùng tiktoken fallback, nếu không có thì dùng HF tokenizer

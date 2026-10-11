@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DiabetesFood",
+  "description": "Một món ăn/đồ uống cho RAG tiểu đường. GL và carb_choices LUÔN tính bằng code, không nhập tay.",
+  "type": "object",
+  "required": ["food_id", "names", "category", "serving", "nutrition_per_100g",
+               "glycemic", "diabetes_recommendation", "metadata"],
+  "properties": {
+    "food_id": {"type": "string", "pattern": "^[A-Z]{2,4}[0-9]{3}$"},
+    "names": {
+      "type": "object",
+      "required": ["vi", "en"],
+      "properties": {
+        "vi": {"type": "string", "minLength": 1},
+        "en": {"type": "string", "minLength": 1},
+        "aliases_vi": {"type": "array", "items": {"type": "string"}, "default": []}
+      }
+    },
+    "category": {"type": "string", "enum": ["grain", "tuber", "fruit", "vegetable",
+      "protein", "dairy", "beverage", "snack_sweet", "mixed_dish", "condiment",
+      "canned", "spice"]},
+    "serving": {
+      "type": "object",
+      "required": ["size_g", "description"],
+      "properties": {
+        "size_g": {"type": "number", "exclusiveMinimum": 0},
+        "description": {"type": "string", "minLength": 1}
+      }
+    },
+    "nutrition_per_100g": {
+      "type": "object",
+      "required": ["energy_kcal", "total_carbohydrate_g", "sugars_g",
+                   "dietary_fiber_g", "protein_g", "total_fat_g"],
+      "properties": {
+        "energy_kcal": {"type": "number", "minimum": 0},
+        "total_carbohydrate_g": {"type": "number", "minimum": 0},
+        "sugars_g": {"type": "number", "minimum": 0},
+        "dietary_fiber_g": {"type": "number", "minimum": 0},
+        "protein_g": {"type": "number", "minimum": 0},
+        "total_fat_g": {"type": "number", "minimum": 0}
+      }
+    },
+    "glycemic": {
+      "type": "object",
+      "required": ["gi", "gi_tier"],
+      "properties": {
+        "gi": {"type": ["number", "null"], "minimum": 0, "maximum": 110},
+        "gi_tier": {"type": "string", "enum": ["table1", "table2", "proxy", "estimated", "na"]}
+      }
+    },
+    "diabetes_recommendation": {
+      "type": "object",
+      "required": ["mild_g", "severe_g", "gl_std", "gl_mild", "gl_severe",
+                   "choices_std", "choices_mild", "choices_severe", "notes"],
+      "properties": {
+        "mild_g": {"type": "number", "exclusiveMinimum": 0},
+        "severe_g": {"type": "number", "exclusiveMinimum": 0},
+        "gl_std": {"type": ["number", "null"]},
+        "gl_mild": {"type": ["number", "null"]},
+        "gl_severe": {"type": ["number", "null"]},
+        "choices_std": {"type": "number", "minimum": 0},
+        "choices_mild": {"type": "number", "minimum": 0},
+        "choices_severe": {"type": "number", "minimum": 0},
+        "notes": {"type": "string", "minLength": 1}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["source", "is_local_vietnam", "last_updated"],
+      "properties": {
+        "source": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+        "is_local_vietnam": {"type": "boolean"},
+        "last_updated": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "review_flag": {"type": "boolean", "default": false}
+      }
+    }
+  }
+}

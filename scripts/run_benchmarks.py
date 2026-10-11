@@ -225,6 +225,33 @@ def run_b4(dataset, n):
 # B5 judge
 # ---------------------------------------------------------------------------
 
+def _parse_verdict(cleaned):
+    """Parse judge JSON cứng đầu: thử toàn văn, rồi từng khối {...} từ
+    ngắn đến dài (reasoning model hay chèn preamble có ngoặc nhọn lẻ)."""
+    import re as _re_local
+    try:
+        v = json.loads(cleaned)
+        return v if isinstance(v, dict) else {}
+    except json.JSONDecodeError:
+        pass
+    cands = sorted(set(_re_local.findall(r"\{.*?\}", cleaned, _re_local.S)), key=len)
+    big = _re_local.search(r"\{.*\}", cleaned, _re_local.S)
+    if big:
+        cands.append(big.group(0))
+    want = {"faithfulness", "contextual_precision", "contextual_recall", "fluency"}
+    for c in cands:
+        if not c:
+            continue
+        try:
+            v = json.loads(c)
+            # chỉ nhận dict có ít nhất 1 metric rubric (loại khối rác trong thinking)
+            if isinstance(v, dict) and v and (want & {k.lower() for k in v}):
+                return v
+        except (json.JSONDecodeError, AttributeError):
+            continue
+    return {}
+
+
 def run_b5(dataset, max_questions=None):
     """Generate answers then LLM-as-judge using EVALUATION_PROMPT rubric."""
     import re as _re
@@ -232,6 +259,21 @@ def run_b5(dataset, max_questions=None):
     from chat.generator import client as llm_client, format_context, \
         _normalize_model, detect_tone_and_temp
     from shared.prompt_manager import get_system_prompt, get_evaluation_prompt
+    try:
+        from shared.config import LLM_PROVIDER as _BENCH_PROV, NVIDIA_JUDGE_MODEL as _JUDGE
+        from shared.nvidia import select_chat_model as _select
+    except ImportError:
+        _BENCH_PROV, _JUDGE, _select = "openai", None, None
+
+    def _ans_model(q):
+        if _BENCH_PROV == "nvidia" and _select:
+            return _select(q)
+        return _normalize_model(None)
+
+    def _judge_model():
+        if _BENCH_PROV == "nvidia" and _JUDGE:
+            return _JUDGE
+        return _normalize_model(None)
 
     samples = dataset[:max_questions] if max_questions else dataset
     scores = []
@@ -246,7 +288,7 @@ def run_b5(dataset, max_questions=None):
             "Answer clearly and concisely"
         )
         resp = llm_client.chat.completions.create(
-            model=_normalize_model(None),
+            model=_ans_model(q),
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -259,18 +301,17 @@ def run_b5(dataset, max_questions=None):
         judge_prompt = get_evaluation_prompt().format(
             question=q, answer=answer, context_text=context_text)
         jresp = llm_client.chat.completions.create(
-            model=_normalize_model(None),
+            model=_judge_model(),
             messages=[{"role": "user", "content": judge_prompt}],
             temperature=0,
-            max_tokens=500,
+            max_tokens=1500,  # reasoning model cần chỗ cho thinking + JSON
         )
         raw = jresp.choices[0].message.content.strip()
         cleaned = _re.sub(r"^```(json)?|```$", "", raw, flags=_re.M).strip()
-        try:
-            verdict = json.loads(cleaned)
-        except json.JSONDecodeError:
-            m = _re.search(r"\{.*\}", cleaned, _re.S)
-            verdict = json.loads(m.group(0)) if m else {}
+        verdict = _parse_verdict(cleaned)
+        if not verdict:
+            log(f"B5 [{i + 1}/{len(samples)}] judge unparseable, raw head: "
+                f"{cleaned[:160]!r}")
         scores.append(verdict)
         keys = ["Faithfulness", "Contextual_Precision",
                 "Contextual_Recall", "Fluency"]
@@ -335,7 +376,11 @@ def main():
     output["b123_retrieval"] = run_b123(dataset)
     output["b4_latency"] = run_b4(dataset, n=args.latency_n)
     if not args.skip_judge:
-        output["b5_judge"] = run_b5(dataset, max_questions=args.judge_n)
+        try:
+            output["b5_judge"] = run_b5(dataset, max_questions=args.judge_n)
+        except Exception as e:  # judge sập vẫn giữ B1-B4
+            output["b5_judge"] = {"error": f"{type(e).__name__}: {e}"}
+            log(f"B5 failed, kept B1-B4: {e}")
 
     out_path = os.path.join(
         ROOT, "data", "evaluation",

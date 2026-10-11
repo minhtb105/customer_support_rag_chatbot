@@ -112,7 +112,7 @@ class TestDiabetesAPI:
     def test_health(self, client: TestClient):
         resp = client.get("/v1/health")
         assert resp.status_code == 200
-        assert resp.json()["embedding_provider"] in ("openai", "local")
+        assert resp.json()["embedding_provider"] in ("openai", "local", "nvidia")
 
     def test_user_isolation(self, client: TestClient, make_user):
         u1, t1 = make_user(role="user")

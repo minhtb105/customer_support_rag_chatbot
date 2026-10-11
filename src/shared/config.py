@@ -39,15 +39,24 @@ SENTENCE_GROUP = 4
 INDEX_STRATEGIES = [s.strip() for s in os.getenv("INDEX_STRATEGIES", "structure").split(",") if s.strip()]
 
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # generator model
+if _env_first("LLM_PROVIDER", "PROVIDER", default="openai").lower() == "nvidia":
+    DEFAULT_MODEL = os.getenv(
+        "NVIDIA_CHAT_MODEL", "nvidia/nemotron-3.5-lightning-30b-a3b")
 # Embedding: ưu tiên OpenAI, fallback về local nếu chưa cấu hình
 OPENAI_EMBEDDING_MODEL = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
-EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "openai").lower()  # "openai" | "local"
-EMBEDDING_MODEL = OPENAI_EMBEDDING_MODEL if EMBEDDING_PROVIDER == "openai" else "all-MiniLM-L6-v2"
+NVIDIA_EMBEDDING_MODEL = os.getenv(
+    "NVIDIA_EMBEDDING_MODEL", "nvidia/nemotron-3-embed-1b")
+EMBEDDING_PROVIDER = os.getenv("EMBEDDING_PROVIDER", "openai").lower()  # "openai" | "local" | "nvidia"
+if EMBEDDING_PROVIDER == "nvidia":
+    EMBEDDING_MODEL = NVIDIA_EMBEDDING_MODEL
+else:
+    EMBEDDING_MODEL = OPENAI_EMBEDDING_MODEL if EMBEDDING_PROVIDER == "openai" else "all-MiniLM-L6-v2"
 EMBEDDING_DIMENSIONS_MAP = {
     "text-embedding-3-small": 1536,
     "text-embedding-3-large": 3072,
     "text-embedding-ada-002": 1536,
     "all-MiniLM-L6-v2": 384,
+    "nvidia/nemotron-3-embed-1b": 2048,
 }
 EMBEDDING_DIMENSION = EMBEDDING_DIMENSIONS_MAP.get(EMBEDDING_MODEL, 1536)
 RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
@@ -58,9 +67,17 @@ TOKENIZER_MODEL = "bert-base-uncased"
 # ==============================
 # "openai" (default) -> OPENAI_API_KEY + OPENAI_BASE_URL
 # "groq"             -> GROQ_API_KEY + https://api.groq.com/openai/v1
+# "nvidia"           -> NVDIA_API_KEY[2,3] + https://integrate.api.nvidia.com/v1
 LLM_PROVIDER = _env_first("LLM_PROVIDER", "PROVIDER", default="openai").lower()
 OPENAI_API_KEY = _env_first("OPENAI_API_KEY")
 OPENAI_BASE_URL = _env_first("OPENAI_BASE_URL", default="https://api.openai.com/v1")
+NVIDIA_BASE_URL = _env_first("NVIDIA_BASE_URL", default="https://integrate.api.nvidia.com/v1")
+NVIDIA_CHAT_MODEL_HARD = os.getenv(
+    "NVIDIA_CHAT_MODEL_HARD", "nvidia/nemotron-3-ultra-550b-a55b")
+NVIDIA_CHAT_MODEL_LIGHT = os.getenv(
+    "NVIDIA_CHAT_MODEL_LIGHT", "meta/llama-3.2-11b-vision-instruct")
+# Judge dùng model LIGHT (output sạch, parse JSON được; reasoning model xả thinking)
+NVIDIA_JUDGE_MODEL = os.getenv("NVIDIA_JUDGE_MODEL", NVIDIA_CHAT_MODEL_LIGHT)
 GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
 
 TOP_K = 10

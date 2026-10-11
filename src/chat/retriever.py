@@ -4,7 +4,7 @@ from langchain_core.documents import Document
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever as LangchainBM25Retriever
-from src.shared.config import PDF_DB_DIR, TOP_K, EMBEDDING_MODEL, EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL, BASE_DIR
+from src.shared.config import PDF_DB_DIR, TOP_K, EMBEDDING_MODEL, EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL, NVIDIA_EMBEDDING_MODEL, BASE_DIR
 from src.shared.models.llm_io import ContextItem
 from typing import List, Optional
 import os as _os
@@ -13,7 +13,10 @@ import time as _time
 
 
 def _get_embeddings():
-    """Factory: OpenAI nếu cấu hình, fallback HuggingFace."""
+    """Factory: NVIDIA / OpenAI nếu cấu hình, fallback HuggingFace."""
+    if EMBEDDING_PROVIDER == "nvidia":
+        from src.shared.nvidia import NvidiaEmbeddings
+        return NvidiaEmbeddings(model=NVIDIA_EMBEDDING_MODEL)
     if EMBEDDING_PROVIDER == "openai":
         try:
             from langchain_openai import OpenAIEmbeddings
@@ -29,7 +32,10 @@ def _get_embeddings():
 
 
 def _resolve_db_dir(strategy: str) -> str:
-    # Nếu dùng OpenAI embeddings, tách DB riêng để tránh lệch dimension 384 vs 1536
+    # Tách DB riêng theo provider để tránh lệch dimension (openai 1536 vs local 384 vs nvidia 2048)
+    if EMBEDDING_PROVIDER == "nvidia":
+        base = BASE_DIR / "embeddings" / "pdf_db_nvidia"
+        return str(base / strategy)
     if EMBEDDING_PROVIDER == "openai":
         base = BASE_DIR / "embeddings" / "pdf_db_openai"
         return str(base / strategy)
@@ -124,7 +130,9 @@ def normalize_docs(docs):
 
 def get_bm25():
     docs = cached_documents()
-    retriever = LangchainBM25Retriever.from_documents(docs)
+    # lowercase để query thường ("ổi") match tên món viết hoa ("Ổi")
+    retriever = LangchainBM25Retriever.from_documents(
+        docs, preprocess_func=lambda t: t.lower().split())
     retriever.k = TOP_K
     return retriever
 
@@ -132,8 +140,74 @@ def get_vector_retriever(strategy: str = "structure"):
     db = load_vectorstores(strategy)
     return db.as_retriever(search_kwargs={"k": TOP_K})
 
-def _file_updated_at(source_id: str) -> Optional[str]:
-    # lookup metadata_store files.updated_at for file matching source_id
+# --- food linker: tên món trong query -> pin chunk nutrition lên đầu ---
+_FOOD_ALIASES: dict | None = None  # alias lower -> source_id
+
+
+def _load_food_aliases() -> dict:
+    global _FOOD_ALIASES
+    if _FOOD_ALIASES is not None:
+        return _FOOD_ALIASES
+    m: dict = {}
+    try:
+        from pathlib import Path as _P
+        import json as _json
+        for fp in (_P(str(BASE_DIR)) / "data" / "raw" / "nutrition" / "foods").glob("*.json"):
+            try:
+                food = _json.loads(fp.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            names = [food.get("names", {}).get("vi", ""),
+                     food.get("names", {}).get("en", "")]
+            names += food.get("names", {}).get("aliases_vi", []) or []
+            for n in names:
+                n = (n or "").strip().lower()
+                if len(n) >= 2:
+                    m.setdefault(n, food.get("food_id"))
+    except Exception:
+        pass
+    _FOOD_ALIASES = m
+    return m
+
+
+def _promote_linked_foods(query: str, merged_list: list) -> None:
+    """Đưa chunk món ăn được nhắc tên trong query lên đầu (stable)."""
+    aliases = _load_food_aliases()
+    if not aliases:
+        return
+    q = " " + (query or "").lower() + " "
+    rank: dict = {}
+    for alias, sid in aliases.items():
+        if alias and alias in q and sid not in rank:
+            rank[sid] = len(alias)  # alias dài match trước khi sắp xếp ổn định
+    if not rank:
+        return
+    merged_list.sort(key=lambda d: (0, -rank[d.metadata.get("source_id")])
+                     if d.metadata.get("source_id") in rank else (1, 0))
+
+
+def pin_linked_foods(query: str, contexts: list, top_n: int = 3) -> list:
+    """Đảm bảo chunk món ăn được nhắc tên lọt vào top_n sau rerank.
+    (CrossEncoder tiếng Anh hay chôn chunk món Việt ngắn dưới guideline dài.)"""
+    aliases = _load_food_aliases()
+    if not aliases:
+        return contexts[:top_n]
+    q = " " + (query or "").lower() + " "
+    linked = [c for c in contexts
+              if getattr(c, "source_id", None) in
+              {sid for alias, sid in aliases.items() if alias and alias in q}]
+    rest = [c for c in contexts if c not in linked]
+    # dedupe theo source_id giữ thứ tự linked trước
+    seen, out = set(), []
+    for c in linked + rest:
+        sid = getattr(c, "source_id", None)
+        if sid not in seen:
+            seen.add(sid)
+            out.append(c)
+    return out[:top_n]
+
+
+def _file_updated_at(source_id: str) -> Optional[str]:    # lookup metadata_store files.updated_at for file matching source_id
     try:
         from src.shared.metadata_store import META_DB_PATH
         import sqlite3
@@ -190,6 +264,9 @@ def retrieve_context(query: str, top_k: int = TOP_K,
     # sort: put vector matches first (optional)
     # or keep frequency, or average rank
     # here we just keep current order
+    # food-linker: chunk món ăn có tên xuất hiện trong query -> lên đầu
+    # (CrossEncoder huấn luyện tiếng Anh chấm món Việt kém, cần neo cứng)
+    _promote_linked_foods(query, merged_list)
     results = merged_list[:top_k * 2]  # optionally extend
 
     # group for merge
