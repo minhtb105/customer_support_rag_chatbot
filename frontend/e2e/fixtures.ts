@@ -1,14 +1,8 @@
 import { test as base, expect } from '@playwright/test';
 
-type Fixtures = {
-  userId: string;
-};
+// No shared fixtures: specs import { test, expect } from here for a single
+// import path. (userId fixture removed — 0 consumers.)
 
-export const test = base.extend<Fixtures>({
-  userId: async ({}, use) => {
-    const id = `e2e_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-    await use(id);
-  },
-});
+export const test = base;
 
 export { expect };

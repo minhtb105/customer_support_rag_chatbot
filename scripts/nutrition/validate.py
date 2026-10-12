@@ -4,27 +4,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-SCHEMA_PATH = Path(__file__).with_name("food_schema.json")
-
-
-def _load_schema() -> dict:
-    return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
-
 
 def validate(food: dict) -> list[str]:
-    """Trả về list lỗi (rỗng = pass). Không cần jsonschema lib."""
-    errs: list[str] = []
-    try:
-        import jsonschema
-        schema = _load_schema()
-        try:
-            jsonschema.validate(food, schema)
-        except Exception as e:  # noqa: BLE001
-            return [f"schema: {e}"]
-    except ImportError:
-        errs.extend(_manual_check(food))
-    errs.extend(_recompute_check(food))
-    return errs
+    """Trả về list lỗi (rỗng = pass)."""
+    return _manual_check(food) + _recompute_check(food)
 
 
 def _manual_check(food: dict) -> list[str]:

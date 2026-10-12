@@ -1,5 +1,6 @@
 """Unit tests for Hypertension tracker — AHA/ACC 2025."""
 import pytest
+from tests._helpers import make_crud_case, assert_classify_first
 from src.vitals.bp_tracker import classify_bp, add_bp_log, get_bp_logs, get_bp_stats, should_escalate_bp, _should_escalate_bp
 from src.shared.config import BP_THRESHOLDS_MMHG
 
@@ -90,3 +91,13 @@ class TestBPStatsAndEscalation:
         assert _should_escalate_bp([{"classification": "crisis"}]) is True
         assert _should_escalate_bp([{"classification": "stage2"}]*3) is True
         assert _should_escalate_bp([{"classification": "stage2"}]*2) is False
+
+
+@pytest.mark.parametrize("args,expected", [
+    make_crud_case((110, 70), "normal"),
+    make_crud_case((135, 85), "stage1"),
+    make_crud_case((150, 95), "stage2"),
+    make_crud_case((185, 125), "crisis"),
+])
+def test_classify_via_helpers(args, expected):
+    assert_classify_first(classify_bp, args, expected)

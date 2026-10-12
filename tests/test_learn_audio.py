@@ -11,6 +11,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from tests._helpers import norm_ws
+
 DATA = Path(__file__).resolve().parents[1] / "data" / "curriculum" / "lessons.json"
 LIMIT = 480  # under /speak [:500] with margin
 
@@ -68,8 +70,7 @@ class TestLearnAudioChunks:
             chunks = split_script(orig)
             assert chunks, f'{l["id"]}: no chunks'
             # Lossless: reassembly covers the full script (whitespace-normalized).
-            norm = lambda s: re.sub(r"\s+", " ", s).strip()
-            assert norm(" ".join(chunks)) == norm(orig), f'{l["id"]}: lossy split'
+            assert norm_ws(" ".join(chunks)) == norm_ws(orig), f'{l["id"]}: lossy split'
             # No mid-sentence cut: every chunk except the last ends with a
             # sentence terminator (long-sentence word-splits are the only
             # exception, and no current lesson needs one).

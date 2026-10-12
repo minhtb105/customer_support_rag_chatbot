@@ -41,10 +41,16 @@ _FALLBACK_ORDER = [
 _FALLBACK_HOURS = "Mon-Fri 08:00-17:00"
 
 
-def _unaccent(s: str) -> str:
-    return "".join(
-        c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
-    )
+try:
+    from src.shared.text import unaccent as _unaccent
+except ImportError:  # pragma: no cover
+    try:
+        from shared.text import unaccent as _unaccent  # type: ignore
+    except ImportError:
+        def _unaccent(s: str) -> str:  # fallback NFD-strip
+            return "".join(
+                c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
+            )
 
 
 def expand_day_range(token: str) -> List[int]:

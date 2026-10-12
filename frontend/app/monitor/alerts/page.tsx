@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { listAlerts, decideAlert, triggerSafetyCheck, fmtDT } from "@/lib/api";
+import { useMonitorList, MonitorMsg, MonitorLoading } from "@/components/MonitorList";
 
 type AItem = {
   id: string;
@@ -26,27 +27,12 @@ function sevColor(s: string) {
 
 export default function AlertsPage() {
   const { user } = useAuth();
-  const [items, setItems] = useState<AItem[]>([]);
-  const [total, setTotal] = useState(0);
   const [severity, setSeverity] = useState("");
-  const [msg, setMsg] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const fetchList = async () => {
-    setLoading(true);
-    try {
-      const j = await listAlerts({ status: "pending_review", limit: 20, severity: severity || undefined });
-      setItems(j.items || []);
-      setTotal(j.total || 0);
-    } catch (e: any) {
-      setMsg(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    fetchList();
-  }, [severity]);
+  const { items, total, msg, setMsg, loading, fetchList } = useMonitorList<AItem>(
+    () => listAlerts({ status: "pending_review", limit: 20, severity: severity || undefined }),
+    [severity]
+  );
 
   const decide = async (aid: string, decision: "approved" | "dismissed") => {
     const notes = prompt(`Ghi chú cho ${decision}:`) || "";
@@ -93,10 +79,8 @@ export default function AlertsPage() {
         </button>
         <span className="py-2 text-xs text-slate-500">Tổng pending: {total}</span>
       </div>
-      {msg && <div className="rounded-lg border bg-slate-50 p-3 text-xs">{msg}</div>}
-      {loading ? (
-        <div className="text-sm text-slate-500">Đang tải…</div>
-      ) : items.length ? (
+      <MonitorMsg msg={msg} />
+      <MonitorLoading loading={loading} empty={!items.length} emptyText="Không có cảnh báo pending.">
         <div className="space-y-3">
           {items.map((it) => {
             let sum: any = null;
@@ -135,9 +119,7 @@ export default function AlertsPage() {
             );
           })}
         </div>
-      ) : (
-        <div className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 text-sm text-slate-500">Không có cảnh báo pending.</div>
-      )}
+      </MonitorLoading>
     </div>
   );
 }

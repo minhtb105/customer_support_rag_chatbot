@@ -10,40 +10,25 @@ Chạy:  python scripts/nutrition/fetch_vn_fct.py [--skip-download]
 """
 from __future__ import annotations
 
-import json
-import logging
 import sys
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-log = logging.getLogger(__name__)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from _fetch import OUT, download as _download, log, save_json
+from decode_vni import decode_span
 
 URL = "https://www.fao.org/fileadmin/templates/food_composition/documents/pdf/VTN_FCT_2007.pdf"
-OUT = Path(__file__).resolve().parents[2] / "data" / "raw" / "nutrition" / "_interim"
 PDF = OUT / "vn_fct.pdf"
 PAGES_JSON = OUT / "vn_fct_pages.json"
 
 
 def download() -> Path:
-    import requests
-    OUT.mkdir(parents=True, exist_ok=True)
-    if PDF.exists() and PDF.stat().st_size > 1_000_000:
-        log.info("PDF đã có: %.1f MB", PDF.stat().st_size / 1e6)
-        return PDF
-    log.info("Downloading %s", URL)
-    with requests.get(URL, timeout=300, stream=True) as r:
-        r.raise_for_status()
-        with open(PDF, "wb") as f:
-            for chunk in r.iter_content(1 << 20):
-                f.write(chunk)
-    log.info("Xong: %.1f MB", PDF.stat().st_size / 1e6)
-    return PDF
+    return _download(URL, PDF, min_size=1_000_000)
 
 
 def extract() -> dict:
     import fitz
-    sys.path.insert(0, str(Path(__file__).resolve().parent))
-    from decode_vni import decode_span
     doc = fitz.open(PDF)
     pages = {}
     for i, page in enumerate(doc):
@@ -53,7 +38,7 @@ def extract() -> dict:
                 for s in l.get("spans", []):
                     parts.append(decode_span(s["text"], s["font"]))
         pages[str(i)] = "\n".join(parts)
-    PAGES_JSON.write_text(json.dumps(pages, ensure_ascii=False), encoding="utf-8")
+    save_json(PAGES_JSON, pages)
     log.info("Trích %d trang (decode theo font) -> %s", len(pages), PAGES_JSON)
     return pages
 

@@ -8,17 +8,15 @@ Chạy:  python scripts/nutrition/fetch_usda.py "guava raw"
 """
 from __future__ import annotations
 
-import json
-import logging
 import os
 import sys
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-log = logging.getLogger(__name__)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from _fetch import OUT, get_json, log, post_json, save_json
 
 BASE = "https://api.nal.usda.gov/fdc/v1"
-OUT = Path(__file__).resolve().parents[2] / "data" / "raw" / "nutrition" / "_interim"
 
 BATCH_QUERIES = [
     "apple raw", "grapes raw", "oats", "milk whole", "yogurt plain",
@@ -46,23 +44,13 @@ def _headers(api_key: str) -> dict:
 
 
 def search(query: str, api_key: str, top: int = 5) -> list[dict]:
-    import requests
-    r = requests.post(f"{BASE}/foods/search",
-                      headers=_headers(api_key),
-                      json={"query": query, "pageSize": top},
-                      timeout=60)
-    r.raise_for_status()
-    return r.json().get("foods", [])
+    return post_json(f"{BASE}/foods/search", {"query": query, "pageSize": top},
+                     headers=_headers(api_key)).get("foods", [])
 
 
 def detail(fdc_id: int, api_key: str) -> dict:
-    import requests
     # KHÔNG lọc nutrients (param lọc trả rỗng) — lấy full rồi lọc ở macros()
-    r = requests.get(f"{BASE}/food/{fdc_id}",
-                     headers=_headers(api_key),
-                     timeout=60)
-    r.raise_for_status()
-    return r.json()
+    return get_json(f"{BASE}/food/{fdc_id}", headers=_headers(api_key))
 
 
 def macros(food: dict) -> dict:
@@ -103,8 +91,7 @@ def main() -> None:
             log.info("%s -> %s", q, out[q][0]["description"] if out[q] else None)
         except Exception as e:  # noqa: BLE001
             log.warning("%s FAIL: %s", q, str(e)[:150])
-    (OUT / "usda_candidates.json").write_text(
-        json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    save_json(OUT / "usda_candidates.json", out)
     log.info("Ghi candidates -> usda_candidates.json (chọn fdcId tay ở build step)")
 
 

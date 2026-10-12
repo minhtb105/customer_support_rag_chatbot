@@ -1,6 +1,7 @@
 """Unit tests for Track A — glucose_tracker (diabetes spec)."""
 
 import pytest
+from tests._helpers import make_crud_case, assert_classify_first
 from src.diabetes.glucose_tracker import (
     classify_glucose,
     should_escalate_to_doctor,
@@ -89,3 +90,13 @@ class TestGlucoseStatsAndEscalation:
             add_log(temp_user, 90 + i, context="random")
         logs = get_logs(temp_user, limit=2)
         assert len(logs) == 2
+
+
+@pytest.mark.parametrize("args,expected", [
+    make_crud_case((85, "fasting"), "normal"),
+    make_crud_case((130, "fasting"), "high"),
+    make_crud_case((65, "random"), "low"),
+    make_crud_case((350, "random"), "critical"),
+])
+def test_classify_via_helpers(args, expected):
+    assert_classify_first(classify_glucose, args, expected)

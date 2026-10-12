@@ -4,7 +4,7 @@ from langchain_core.documents import Document
 from langchain_chroma.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever as LangchainBM25Retriever
-from src.shared.config import PDF_DB_DIR, TOP_K, EMBEDDING_MODEL, EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL, NVIDIA_EMBEDDING_MODEL, BASE_DIR
+from src.shared.config import PDF_DB_DIR, TOP_K, EMBEDDING_MODEL, EMBEDDING_PROVIDER, OPENAI_EMBEDDING_MODEL, NVIDIA_EMBEDDING_MODEL, BASE_DIR, DEFAULT_CHUNK_STRATEGY
 from src.shared.models.llm_io import ContextItem
 from typing import List, Optional
 import os as _os
@@ -42,7 +42,7 @@ def _resolve_db_dir(strategy: str) -> str:
     return os.path.join(PDF_DB_DIR, strategy)
 
 
-def load_vectorstores(strategy: str = "structure") -> Chroma:
+def load_vectorstores(strategy: str = DEFAULT_CHUNK_STRATEGY) -> Chroma:
     # No cache — provider may switch between openai/local and dimension mismatch would break cached instance
     embeddings = _get_embeddings()
     db_dir = _resolve_db_dir(strategy)
@@ -136,7 +136,7 @@ def get_bm25():
     retriever.k = TOP_K
     return retriever
 
-def get_vector_retriever(strategy: str = "structure"):
+def get_vector_retriever(strategy: str = DEFAULT_CHUNK_STRATEGY):
     db = load_vectorstores(strategy)
     return db.as_retriever(search_kwargs={"k": TOP_K})
 
@@ -149,13 +149,11 @@ def _load_food_aliases() -> dict:
         return _FOOD_ALIASES
     m: dict = {}
     try:
-        from pathlib import Path as _P
-        import json as _json
-        for fp in (_P(str(BASE_DIR)) / "data" / "raw" / "nutrition" / "foods").glob("*.json"):
-            try:
-                food = _json.loads(fp.read_text(encoding="utf-8"))
-            except Exception:
-                continue
+        try:
+            from src.diabetes.nutrition_lookup import _load_foods as _foods
+        except ImportError:
+            from diabetes.nutrition_lookup import _load_foods as _foods  # type: ignore
+        for food in _foods():
             names = [food.get("names", {}).get("vi", ""),
                      food.get("names", {}).get("en", "")]
             names += food.get("names", {}).get("aliases_vi", []) or []
@@ -236,7 +234,7 @@ def _file_updated_at(source_id: str) -> Optional[str]:    # lookup metadata_stor
     return None
 
 def retrieve_context(query: str, top_k: int = TOP_K, 
-                     strategy: str = "structure") -> List[ContextItem]:
+                     strategy: str = DEFAULT_CHUNK_STRATEGY) -> List[ContextItem]:
     """
     Retrieve relevant contexts for a given query.
     Combines BM25 + vector + PDF retrievers (hybrid retrieval).

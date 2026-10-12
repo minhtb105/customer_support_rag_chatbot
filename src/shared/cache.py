@@ -1,11 +1,9 @@
-import time, hashlib, numpy as np, re
+import time, hashlib, re
 from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Optional, List
 
-# Semantic cache removed — exact-only POC (ponytail: re-add via .[local] + FAISS when local embeddings land).
-# Signature keeps semantic_* params as deprecated no-ops so callers don't change.
-_SEMANTIC_AVAILABLE = False
+# Exact-only POC (ponytail: re-add via .[local] + FAISS when local embeddings land).
 try:
     from shared.models.llm_io import LLMOutput
 except ImportError:
@@ -17,8 +15,6 @@ class CacheEntry:
     key: str
     output: LLMOutput
     timestamp: float
-    embedding: Optional[np.ndarray] = None
-    context_hash: Optional[str] = None
 
 
 class CAGHybridCache:
@@ -30,17 +26,13 @@ class CAGHybridCache:
         self,
         max_size: int = 1024,
         ttl_seconds: int = 60 * 60 * 24,
-        semantic_model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
-        semantic_threshold: float = 0.82,
+        **_deprecated,  # semantic_* no-ops for old callers (e.g. rag_pipeline)
     ):
         self.max_size = max_size
         self.ttl_seconds = ttl_seconds
-        self.semantic_threshold = semantic_threshold
 
         # Exact cache (LRU)
         self._exact_store: "OrderedDict[str, CacheEntry]" = OrderedDict()
-
-        # Semantic disabled (see module note); params kept for compat only.
 
         # Stats
         self.hits = 0
@@ -80,10 +72,6 @@ class CAGHybridCache:
     def _evict_if_needed(self):
         while len(self._exact_store) > self.max_size:
             self._exact_store.popitem(last=False)
-
-    def _rebuild_faiss(self):
-        """No-op compat shim (semantic removed)."""
-        return
 
     # ---------- Public API ----------
 
@@ -133,7 +121,6 @@ class CAGHybridCache:
             "hits": self.hits,
             "misses": self.misses,
             "exact_size": len(self._exact_store),
-            "semantic_size": 0,  # compat key, semantic removed
         }
 
     def clear(self):

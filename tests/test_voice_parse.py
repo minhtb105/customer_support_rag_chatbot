@@ -9,19 +9,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.voice.vn_parse import parse_vi
+from tests._helpers import assert_parse_ambiguous, assert_parse_ok
 
 
 def _ok(text, value, context):
-    r = parse_vi(text)
-    assert r["ambiguous"] is False, f"{text!r} -> ambiguous ({r['reason']})"
-    assert r["value"] == value, f"{text!r} -> {r['value']} != {value}"
-    assert r["context"] == context, f"{text!r} -> {r['context']} != {context}"
-    assert str(value) in r["confirm_text"]
+    assert_parse_ok(parse_vi, text, value, context)
 
 
 def _amb(text):
-    r = parse_vi(text)
-    assert r["ambiguous"] is True, f"{text!r} should be ambiguous, got {r}"
+    assert_parse_ambiguous(parse_vi, text)
 
 
 def test_digits_passthrough_accented():

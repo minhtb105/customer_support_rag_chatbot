@@ -17,10 +17,16 @@ GROUPS = ["hieu-benh", "dinh-duong", "van-dong",
 DAY_SEQUENCE = ["1.1", "1.2", "2.1", "2.2", "3.1", "4.1", "5.1"]
 
 
-def _unaccent(s: str) -> str:
-    s = unicodedata.normalize("NFD", s or "")
-    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
-    return s.replace("đ", "d").replace("Đ", "D")
+try:
+    from src.shared.text import unaccent as _unaccent
+except ImportError:  # pragma: no cover
+    try:
+        from shared.text import unaccent as _unaccent  # type: ignore
+    except ImportError:
+        def _unaccent(s: str) -> str:  # fallback NFD-strip
+            s = unicodedata.normalize("NFD", s or "")
+            s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+            return s.replace("đ", "d").replace("Đ", "D")
 
 
 # Letters-only patterns (accented + unaccented). Digits/number-words excluded by design.

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { adminListTraces, API_BASE, fmtDT } from "@/lib/api";
+import { AdminTable, AdminEmpty, AdminPagination, AdminFilterBar } from "@/components/AdminTable";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -35,18 +36,15 @@ export default function TracingListPage(){
         <p className="text-xs text-slate-600">Truy vết user query → chunks retrieved → final answer + RAGAS. Lưu 30 ngày, 10 trace/trang. Chỉ admin.</p>
         <div className="text-xs text-slate-500">{API_BASE} · Tổng {total} traces · <Link href="/admin/tracing/chunks" className="text-blue-700 hover:underline font-medium">Chunks →</Link> · <Link href="/admin/tracing/memory" className="text-blue-700 hover:underline font-medium">Memory →</Link></div>
       </div>
-      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm flex flex-wrap gap-2 items-end">
+      <AdminFilterBar>
         <div><label className="text-xs">Tìm kiếm</label><input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="query/answer" className="ml-2 rounded border px-2 py-1 text-xs" /></div>
         <div><label className="text-xs">Tone</label><select value={tone} onChange={(e)=>setTone(e.target.value)} className="ml-2 rounded border px-2 py-1 text-xs"><option value="">all</option><option value="diabetes">diabetes</option><option value="hypertension">hypertension</option><option value="respiratory">respiratory</option><option value="mental">mental</option><option value="balanced">balanced</option></select></div>
         <button onClick={()=>load(1)} className="rounded-full bg-slate-900 text-white px-4 py-1.5 text-xs">Lọc</button>
         <button onClick={()=>{ setQ(""); setTone(""); load(1); }} className="rounded-full border px-4 py-1.5 text-xs">Xóa</button>
-      </div>
+      </AdminFilterBar>
       {msg && <div className="rounded-lg bg-red-50 border border-red-200 p-2 text-xs text-red-700">{msg}</div>}
-      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 shadow-sm overflow-hidden">
-        <table className="w-full text-xs">
-          <thead className="bg-slate-50 border-b text-left"><tr><th className="p-2">Query</th><th>Answer</th><th>Tone</th><th>RAGAS</th><th>Latency</th><th>Thời gian</th></tr></thead>
-          <tbody>
-            {traces.map((t:any)=>(
+      <AdminTable columns={["Query", "Answer", "Tone", "RAGAS", "Latency", "Thời gian"]} emptyText="Không có trace (30 ngày)">
+          {traces.map((t:any)=>(
               <tr key={t.id} className="border-b hover:bg-slate-50">
                 <td className="p-2 max-w-[260px]"><Link href={`/admin/tracing/${t.id}`} className="font-medium text-blue-700 hover:underline line-clamp-2">{t.query}</Link><div className="text-[11px] text-slate-500">{t.username || t.user_id.slice(0,8)} · {t.prompt_version}</div></td>
                 <td className="p-2 max-w-[260px] line-clamp-2">{t.answer?.slice(0,120) || "—"}</td>
@@ -56,18 +54,9 @@ export default function TracingListPage(){
                 <td className="p-2 text-[11px] text-slate-500">{fmtDT(t.created_at)}</td>
               </tr>
             ))}
-            {!traces.length && <tr><td colSpan={6} className="p-6 text-center text-slate-500">Không có trace (30 ngày)</td></tr>}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex items-center justify-between text-xs">
-        <div>Trang {page}/{totalPages} · {total} traces (30 ngày)</div>
-        <div className="flex gap-1">
-          <button disabled={page<=1} onClick={()=>go(page-1)} className="rounded-full border px-3 py-1 disabled:opacity-50">Trước</button>
-          {Array.from({length: Math.min(totalPages,5)}, (_,i)=>i+1).map(p=> <button key={p} onClick={()=>go(p)} className={`rounded-full px-3 py-1 ${p===page?"bg-slate-900 text-white":"border"}`}>{p}</button>)}
-          <button disabled={page>=totalPages} onClick={()=>go(page+1)} className="rounded-full border px-3 py-1 disabled:opacity-50">Sau</button>
-        </div>
-      </div>
+            {!traces.length && <AdminEmpty colSpan={6} text="Không có trace (30 ngày)" />}
+      </AdminTable>
+      <AdminPagination page={page} totalPages={totalPages} total={total} label="traces (30 ngày)" go={go} />
     </div>
   );
 }

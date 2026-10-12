@@ -5,17 +5,11 @@ from collections import defaultdict
 try:
     from chat.retriever import retrieve_context
     from shared.models.llm_io import ContextItem
+    from shared.config import DEFAULT_CHUNK_STRATEGY
 except ImportError:
     from src.chat.retriever import retrieve_context
     from src.shared.models.llm_io import ContextItem
-
-try:
-    from shared.observability.tracing import log_evaluation_summary
-except ImportError:
-    try:
-        from src.shared.observability.tracing import log_evaluation_summary
-    except ImportError:
-        def log_evaluation_summary(*a, **kw): return False  # type: ignore
+    from src.shared.config import DEFAULT_CHUNK_STRATEGY
 
 
 # =========================
@@ -28,7 +22,7 @@ class BaseRetriever:
 
 
 class HybridRetriever(BaseRetriever):
-    def __init__(self, strategy: str = "structure", top_k: int = 10):
+    def __init__(self, strategy: str = DEFAULT_CHUNK_STRATEGY, top_k: int = 10):
         self.strategy = strategy
         self.top_k = top_k
 
@@ -191,30 +185,8 @@ class RetrievalEvaluator:
         }
 
 
-# =========================
-# 🔹 Main
-# =========================
-
-if __name__ == "__main__":
-    import os
-    default_ds = os.path.join(os.path.dirname(__file__), "..", "..", "data",
-                              "evaluation", "retrieval_evaluation.json")
-    dataset = load_dataset(default_ds)
-
-    retrievers = {
-        "hybrid": HybridRetriever(),
-    }
-
-    evaluator = RetrievalEvaluator(retrievers)
-    results = evaluator.evaluate(dataset, k=5)
-
-    print("\n=== Retrieval Evaluation Results ===")
-    for method, metrics in results.items():
-        print(f"\n[{method}]")
-        for m, v in metrics.items():
-            print(f"{m}: {v:.4f}")
-
-    # Push the aggregate snapshot to LangSmith so trends show up in dashboards
-    logged = log_evaluation_summary("retrieval_evaluation", results, k=5)
-    print(f"\nLangSmith logging: {'OK' if logged else 'skipped (tracing unavailable)'}")
+# Class-name aliases (kept importable; canonical defs above).
+BaseRetrieverAlias = BaseRetriever
+HybridRetrieverAlias = HybridRetriever
+RetrievalEvaluatorAlias = RetrievalEvaluator
             

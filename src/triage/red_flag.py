@@ -25,10 +25,16 @@ except ImportError:  # pragma: no cover
     _BASE_DIR = Path(__file__).resolve().parents[2]  # type: ignore
 
 
-def _unaccent(s: str) -> str:
-    return "".join(
-        c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
-    )
+try:
+    from src.shared.text import unaccent as _unaccent
+except ImportError:  # pragma: no cover
+    try:
+        from shared.text import unaccent as _unaccent  # type: ignore
+    except ImportError:
+        def _unaccent(s: str) -> str:  # fallback NFD-strip
+            return "".join(
+                c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
+            )
 
 
 # 3 diabetes red-flag groups: (keywords matched against lowered raw text

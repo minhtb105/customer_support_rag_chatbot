@@ -64,11 +64,12 @@ def _admin_hdr(admin_client):
     return {"Authorization": f"Bearer {admin_client['token']}"}
 
 
-def test_collections_returns_4_strategies(client: TestClient, admin_client, fake_collection):
+def test_collections_returns_registry_strategies(client: TestClient, admin_client, fake_collection):
     resp = client.get("/v1/admin/collections", headers=_admin_hdr(admin_client))
     assert resp.status_code == 200, resp.text
     data = resp.json()
-    assert [c["strategy"] for c in data["collections"]] == ["structure", "sliding", "semantic", "hybrid_section_semantic"]
+    from src.shared.chunk_strategies import VARIANTS
+    assert [c["strategy"] for c in data["collections"]] == list(VARIANTS)
     for c in data["collections"]:
         assert c["exists"] is True
         assert c["count"] == 25

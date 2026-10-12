@@ -53,12 +53,17 @@ def _db_path(explicit=None) -> Path:
     return Path(LAB_DB_PATH)
 
 
+def ensure_tables(db, tables) -> Path:
+    """Shared DDL runner: [(ddl, index|None), ...] -> db. Used by labs + learn."""
+    for ddl, idx in tables:
+        init_table(db, ddl, idx)
+    return db
+
+
 def _ensure_db(target=None) -> Path:
     """Tao 2 tables dung tren DB dich (precedent seed_synthetic fix)."""
     db = _db_path(target)
-    init_table(db, REPORT_DDL, REPORT_INDEX)
-    init_table(db, OBS_DDL, OBS_INDEX)
-    return db
+    return ensure_tables(db, [(REPORT_DDL, REPORT_INDEX), (OBS_DDL, OBS_INDEX)])
 
 
 def create_report(report_id: str, user_id: str, sampled_at: str,

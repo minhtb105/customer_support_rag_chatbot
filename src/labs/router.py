@@ -52,10 +52,16 @@ LAB_PANIC_MESSAGE = (
 GUIDELINE_FALLBACK = "BYT QD5481 (2020) + ADA 2024"
 
 
-def _unaccent(s: str) -> str:
-    return "".join(
-        c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
-    )
+try:
+    from src.shared.text import unaccent as _unaccent
+except ImportError:  # pragma: no cover
+    try:
+        from shared.text import unaccent as _unaccent  # type: ignore
+    except ImportError:
+        def _unaccent(s: str) -> str:  # fallback NFD-strip
+            return "".join(
+                c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
+            )
 
 
 # Analyte keywords (co/khong dau) -> LOINC. Than/gan la hop le o day

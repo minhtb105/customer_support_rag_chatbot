@@ -8,19 +8,15 @@ Chạy:  python scripts/nutrition/parse_vn_fct.py
 """
 from __future__ import annotations
 
-import csv
-import json
-import logging
 import re
 import sys
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-log = logging.getLogger(__name__)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-HERE = Path(__file__).resolve().parent
-INTERIM = HERE.parents[1] / "data" / "raw" / "nutrition" / "_interim"
-OUT_CSV = INTERIM / "vn_fct_macros.csv"
+from _parse_io import INTERIM, load_json, log, save_csv
+
+OUT_CSV = "vn_fct_macros.csv"
 
 WANT = {
     "energy_kcal": r"Năng lượng\s*\(\s*Energy\s*\)\s*KCal\s*([0-9.\-]+)",
@@ -76,21 +72,18 @@ def parse_page(text: str) -> dict | None:
 
 
 def main() -> None:
-    pages = json.loads((INTERIM / "vn_fct_pages.json").read_text(encoding="utf-8"))
+    pages = load_json("vn_fct_pages.json")
     rows = []
     for idx in sorted(pages, key=int):
         r = parse_page(pages[idx])
         if r:
             r["page"] = idx
             rows.append(r)
-    with open(OUT_CSV, "w", newline="", encoding="utf-8-sig") as f:
-        w = csv.DictWriter(f, fieldnames=["page", "ma_so", "ten_vi", "ten_en",
-                                          "thai_bo_pct", "energy_kcal", "protein_g",
-                                          "lipid_g", "glucid_g", "fiber_g", "sugars_g"])
-        w.writeheader()
-        w.writerows(rows)
+    save_csv(OUT_CSV, rows, ["page", "ma_so", "ten_vi", "ten_en",
+                             "thai_bo_pct", "energy_kcal", "protein_g",
+                             "lipid_g", "glucid_g", "fiber_g", "sugars_g"])
     n_sugar = sum(1 for r in rows if r["sugars_g"] is not None)
-    log.info("Parsed %d món -> %s (có sugars: %d)", len(rows), OUT_CSV, n_sugar)
+    log.info("Parsed %d món -> %s (có sugars: %d)", len(rows), INTERIM / OUT_CSV, n_sugar)
 
 
 if __name__ == "__main__":

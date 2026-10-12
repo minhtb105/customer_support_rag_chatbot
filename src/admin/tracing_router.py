@@ -22,7 +22,14 @@ except ImportError:
 router = APIRouter(prefix="/v1/admin", tags=["admin-tracing"])
 
 # --- Admin chunk viewer (collections) ---
-CHUNK_STRATEGIES = ["structure", "sliding", "semantic", "hybrid_section_semantic"]
+try:
+    from shared.chunk_strategies import VARIANTS as _CHUNK_VARIANTS
+except ImportError:
+    try:
+        from src.shared.chunk_strategies import VARIANTS as _CHUNK_VARIANTS  # type: ignore
+    except ImportError:
+        _CHUNK_VARIANTS = {}
+CHUNK_STRATEGIES = list(_CHUNK_VARIANTS) or ["structure", "sliding", "semantic", "hybrid_section_semantic"]
 CHUNK_SNIPPET_LEN = 500
 CHUNK_FULL_MAX = 4000
 _COLLECTIONS_CACHE: dict = {}  # (provider, strategy) -> (timestamp, {"count": int, "datasets": list})

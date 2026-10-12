@@ -93,6 +93,9 @@ VERIFY_PAIRS = [
 ]
 
 
+_TABLE = str.maketrans(SEED)
+
+
 def is_vni_font(fontname: str) -> bool:
     """Font VNI (VnArial/VnTime...) chứa mojibake; Arial/Symbol giữ nguyên."""
     return "vn" in (fontname or "").lower()
@@ -124,8 +127,9 @@ def decode_words(text: str) -> str:
 WORD_FIXES = _WORD_FIXES  # alias tương thích
 
 
-def decode(text: str, table: dict) -> str:
-    return "".join(table.get(ch, ch) for ch in text)
+def decode(text: str, table: dict = SEED) -> str:
+    # ponytail: str.translate, 1 pass C; custom table -> maketrans tại chỗ
+    return text.translate(_TABLE if table is SEED else str.maketrans(table))
 
 
 def main() -> None:

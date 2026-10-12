@@ -28,10 +28,6 @@ GLUCOSE_DB_PATH = Path(os.getenv("GLUCOSE_DB_PATH", str(_DEFAULT_GLUCOSE_DB_PATH
 
 # ---------- DB ----------
 
-def _get_conn():
-    return _base_get_conn(GLUCOSE_DB_PATH)
-
-
 def init_glucose_db():
     init_table(
         GLUCOSE_DB_PATH,
@@ -106,7 +102,7 @@ def add_log(user_id: str, value_mgdl: float, measured_at: Optional[datetime] = N
     init_glucose_db()
     measured_at = measured_at or datetime.now(timezone.utc)
     classification, message = classify_glucose(value_mgdl, context)
-    conn = _get_conn()
+    conn = _base_get_conn(GLUCOSE_DB_PATH)
     cur = conn.execute(
         "INSERT INTO glucose_logs (user_id, value_mgdl, measured_at, context, notes, classification, created_at) VALUES (?,?,?,?,?,?,?)",
         (user_id, value_mgdl, measured_at.isoformat(), context, notes, classification, datetime.now(timezone.utc).isoformat()),

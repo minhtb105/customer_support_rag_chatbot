@@ -63,10 +63,16 @@ BHYT_COST_WARNING = "không đảm bảo BHYT — có thể phát sinh chi phí"
 ECHO_ORDER = ("bhyt", "branch", "doctor", "nearby", "weekday", "window")
 
 
-def _unaccent(s: str) -> str:
-    return "".join(
-        c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
-    )
+try:
+    from src.shared.text import unaccent as _unaccent
+except ImportError:  # pragma: no cover
+    try:
+        from shared.text import unaccent as _unaccent  # type: ignore
+    except ImportError:
+        def _unaccent(s: str) -> str:  # fallback NFD-strip
+            return "".join(
+                c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
+            )
 
 
 # ---------- Doctor attributes (hashlib only, calibrated) ----------
@@ -147,6 +153,34 @@ def _echo(constraints: List[str]) -> str:
     return "constraints=[" + ",".join(constraints) + "]"
 
 
+def _attrs_ok(attrs: Dict[str, Any], want_bhyt: bool, want_tier) -> bool:
+    if want_bhyt and not attrs.get("accepts_bhyt"):
+        return False
+    if want_tier and attrs.get("tier") != want_tier:
+        return False
+    return True
+
+
+def _filtered_pool(doctors, want_bhyt: bool, want_tier, window, excluded, per_doctor: int):
+    """Shared doctor→slots pool honoring bhyt/tier/window/excluded (never specialty)."""
+    out = []
+    for d in doctors or []:
+        attrs = doctor_attributes(str(d.get("doctor_id") or ""))
+        if not _attrs_ok(attrs, want_bhyt, want_tier):
+            continue
+        slots = _sg.free_slots(d, excluded or set())
+        if window:
+            slots = [s for s in slots if not _in_window(s, window)]
+        slots = slots[:per_doctor]
+        if not slots:
+            continue
+        entry = {"doctor_id": d.get("doctor_id"), "name": d.get("name"),
+                 "specialty": d.get("specialty"), "slots": slots}
+        entry.update(attrs)
+        out.append(entry)
+    return out
+
+
 def _slot_minutes(t: str) -> int:
     try:
         h, m = str(t or "").split(":")
@@ -217,9 +251,7 @@ class GreedySolver:
         out: List[Dict[str, Any]] = []
         for d in recs:
             attrs = doctor_attributes(str(d.get("doctor_id") or ""))
-            if want_bhyt and not attrs["accepts_bhyt"]:
-                continue
-            if want_tier and attrs["tier"] != want_tier:
+            if not _attrs_ok(attrs, want_bhyt, want_tier):
                 continue
             dist = _dist(str(d.get("doctor_id") or ""))
             if nearby and dist >= 5:
@@ -290,21 +322,11 @@ class DFSSolver:
                 if all(str(x.get("doctor_id")) != str(d.get("doctor_id")) for x in ordered):
                     ordered.append(d)
             out: List[Dict[str, Any]] = []
-            for d in ordered:
-                attrs = doctor_attributes(str(d.get("doctor_id") or ""))
-                if use_branch and want_tier and attrs["tier"] != want_tier:
-                    continue
-                if use_bhyt and want_bhyt and not attrs["accepts_bhyt"]:
-                    continue
-                slots = _sg.free_slots(d, excluded if use_time else set())
-                if use_time and window:
-                    slots = [s for s in slots if not _in_window(s, window)]
-                slots = slots[:per_doctor]
-                if not slots:
-                    continue
-                entry = {"doctor_id": d.get("doctor_id"), "name": d.get("name"),
-                         "specialty": d.get("specialty"), "slots": slots}
-                entry.update(attrs)
+            pool = _filtered_pool(ordered, want_bhyt if use_bhyt else False,
+                                  want_tier if use_branch else None,
+                                  window if use_time else None,
+                                  excluded if use_time else set(), per_doctor)
+            for entry in pool:
                 out.append(entry)
                 if len(out) >= max_doctors:
                     break

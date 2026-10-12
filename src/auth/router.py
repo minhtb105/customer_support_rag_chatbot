@@ -59,6 +59,20 @@ def _clear_auth_cookies(response: Response):
     response.delete_cookie(key="access_token", path="/")
     response.delete_cookie(key="refresh_token", path="/")
 
+def _issue_tokens(user: dict, response: Response) -> dict:
+    update_user(user["id"], last_login=datetime.now(timezone.utc).isoformat())
+    access_token = create_access_token({"sub": user["id"], "role": user["role"], "username": user["username"]})
+    refresh_token = create_refresh_token({"sub": user["id"]})
+    expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+    store_refresh_token(refresh_token, user["id"], expires_at)
+    _set_auth_cookies(response, access_token, refresh_token)
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": _to_user_out(get_user_by_id(user["id"])),
+    }
+
 @router.post("/register", response_model=UserOut, status_code=201)
 def register(payload: RegisterRequest, request: Request, current_user: Optional[dict] = Depends(lambda: None)):
     # Try to get current user optionally for role elevation
@@ -132,21 +146,7 @@ def login(response: Response, form: OAuth2PasswordRequestForm = Depends()):
         raise HTTPException(status_code=403, detail="Account deactivated")
     if user.get("role") in EXPERT_ROLES and not user.get("is_verified"):
         raise HTTPException(status_code=403, detail="Expert account pending admin verification")
-    # update last_login
-    update_user(user["id"], last_login=datetime.now(timezone.utc).isoformat())
-    # create tokens
-    access_token = create_access_token({"sub": user["id"], "role": user["role"], "username": user["username"]})
-    refresh_token = create_refresh_token({"sub": user["id"]})
-    # store refresh token
-    expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    store_refresh_token(refresh_token, user["id"], expires_at)
-    _set_auth_cookies(response, access_token, refresh_token)
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "user": _to_user_out(get_user_by_id(user["id"])),
-    }
+    return _issue_tokens(user, response)
 
 @router.post("/login-json")
 def login_json(payload: LoginRequest, response: Response):
@@ -157,18 +157,7 @@ def login_json(payload: LoginRequest, response: Response):
         raise HTTPException(status_code=403, detail="Account deactivated")
     if user.get("role") in EXPERT_ROLES and not user.get("is_verified"):
         raise HTTPException(status_code=403, detail="Expert account pending admin verification")
-    update_user(user["id"], last_login=datetime.now(timezone.utc).isoformat())
-    access_token = create_access_token({"sub": user["id"], "role": user["role"], "username": user["username"]})
-    refresh_token = create_refresh_token({"sub": user["id"]})
-    expires_at = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
-    store_refresh_token(refresh_token, user["id"], expires_at)
-    _set_auth_cookies(response, access_token, refresh_token)
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-        "user": _to_user_out(get_user_by_id(user["id"])),
-    }
+    return _issue_tokens(user, response)
 
 @router.post("/refresh")
 def refresh_token_endpoint(request: Request, response: Response, payload: Optional[RefreshRequest] = None):

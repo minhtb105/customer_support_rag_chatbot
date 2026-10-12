@@ -55,9 +55,3 @@ class EmbeddingAdapter:
         safe_texts = [self._truncate(t) for t in texts]
 
         return np.array(self.embedder.embed_documents(safe_texts))
-
-    def embed_text(self, text: str) -> np.ndarray:
-        """
-        Embed single text (thin wrapper)
-        """
-        return self.embed_texts([text])[0]

@@ -37,6 +37,9 @@ SENTENCE_GROUP = 4
 # Existing sliding/semantic/hybrid collections on disk keep serving reads.
 # Re-enable full rebuild with: INDEX_STRATEGIES=structure,sliding,semantic,hybrid_section_semantic
 INDEX_STRATEGIES = [s.strip() for s in os.getenv("INDEX_STRATEGIES", "structure").split(",") if s.strip()]
+# Single-source serving default (env override; stays "structure" until a
+# benchmark winner is locked, then set to the winner name).
+DEFAULT_CHUNK_STRATEGY = os.getenv("DEFAULT_CHUNK_STRATEGY", "structure")
 
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # generator model
 if _env_first("LLM_PROVIDER", "PROVIDER", default="openai").lower() == "nvidia":
@@ -278,6 +281,3 @@ PROMPT_ACTIVE_CACHE_TTL_SECONDS = int(os.getenv("PROMPT_ACTIVE_CACHE_TTL_SECONDS
 # RAGAS on-demand per trace (admin bật mới tính)
 RAGAS_ON_DEMAND = os.getenv("RAGAS_ON_DEMAND", "true").lower() in ("true","1","yes")
 EVALUATOR_MODEL = os.getenv("EVALUATOR_MODEL", DEFAULT_MODEL)
-
-PROMPT_HUB_REPO_PREFIX = os.getenv("PROMPT_HUB_REPO_PREFIX", "medical-support")
-PROMPT_HUB_CACHE_TTL_SECONDS = PROMPT_ACTIVE_CACHE_TTL_SECONDS

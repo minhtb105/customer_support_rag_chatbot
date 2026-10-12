@@ -2,9 +2,9 @@ import time
 from typing import Dict, Any, List
 
 try:
-    from shared.config import TOP_K, DEFAULT_MODEL, CAG_MAX_SIZE, CAG_TTL_SECONDS, CAG_SEMANTIC_MODEL, CAG_SEMANTIC_THRESHOLD, EMBEDDING_MODEL
+    from shared.config import TOP_K, DEFAULT_MODEL, CAG_MAX_SIZE, CAG_TTL_SECONDS, CAG_SEMANTIC_MODEL, CAG_SEMANTIC_THRESHOLD, EMBEDDING_MODEL, DEFAULT_CHUNK_STRATEGY
 except ImportError:
-    from src.shared.config import TOP_K, DEFAULT_MODEL, CAG_MAX_SIZE, CAG_TTL_SECONDS, CAG_SEMANTIC_MODEL, CAG_SEMANTIC_THRESHOLD, EMBEDDING_MODEL
+    from src.shared.config import TOP_K, DEFAULT_MODEL, CAG_MAX_SIZE, CAG_TTL_SECONDS, CAG_SEMANTIC_MODEL, CAG_SEMANTIC_THRESHOLD, EMBEDDING_MODEL, DEFAULT_CHUNK_STRATEGY
 
 try:
     from chat.retriever import retrieve_context
@@ -108,7 +108,7 @@ def rag_chat(question: str, top_k: int = TOP_K, user_id: str = "default_user", u
     except Exception:
         tone = "balanced"
     # start trace
-    trace_id = start_trace(user_id=user_id, username=username, query=question, tone=tone, model=model, embedding_model=EMBEDDING_MODEL, chunking_strategy="structure", top_k=top_k)
+    trace_id = start_trace(user_id=user_id, username=username, query=question, tone=tone, model=model, embedding_model=EMBEDDING_MODEL, chunking_strategy=DEFAULT_CHUNK_STRATEGY, top_k=top_k)
     # also need prompt version
     try:
         prompt_version = get_prompt_version(tone)
@@ -294,7 +294,7 @@ def rag_chat_stream(question: str, top_k: int = TOP_K, user_id: str = "default_u
         tone, _, _ = detect_tone_and_temp(question)
     except Exception:
         tone = "balanced"
-    trace_id = start_trace(user_id=user_id, username=username, query=question, tone=tone, model=model, embedding_model=EMBEDDING_MODEL, chunking_strategy="structure", top_k=top_k)
+    trace_id = start_trace(user_id=user_id, username=username, query=question, tone=tone, model=model, embedding_model=EMBEDDING_MODEL, chunking_strategy=DEFAULT_CHUNK_STRATEGY, top_k=top_k)
     try:
         prompt_version = get_prompt_version(tone)
     except Exception:

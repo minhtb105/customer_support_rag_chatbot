@@ -106,6 +106,27 @@ def _find_latest_approved(source: str) -> Optional[Dict[str, Any]]:
             return r
     return None
 
+def stage_version(source, title, url, version_label, publication_date, sha256, etag,
+                  staging_path, summary, diff_text, latest, source_key,
+                  last_hash=None, last_modified=None):
+    """Shared create_guideline_version + notify + update_source_check."""
+    gv = create_guideline_version(
+        source=source, title=title, url=url, version_label=version_label,
+        publication_date=publication_date, sha256=sha256, etag=etag,
+        staging_path=staging_path,
+        change_summary_json=json.dumps(summary, ensure_ascii=False),
+        diff_text=(diff_text or "")[:3000],
+        supersedes_id=latest["id"] if latest else None,
+    )
+    update_source_check(source_key, etag=etag, last_modified=last_modified or publication_date,
+                        last_hash=last_hash or sha256)
+    try:
+        from src.monitors.service import notify_guideline_pending
+        notify_guideline_pending(gv, summary)
+    except Exception:
+        pass
+    return gv
+
 def check_guideline_update(source_key: str, force_download: bool = False) -> Dict[str, Any]:
     """Check single guideline source for update via HEAD/etag, return status dict."""
     cfg = GUIDELINE_SOURCE_CONFIGS.get(source_key)
@@ -234,26 +255,9 @@ def _check_byt_scrape(source_key: str, cfg: Dict[str, Any], force_download: bool
                 pass
         staging_path = pdf_staging or str(html_path)
         # create DB entry
-        gv = create_guideline_version(
-            source=cfg["source"],
-            title=title,
-            url=pdf_link or url,
-            version_label=pub_date or f"BYT-{content_hash}",
-            publication_date=pub_date,
-            sha256=sha,
-            etag=content_hash,
-            staging_path=staging_path,
-            change_summary_json=json.dumps(summary, ensure_ascii=False),
-            diff_text=new_text[:2000],
-            supersedes_id=latest["id"] if latest else None,
-        )
-        update_source_check(source_key, last_hash=content_hash, last_modified=pub_date)
-        # create notification via shared helper
-        try:
-            from src.monitors.service import notify_guideline_pending
-            notify_guideline_pending(gv, summary)
-        except Exception:
-            pass
+        gv = stage_version(cfg["source"], title, pdf_link or url, pub_date or f"BYT-{content_hash}",
+                           pub_date, sha, content_hash, staging_path, summary, new_text,
+                           latest, source_key, last_hash=content_hash, last_modified=pub_date)
         return {"source_key": source_key, "found_new": True, "guideline_version_id": gv["id"], "title": title, "sha256": sha}
     except Exception as e:
         return {"source_key": source_key, "found_new": False, "error": str(e)[:500]}
@@ -361,25 +365,9 @@ def _download_and_stage(source_key: str, cfg: Dict[str, Any], etag: Optional[str
         version_hint=version_label,
         publication_date_hint=last_modified,
     )
-    gv = create_guideline_version(
-        source=cfg["source"],
-        title=cfg["title"],
-        url=direct_pdf,
-        version_label=version_label,
-        publication_date=last_modified,
-        sha256=sha,
-        etag=etag,
-        staging_path=str(dest),
-        change_summary_json=json.dumps(summary, ensure_ascii=False),
-        diff_text=new_text[:3000],
-        supersedes_id=latest["id"] if latest else None,
-    )
-    update_source_check(source_key, etag=etag, last_modified=last_modified, last_hash=sha)
-    try:
-        from src.monitors.service import notify_guideline_pending
-        notify_guideline_pending(gv, summary)
-    except Exception as e:
-        print(f"[guideline notify] {e}")
+    gv = stage_version(cfg["source"], cfg["title"], direct_pdf, version_label,
+                       last_modified, sha, etag, str(dest), summary, new_text,
+                       latest, source_key, last_hash=sha, last_modified=last_modified)
     return {"source_key": source_key, "found_new": True, "guideline_version_id": gv["id"], "sha256": sha, "staging_path": str(dest)}
 
 def check_all_guidelines(force: bool = False) -> List[Dict[str, Any]]:

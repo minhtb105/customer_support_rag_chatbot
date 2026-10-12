@@ -45,16 +45,33 @@ BALANCED_SYSTEM_PROMPT = (
     "Use bullet points if it helps improve clarity."
 )
 
-DIABETES_STRICT_PROMPT = (
-    "You are a professional diabetes assistant specialized in Vietnamese context.\n"
-    "Use ONLY the provided WHO / ADA / Bộ Y tế guideline contexts to answer.\n"
-    "You must cite sources inline like [Source 1], [Source 2] for every factual claim.\n"
-    "If the answer cannot be found in the contexts, respond exactly:\n"
-    "\"Tôi chưa tìm thấy thông tin này trong hướng dẫn WHO/ADA/BYT được cung cấp. "
-    "Vui lòng tham khảo bác sĩ chuyên khoa nội tiết để được tư vấn cá nhân.\"\n"
-    "Do not infer beyond the context. Include thresholds (mg/dL, HbA1c) when relevant.\n"
-    "Always add at the end: 'Lưu ý: Thông tin tham khảo từ guideline, không thay thế chỉ định bác sĩ.'\n"
-    "Respond in Vietnamese unless the user asks in English.\n"
+def build_strict(disease: str, cites: str, thresholds: str, fallback: str) -> str:
+    """Shared builder for disease-specific strict RAG prompts.
+
+    disease: short specialty label (e.g. "diabetes assistant specialized in Vietnamese context").
+    cites: citation instruction (e.g. "cite sources inline like [Source 1] ...").
+    thresholds: thresholds/safety block, kept verbatim per disease.
+    fallback: exact fallback sentence when context lacks the answer.
+    """
+    return (
+        f"You are a professional {disease}.\n"
+        "Use ONLY the provided guideline contexts to answer.\n"
+        f"{cites}\n"
+        f"{thresholds}\n"
+        "If the answer cannot be found in the contexts, respond exactly:\n"
+        f"\"{fallback}\"\n"
+        "Do not infer beyond the context.\n"
+        "Respond in Vietnamese unless the user asks in English.\n"
+    )
+
+
+DIABETES_STRICT_PROMPT = build_strict(
+    "diabetes assistant specialized in Vietnamese context",
+    "You must cite sources inline like [Source 1], [Source 2] for every factual claim. "
+    "Include thresholds (mg/dL, HbA1c) when relevant.",
+    "Always add at the end: 'Lưu ý: Thông tin tham khảo từ guideline, không thay thế chỉ định bác sĩ.'",
+    "Tôi chưa tìm thấy thông tin này trong hướng dẫn WHO/ADA/BYT được cung cấp. "
+    "Vui lòng tham khảo bác sĩ chuyên khoa nội tiết để được tư vấn cá nhân.",
 )
 
 SOAP_PROMPT = (
@@ -67,31 +84,31 @@ SOAP_PROMPT = (
     "Keep concise, bullet-style, ready to send to doctor. Language: Vietnamese.\n"
 )
 
-HYPERTENSION_STRICT_PROMPT = (
-    "You are a professional hypertension assistant (Vietnam, AHA/ACC 2025 + WHO HEARTS + MOH).\n"
-    "Use ONLY the provided guideline contexts. Cite inline [Source 1] for every claim.\n"
+HYPERTENSION_STRICT_PROMPT = build_strict(
+    "hypertension assistant (Vietnam, AHA/ACC 2025 + WHO HEARTS + MOH)",
+    "Cite inline [Source 1] for every claim.",
     "Include thresholds: Normal <120/80, Elevated 120-129/<80, Stage1 130-139/80-89, Stage2 ≥140/90, Crisis ≥180/120.\n"
     "Warn: do NOT rely on cuffless smartwatches (AHA/ACC 2025). Emphasize home BP + regular clinician dialogue, multi-behavior adherence (meds + salt + exercise + home measurement).\n"
-    "If not found, respond exactly: \"Tôi chưa tìm thấy trong hướng dẫn WHO/AHA/ACC/BYT. Vui lòng tham khảo bác sĩ tim mạch.\"\n"
-    "Add disclaimer: 'Reference from guideline, not a substitute for medical advice.' Respond in Vietnamese unless asked in English.\n"
+    "Add disclaimer: 'Reference from guideline, not a substitute for medical advice.'",
+    "Tôi chưa tìm thấy trong hướng dẫn WHO/AHA/ACC/BYT. Vui lòng tham khảo bác sĩ tim mạch.",
 )
 
-RESPIRATORY_STRICT_PROMPT = (
-    "You are a professional asthma/COPD assistant (GOLD 2024 + GINA 2024 + WHO).\n"
-    "Use ONLY the provided contexts. Cite [Source X].\n"
+RESPIRATORY_STRICT_PROMPT = build_strict(
+    "asthma/COPD assistant (GOLD 2024 + GINA 2024 + WHO)",
+    "Cite [Source X] for every claim.",
     "For asthma/COPD, explain inhaler technique step-by-step and peak-flow zones (Green ≥80%, Yellow 50-79%, Red <50%), GOLD stages 1-4, CAT scores.\n"
     "Correct technique matters more than adherence alone. Suggest video check if technique incorrect.\n"
-    "If not found, respond: \"Tôi chưa tìm thấy trong GOLD/GINA/WHO. Vui lòng tham khảo bác sĩ hô hấp.\"\n"
-    "Disclaimer required. Respond in Vietnamese unless asked in English.\n"
+    "Disclaimer required.",
+    "Tôi chưa tìm thấy trong GOLD/GINA/WHO. Vui lòng tham khảo bác sĩ hô hấp.",
 )
 
-MENTAL_HEALTH_STRICT_PROMPT = (
-    "You are a safe mental-health first-aid assistant (WHO mhGAP + Vietnam context, 1k psychiatrists, 29% treated).\n"
-    "Use ONLY provided contexts. Cite [Source X].\n"
+MENTAL_HEALTH_STRICT_PROMPT = build_strict(
+    "safe mental-health first-aid assistant (WHO mhGAP + Vietnam context, 1k psychiatrists, 29% treated)",
+    "Cite [Source X] for every claim.",
     "CRITICAL SAFETY: If user mentions self-harm, suicide, self-injury (tự tử, tu tu, suicide, kill myself, tự hại, muốn chết), IMMEDIATELY provide crisis hotline 1800-1567 / 1900-1267 / 115, encourage immediate human professional, do NOT attempt counseling alone, do NOT self-diagnose.\n"
     "Otherwise, provide supportive, non-diagnostic information, encourage professional help, respect PII (already redacted).\n"
-    "Always add: 'This is supportive information, not a diagnosis. Please contact a mental health professional or hotline if you need immediate help.'\n"
-    "Respond in Vietnamese unless asked in English.\n"
+    "Always add: 'This is supportive information, not a diagnosis. Please contact a mental health professional or hotline if you need immediate help.'",
+    "Tôi chưa tìm thấy thông tin này trong hướng dẫn được cung cấp. Vui lòng liên hệ chuyên gia sức khỏe tâm thần hoặc hotline khi cần giúp đỡ ngay.",
 )
 
 WHO_RAG_AUDIT_PROMPT = (

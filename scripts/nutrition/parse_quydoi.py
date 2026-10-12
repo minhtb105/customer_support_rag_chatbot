@@ -8,16 +8,14 @@ Chạy:  python scripts/nutrition/parse_quydoi.py
 """
 from __future__ import annotations
 
-import csv
-import json
-import logging
 import re
+import sys
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-log = logging.getLogger(__name__)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-OUT = Path(__file__).resolve().parents[2] / "data" / "raw" / "nutrition" / "_interim"
+from _parse_io import load_json, log, save_csv
+
 UNIT_RE = re.compile(r"bát|quả|miếng|muỗng|thìa|cốc|gói|củ|mớ|lon|chai|viên|múi|khoanh|chén|đĩa|bẹ|nhánh|tai|con|khúc|lát|thanh|cây|hộp|túi|bịch|gắp|nắm|bó|quầy|trái", re.I)
 MA_RE = re.compile(r"Mã\s*(\d{4,5})", re.I)
 NUM_RE = re.compile(r"\d+(?:[.,]\d+)?")
@@ -28,7 +26,7 @@ def clean(s) -> str:
 
 
 def main() -> None:
-    tabs = json.loads((OUT / "quydoi_tables.json").read_text(encoding="utf-8"))
+    tabs = load_json("quydoi_tables.json")
     rows = []
     for key in sorted(tabs):
         grid = tabs[key]
@@ -53,10 +51,7 @@ def main() -> None:
                         rows.append({"ma_tp": cur_ma, "ten": cur_ten,
                                      "don_vi": cells[0][:60], "gram_chin": g,
                                      "table": key})
-    with open(OUT / "quydoi_servings.csv", "w", newline="", encoding="utf-8-sig") as f:
-        w = csv.DictWriter(f, fieldnames=["ma_tp", "ten", "don_vi", "gram_chin", "table"])
-        w.writeheader()
-        w.writerows(rows)
+    save_csv("quydoi_servings.csv", rows, ["ma_tp", "ten", "don_vi", "gram_chin", "table"])
     log.info("parsed %d serving rows", len(rows))
 
 

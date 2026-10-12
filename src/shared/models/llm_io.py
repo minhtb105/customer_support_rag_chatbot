@@ -36,3 +36,16 @@ class LLMOutput(BaseModel):
                         description="Generated assistant's answer to the query.")
     cited_sources: List[int] = Field(default_factory=list)
     contexts: List[ContextItem]
+
+
+class ChunkMetadata(BaseModel):
+    section_path: Optional[List[str]] = None
+    page_numbers: Optional[List[int]] = None
+    chunk_index: int
+
+
+class Chunk(BaseModel):
+    source_id: str
+    chunk_id: str
+    text: str
+    metadata: ChunkMetadata

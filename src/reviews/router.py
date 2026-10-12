@@ -87,15 +87,12 @@ def post_decision(
     expert_notes: Optional[str] = None,
     current_user=Depends(require_expert),
 ):
-    # also allow JSON body alternative? For now query params + JSON fallback
-    # Try to parse JSON body if provided
-    # FastAPI will handle JSON if we define model, but keep simple: decision via body
-    # We'll also accept JSON via request body by checking if decision in body
-    try:
-        result = decide_review(review_id, decision=decision, expert_id=current_user["id"], final_answer=final_answer, expert_notes=expert_notes)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    return result
+    # Thin wrapper over the JSON canonical path (keeps query compat).
+    return post_decision_json(
+        review_id,
+        DecisionBody(decision=decision, final_answer=final_answer, expert_notes=expert_notes),
+        current_user,
+    )
 
 # Alternative JSON body endpoint for frontend convenience
 from pydantic import BaseModel

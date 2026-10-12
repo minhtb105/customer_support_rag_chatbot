@@ -11,6 +11,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import scripts.seed_lab_data as seed  # noqa: E402
+from tests._helpers import assert_idempotent
 
 
 @pytest.fixture
@@ -40,8 +41,7 @@ class TestLabSeed:
         kw = dict(seed=42, reset=True, patient_ids=PIDS)
         r1 = seed.seed_all(**kw)
         r2 = seed.seed_all(**kw)
-        assert r1["inserted_reports"] == r2["inserted_reports"]
-        assert r1["inserted_observations"] == r2["inserted_observations"]
+        assert_idempotent(r1, r2, "inserted_reports", "inserted_observations")
         import src.labs.store as ls
         assert ls.count_reports() == r2["inserted_reports"]
         assert ls.count_observations() == r2["inserted_observations"]

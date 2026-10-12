@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { adminListUserFacts, adminListUsers, API_BASE } from "@/lib/api";
+import { AdminTable, AdminEmpty, AdminPagination, AdminFilterBar } from "@/components/AdminTable";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -51,7 +52,7 @@ export default function MemoryFactsPage() {
         <p className="text-xs text-slate-600">Xem long-term facts theo user. 10 facts/trang. Chỉ admin.</p>
         <div className="text-xs text-slate-500">{API_BASE} · Tổng {total} facts · <Link href="/admin/tracing" className="text-blue-700 hover:underline font-medium">← Traces</Link> · <Link href="/admin/tracing/chunks" className="text-blue-700 hover:underline font-medium">Chunks →</Link></div>
       </div>
-      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm flex flex-wrap gap-2 items-end">
+      <AdminFilterBar>
         <div>
           <label className="text-xs">User</label>
           <select value={userId} onChange={(e) => setUserId(e.target.value)} className="ml-2 rounded border px-2 py-1 text-xs max-w-[220px]">
@@ -70,12 +71,9 @@ export default function MemoryFactsPage() {
         <div><label className="text-xs">Tìm kiếm</label><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="từ khóa trong fact" className="ml-2 rounded border px-2 py-1 text-xs" /></div>
         <button onClick={apply} className="rounded-full bg-slate-900 text-white px-4 py-1.5 text-xs">Lọc</button>
         <button onClick={() => { setQ(""); setFactType("all"); setPage(1); }} className="rounded-full border px-4 py-1.5 text-xs">Xóa</button>
-      </div>
+      </AdminFilterBar>
       {msg && <div className="rounded-lg bg-red-50 border border-red-200 p-2 text-xs text-red-700">{msg}</div>}
-      <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 shadow-sm overflow-hidden">
-        <table className="w-full text-xs">
-          <thead className="bg-slate-50 border-b text-left"><tr><th className="p-2">#</th><th>Fact type</th><th>Entities</th><th>Nội dung</th><th>Conf.</th><th>Weight</th><th>Source</th></tr></thead>
-          <tbody>
+      <AdminTable columns={["#", "Fact type", "Entities", "Nội dung", "Conf.", "Weight", "Source"]} emptyText="Không có fact — chọn user rồi bấm Lọc">
             {facts.map((f: any, i: number) => (
               <tr key={f.fact_id} className="border-b hover:bg-slate-50 align-top">
                 <td className="p-2">{(page - 1) * 10 + i + 1}</td>
@@ -88,18 +86,9 @@ export default function MemoryFactsPage() {
                 <td className="p-2 text-[11px] text-slate-500">{f.source || "—"}</td>
               </tr>
             ))}
-            {!facts.length && <tr><td colSpan={7} className="p-6 text-center text-slate-500">Không có fact — chọn user rồi bấm Lọc</td></tr>}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex items-center justify-between text-xs">
-        <div>Trang {page}/{totalPages || 1} · {total} facts</div>
-        <div className="flex gap-1">
-          <button disabled={page <= 1} onClick={() => go(page - 1)} className="rounded-full border px-3 py-1 disabled:opacity-50">Trước</button>
-          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => <button key={p} onClick={() => go(p)} className={`rounded-full px-3 py-1 ${p === page ? "bg-slate-900 text-white" : "border"}`}>{p}</button>)}
-          <button disabled={page >= totalPages} onClick={() => go(page + 1)} className="rounded-full border px-3 py-1 disabled:opacity-50">Sau</button>
-        </div>
-      </div>
+            {!facts.length && <AdminEmpty colSpan={7} text="Không có fact — chọn user rồi bấm Lọc" />}
+      </AdminTable>
+      <AdminPagination page={page} totalPages={totalPages} total={total} label="facts" go={go} />
     </div>
   );
 }

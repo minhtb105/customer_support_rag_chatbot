@@ -216,23 +216,7 @@ CURATED_SEEDS: List[dict] = [
         "tags": ["hypertension", "hearts", "ncd"],
         "direct_pdf": None,
     },
-    # --- Respiratory: Asthma & COPD (2B.2) ---
-    {
-        "source": "respiratory",
-        "title": "GOLD Global Strategy for COPD 2024 — already curated (respiratory copy)",
-        "url": "https://goldcopd.org/2024-gold-report/",
-        "year": 2024,
-        "tags": ["copd", "respiratory", "gold"],
-        "direct_pdf": "https://goldcopd.org/wp-content/uploads/2024/02/GOLD-2024_v1.2-11Jan24_WMV.pdf",
-    },
-    {
-        "source": "respiratory",
-        "title": "GINA Global Strategy for Asthma 2024 — already curated (respiratory copy)",
-        "url": "https://ginasthma.org/2024-gina-main-report/",
-        "year": 2024,
-        "tags": ["asthma", "respiratory", "gina"],
-        "direct_pdf": "https://ginasthma.org/wp-content/uploads/2024/05/GINA-2024-Strategy-Report-24_05_22_WMS.pdf",
-    },
+    # --- Respiratory: Asthma & COPD (2B.2) — xem GOLD/GINA seeds ở trên (không copy) ---
     {
         "source": "respiratory",
         "title": "WHO Chronic Respiratory Diseases — COPD Fact Sheet",
@@ -241,15 +225,7 @@ CURATED_SEEDS: List[dict] = [
         "tags": ["copd", "respiratory", "who"],
         "direct_pdf": None,
     },
-    # --- Mental Health (2B.3) — largest treatment gap ---
-    {
-        "source": "mental",
-        "title": "WHO mhGAP Intervention Guide v2.0 (already curated, mental copy)",
-        "url": "https://iris.who.int/handle/10665/250239",
-        "year": 2016,
-        "tags": ["mental_health", "mhgap"],
-        "direct_pdf": None,
-    },
+    # --- Mental Health (2B.3) — largest treatment gap (mhGAP seed ở WHO IRIS, không copy) ---
     {
         "source": "mental",
         "title": "WHO Mental Health Action Plan 2013-2030",
@@ -650,67 +626,7 @@ DIABETES_3_PUBLIC = [
 
 def download_diabetes_3(force: bool = False) -> dict:
     """Tải 3 (+1 optional) PDF diabetes public vào data/raw/pdfs/diabetes/."""
-    dest_dir = SOURCE_DIRS["diabetes"]
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    stats = {"downloaded": 0, "skipped": 0, "failed": 0, "files": []}
-    for item in DIABETES_3_PUBLIC:
-        dest = dest_dir / item["filename"]
-        is_optional = item.get("optional", False)
-        if dest.exists() and dest.stat().st_size > 1024 and not force:
-            log.info(f"[SKIP] {dest.name} exists")
-            stats["skipped"] += 1
-            stats["files"].append(str(dest))
-            continue
-        url = item["url"]
-        ok = download_file(url, dest)
-        # thử alt/fallback nếu fail và là ADA
-        if not ok and item.get("alt_url"):
-            log.info(f"  trying alt_url for {item['filename']}")
-            ok = download_file(item["alt_url"], dest)
-        if not ok and item.get("fallback_url"):
-            log.info(f"  trying fallback_url for {item['filename']}")
-            fallback_dest = dest_dir / ("FALLBACK_" + item["filename"])
-            ok2 = download_file(item["fallback_url"], fallback_dest)
-            if ok2:
-                stats["files"].append(str(fallback_dest))
-                stats["downloaded"] += 1
-                continue
-        if ok:
-            stats["downloaded"] += 1
-            stats["files"].append(str(dest))
-        else:
-            if is_optional:
-                log.warning(f"  [OPTIONAL FAIL] {item['title']} — sẽ bỏ qua, không tính vào failed chính.")
-                # tạo placeholder README cho file optional
-                placeholder = dest.with_suffix(".DOWNLOAD_FAILED.txt")
-                placeholder.write_text(
-                    f"Optional download failed (paywall): {item['title']}\n"
-                    f"URL: {url}\n"
-                    f"Alt: {item.get('alt_url','')}\n"
-                    f"Hướng dẫn tải thủ công:\n"
-                    f"  1. Truy cập https://diabetesjournals.org/care/issue/47/Supplement_1\n"
-                    f"  2. Tải 'Standards of Care in Diabetes — 2024' PDF\n"
-                    f"  3. Đặt file vào: {dest}\n"
-                    f"  4. Chạy lại: python -m src.shared.indexer\n"
-                    f"WHO IRIS 3 file chính đã đủ để demo RAG.\n",
-                    encoding="utf-8",
-                )
-                # không tính vào failed
-                continue
-            stats["failed"] += 1
-            placeholder = dest.with_suffix(".DOWNLOAD_FAILED.txt")
-            placeholder.write_text(
-                f"Failed to download: {item['title']}\n"
-                f"URL: {url}\n"
-                f"Handle: {item.get('handle','')}\n"
-                f"Hãy tải thủ công và đặt file vào: {dest}\n"
-                f"Thử resolve lại: python -c \"from scripts.crawl_guidelines import resolve_iris_handle_to_content_url; print(resolve_iris_handle_to_content_url('https://iris.who.int/handle/{item.get('handle','')}'))\"\n",
-                encoding="utf-8",
-            )
-            log.warning(f"  placeholder created: {placeholder.name}")
-        time.sleep(1)
-    log.info(f"[Diabetes 3] {stats}")
-    return stats
+    return _download_generic_3(DIABETES_3_PUBLIC, "diabetes", "Diabetes 3", force=force)
 
 
 # ------------------------------------------------------------

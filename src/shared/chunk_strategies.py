@@ -1,11 +1,26 @@
-from enum import Enum
-from typing import List, Callable
+from enum import Enum as _Enum  # fallback only; canonical ChunkingStrategy lives in models.enums
+from typing import List, Callable, Dict, Tuple
+from functools import lru_cache
 from pathlib import Path
 import numpy as np
 
 from transformers import AutoTokenizer
 from docling.chunking import HybridChunker
 from docling_core.transforms.chunker.tokenizer.huggingface import HuggingFaceTokenizer
+
+try:
+    from shared.models.enums import ChunkingStrategy
+except ImportError:
+    try:
+        from src.shared.models.enums import ChunkingStrategy  # type: ignore
+    except ImportError:
+        class ChunkingStrategy(str, _Enum):  # fallback when models package unavailable
+            STRUCTURE = "structure"
+            SENTENCE = "sentence"
+            SLIDING = "sliding"
+            SEMANTIC = "semantic"
+            HYBRID_SECTION_SEMANTIC = "hybrid_section_semantic"
+            AUTO = "auto"
 
 try:
     from shared.models.chunk import Chunk, ChunkMetadata
@@ -32,15 +47,12 @@ except ImportError:
 
 
 # =========================
-# Strategy Enum
+# Strategy Enum (canonical in shared.models.enums, re-exported here)
 # =========================
-class ChunkingStrategy(str, Enum):
-    STRUCTURE = "structure"
-    SENTENCE = "sentence"
-    SLIDING = "sliding"
-    SEMANTIC = "semantic"
-    HYBRID_SECTION_SEMANTIC = "hybrid_section_semantic"
-    AUTO = "auto"
+try:
+    ChunkingStrategy  # noqa: B018 — provided by the import above
+except NameError:  # pragma: no cover — fallback defined above already
+    pass
 
 
 # =========================
@@ -55,6 +67,16 @@ chunker = HybridChunker(
     tokenizer=tokenizer,
     merge_peers=True,
 )
+
+
+@lru_cache(maxsize=8)
+def _get_chunker(max_tokens: int) -> HybridChunker:
+    """Chunker phụ cho structure-variants (MAX_TOKENS khác default)."""
+    tok = HuggingFaceTokenizer(
+        tokenizer=AutoTokenizer.from_pretrained(TOKENIZER_MODEL),
+        max_tokens=max_tokens,
+    )
+    return HybridChunker(tokenizer=tok, merge_peers=True)
 
 
 # =========================
@@ -79,18 +101,23 @@ def serialize_metatdata(meta: dict):
             out[k] = "|||".join(map(str, v))
         else:
             out[k] = v
-            
+
     return out
+
+
+# Correct-spelling alias (old typo kept importable for indexer/nutrition callers).
+serialize_metadata = serialize_metatdata
 
 
 # =========================
 # Chunkers
 # =========================
-def structure_chunk(doc, source_id: str) -> List[Chunk]:
+def structure_chunk(doc, source_id: str, *, max_tokens: int = None) -> List[Chunk]:
     chunks = []
     idx = 0
+    ch = _get_chunker(max_tokens) if max_tokens else chunker
 
-    for c in chunker.chunk(doc):
+    for c in ch.chunk(doc):
         text = chunker.contextualize(c).strip()
         if not text:
             continue
@@ -117,14 +144,15 @@ def structure_chunk(doc, source_id: str) -> List[Chunk]:
     return chunks
 
 
-def sentence_chunk(text: str, source_id: str) -> List[Chunk]:
+def sentence_chunk(text: str, source_id: str, *, group_size: int = None) -> List[Chunk]:
     sentences = sentence_split(text)
     chunks, idx = [], 0
     buf = []
+    group = group_size if group_size else SENTENCE_GROUP
 
     for s in sentences:
         buf.append(s)
-        if len(buf) >= SENTENCE_GROUP:
+        if len(buf) >= group:
             chunks.append(
                 Chunk(
                     source_id=source_id,
@@ -149,13 +177,15 @@ def sentence_chunk(text: str, source_id: str) -> List[Chunk]:
     return chunks
 
 
-def sliding_window_chunk(text: str, source_id: str) -> List[Chunk]:
+def sliding_window_chunk(text: str, source_id: str, *, window_tokens: int = None, overlap: int = None) -> List[Chunk]:
     tokens = tokenizer.tokenizer.tokenize(text)
     chunks, idx = [], 0
     i = 0
+    win = window_tokens if window_tokens else SLIDING_WINDOW_TOKENS
+    ov = overlap if overlap is not None else SLIDING_OVERLAP
 
     while i < len(tokens):
-        window = tokens[i:i + SLIDING_WINDOW_TOKENS]
+        window = tokens[i:i + win]
         chunk_text = tokenizer.tokenizer.convert_tokens_to_string(window)
 
         chunks.append(
@@ -168,9 +198,9 @@ def sliding_window_chunk(text: str, source_id: str) -> List[Chunk]:
         )
         idx += 1
 
-        if i + SLIDING_WINDOW_TOKENS >= len(tokens):
+        if i + win >= len(tokens):
             break
-        i += SLIDING_WINDOW_TOKENS - SLIDING_OVERLAP
+        i += win - ov
 
     return chunks
 
@@ -185,7 +215,9 @@ def semantic_chunk(
     embed_fn: Callable[[List[str]], np.ndarray],
     atomic_tokenizer,
     atomic_size: int = 120,
+    sim_threshold: float = None,
 ) -> List[Chunk]:
+    thr = sim_threshold if sim_threshold is not None else SEMANTIC_SIM_THRESHOLD
 
     tokens = atomic_tokenizer.tokenize(text)
     atomic_texts = [
@@ -198,6 +230,11 @@ def semantic_chunk(
     if not atomic_texts:
         return []
 
+    # Bỏ atomic trắng: NVIDIA /v1/embeddings 400 với input rỗng.
+    atomic_texts = [t for t in atomic_texts if t.strip()]
+    if not atomic_texts:
+        return []
+
     embeddings = np.asarray(embed_fn(atomic_texts))
 
     chunks, idx = [], 0
@@ -206,7 +243,7 @@ def semantic_chunk(
 
     for i in range(1, len(atomic_texts)):
         sim = cosine_sim(cur_emb, embeddings[i])
-        if sim >= SEMANTIC_SIM_THRESHOLD:
+        if sim >= thr:
             cur_text += " " + atomic_texts[i]
             cur_emb = (cur_emb + embeddings[i]) / 2
         else:
@@ -239,13 +276,18 @@ def hybrid_section_semantic_chunk(
     source_id: str,
     *,
     embed_fn,
+    max_tokens: int = None,
+    atomic_size: int = None,
+    sim_threshold: float = None,
 ) -> List[Chunk]:
 
     final_chunks = []
     global_idx = 0
+    cap = max_tokens if max_tokens else MAX_TOKENS
+    ch = _get_chunker(cap) if max_tokens else chunker
 
-    for c in chunker.chunk(doc):
-        base_text = chunker.contextualize(c).strip()
+    for c in ch.chunk(doc):
+        base_text = ch.contextualize(c).strip()
         if not base_text:
             continue
 
@@ -260,7 +302,7 @@ def hybrid_section_semantic_chunk(
             chunk_index=global_idx,
         )
 
-        if token_count <= MAX_TOKENS:
+        if token_count <= cap:
             base_meta.chunk_index = global_idx
             final_chunks.append(
                 Chunk(
@@ -278,7 +320,8 @@ def hybrid_section_semantic_chunk(
             source_id,
             embed_fn=embed_fn,
             atomic_tokenizer=tokenizer.tokenizer,
-            atomic_size=ATOMIC_TOKEN_SIZE,
+            atomic_size=atomic_size if atomic_size else ATOMIC_TOKEN_SIZE,
+            sim_threshold=sim_threshold,
         )
 
         for sub in sub_chunks:
@@ -311,36 +354,48 @@ def chunk_document(
     *,
     raw_text: str = None,
     embed_fn=None,
+    **overrides,
 ) -> List[Chunk]:
 
     source_id = normalize_source_id(pdf_path)
 
     if strategy == ChunkingStrategy.STRUCTURE:
-        return structure_chunk(doc, source_id)
+        if overrides and set(overrides) != {"max_tokens"}:
+            raise ValueError(f"STRUCTURE accepts only max_tokens, got {sorted(overrides)}")
+        return structure_chunk(doc, source_id, **overrides)
 
     if strategy == ChunkingStrategy.HYBRID_SECTION_SEMANTIC:
         if embed_fn is None:
             raise ValueError("HYBRID_SECTION_SEMANTIC requires embed_fn")
-        return hybrid_section_semantic_chunk(doc, source_id, embed_fn=embed_fn)
+        if overrides and not set(overrides) <= {"max_tokens", "atomic_size", "sim_threshold"}:
+            raise ValueError(f"HYBRID accepts max_tokens/atomic_size/sim_threshold, got {sorted(overrides)}")
+        return hybrid_section_semantic_chunk(doc, source_id, embed_fn=embed_fn, **overrides)
 
     if raw_text is None:
         raise ValueError(f"{strategy.value} requires raw_text")
 
     if strategy == ChunkingStrategy.SENTENCE:
-        return sentence_chunk(raw_text, source_id)
+        if overrides and set(overrides) != {"group_size"}:
+            raise ValueError(f"SENTENCE accepts only group_size, got {sorted(overrides)}")
+        return sentence_chunk(raw_text, source_id, **overrides)
 
     if strategy == ChunkingStrategy.SLIDING:
-        return sliding_window_chunk(raw_text, source_id)
+        if overrides and not set(overrides) <= {"window_tokens", "overlap"}:
+            raise ValueError(f"SLIDING accepts window_tokens/overlap, got {sorted(overrides)}")
+        return sliding_window_chunk(raw_text, source_id, **overrides)
 
     if strategy == ChunkingStrategy.SEMANTIC:
         if embed_fn is None:
             raise ValueError("SEMANTIC requires embed_fn")
+        if overrides and not set(overrides) <= {"atomic_size", "sim_threshold"}:
+            raise ValueError(f"SEMANTIC accepts atomic_size/sim_threshold, got {sorted(overrides)}")
         return semantic_chunk(
             raw_text,
             source_id,
             embed_fn=embed_fn,
             atomic_tokenizer=tokenizer.tokenizer,
-            atomic_size=ATOMIC_TOKEN_SIZE,
+            atomic_size=overrides.get("atomic_size", ATOMIC_TOKEN_SIZE),
+            sim_threshold=overrides.get("sim_threshold"),
         )
 
     chunks = structure_chunk(doc, source_id)
@@ -348,3 +403,34 @@ def chunk_document(
         return hybrid_section_semantic_chunk(doc, source_id, embed_fn=embed_fn)
 
     return chunks
+
+
+# =========================
+# Variant registry (D1)
+# =========================
+# variant name -> (base enum, param overrides). Index dir = registry name.
+VARIANTS: Dict[str, Tuple[ChunkingStrategy, dict]] = {
+    "structure": (ChunkingStrategy.STRUCTURE, {}),
+    "sentence": (ChunkingStrategy.SENTENCE, {}),
+    "sliding": (ChunkingStrategy.SLIDING, {}),
+    "semantic": (ChunkingStrategy.SEMANTIC, {}),
+    "hybrid_section_semantic": (ChunkingStrategy.HYBRID_SECTION_SEMANTIC, {}),
+    # Stage-2 variants của top-2 base (B1: hybrid 0.8875, sentence 0.8625).
+    "hybrid__t256": (ChunkingStrategy.HYBRID_SECTION_SEMANTIC, {"max_tokens": 256}),
+    "hybrid__t768": (ChunkingStrategy.HYBRID_SECTION_SEMANTIC, {"max_tokens": 768}),
+    "hybrid__thr080": (ChunkingStrategy.HYBRID_SECTION_SEMANTIC, {"sim_threshold": 0.80}),
+    "hybrid__thr095": (ChunkingStrategy.HYBRID_SECTION_SEMANTIC, {"sim_threshold": 0.95}),
+    "sentence__g2": (ChunkingStrategy.SENTENCE, {"group_size": 2}),
+    "sentence__g6": (ChunkingStrategy.SENTENCE, {"group_size": 6}),
+    "sentence__g8": (ChunkingStrategy.SENTENCE, {"group_size": 8}),
+}
+
+
+def resolve_strategy(name: str) -> Tuple[ChunkingStrategy, dict]:
+    """Resolve registry name -> (base, overrides). Fail LOUD on unknown."""
+    try:
+        return VARIANTS[name]
+    except KeyError:
+        raise ValueError(
+            f"unknown chunking strategy: {name!r} (known: {sorted(VARIANTS)})"
+        )

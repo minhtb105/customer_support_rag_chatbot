@@ -24,11 +24,14 @@ def reindex_single_pdf(pdf_path: str, strategies: Optional[list] = None, version
 
     if strategies is None:
         strategies = [
-            ChunkingStrategy.STRUCTURE,
-            ChunkingStrategy.SLIDING,
-            ChunkingStrategy.SEMANTIC,
-            ChunkingStrategy.HYBRID_SECTION_SEMANTIC,
+            "structure",
+            "sliding",
+            "semantic",
+            "hybrid_section_semantic",
         ]
+    else:
+        # Backward-compat: accept ChunkingStrategy enums too.
+        strategies = [getattr(s, "value", s) for s in strategies]
 
     # Prepare embedding adapter (reuse indexer logic)
     try:
@@ -76,8 +79,8 @@ def reindex_single_pdf(pdf_path: str, strategies: Optional[list] = None, version
     except Exception as e:
         raise RuntimeError(f"Embedding adapter init failed: {e}")
 
-    for strategy in strategies:
-        db_dir = _resolve_index_db_dir(strategy.value)
+    for strategy_name in strategies:
+        db_dir = _resolve_index_db_dir(strategy_name)
         Path(db_dir).mkdir(parents=True, exist_ok=True)
         vector_db = get_or_create_vectorstore(db_dir)
-        hybrid_hash_reindex(pdf_path, vector_db, strategy, embedding_adapter, version_label=version_label, publication_date=publication_date)
+        hybrid_hash_reindex(pdf_path, vector_db, strategy_name, embedding_adapter, version_label=version_label, publication_date=publication_date)

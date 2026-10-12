@@ -28,11 +28,17 @@ WHAT_HAPPENS_NEXT_VI: Dict[str, str] = {
 }
 
 
-def _unaccent(s: str) -> str:
-    t = "".join(
-        c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
-    )
-    return t.replace("đ", "d").replace("Đ", "D")
+try:
+    from src.shared.text import unaccent as _unaccent
+except ImportError:  # pragma: no cover
+    try:
+        from shared.text import unaccent as _unaccent  # type: ignore
+    except ImportError:
+        def _unaccent(s: str) -> str:  # fallback NFD-strip
+            t = "".join(
+                c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
+            )
+            return t.replace("đ", "d").replace("Đ", "D")
 
 
 # NOTE: analyte names (creatinine/eGFR/AST/ALT/HbA1c...) are intentionally NOT

@@ -36,9 +36,6 @@ def redact_pii(text: Optional[str]) -> Optional[str]:
     redacted = re.sub(r"\b\d{9,12}\b", "[REDACTED_ID]", redacted)
     return redacted
 
-def _get_conn():
-    return _base_get_conn(VITALS_DB_PATH)
-
 def init_mood_db():
     init_table(
         VITALS_DB_PATH,
@@ -124,7 +121,7 @@ def add_mood_log(user_id: str, phq9_score: Optional[int] = None, gad7_score: Opt
         raise ValueError("PHQ-9 must be 0-27")
     if gad7_score is not None and not (0 <= gad7_score <= 21):
         raise ValueError("GAD-7 must be 0-21")
-    conn=_get_conn()
+    conn=_base_get_conn(VITALS_DB_PATH)
     cur=conn.execute(
         "INSERT INTO mood_logs (user_id, phq9_score, gad7_score, mood_notes, crisis_flag, crisis_keywords, measured_at, context, classification, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
         (user_id, phq9_score, gad7_score, redacted_notes, int(is_crisis), ",".join(found), measured_at.isoformat(), context, classification, datetime.now(timezone.utc).isoformat()),

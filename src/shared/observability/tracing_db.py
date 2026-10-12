@@ -300,33 +300,47 @@ def list_chunks(trace_id: str, span_id: Optional[str]=None) -> List[Dict[str, An
         out.append(d)
     return out
 
-# ---------- prompts ----------
-def list_prompts(tone: Optional[str]=None, status: Optional[str]=None, limit=100) -> List[Dict[str, Any]]:
+# ---------- prompts (parametrized helpers; old names kept as wrappers) ----------
+def _select_prompts(where: str = "1=1", params: Optional[list] = None, limit: int = 100) -> List[Dict[str, Any]]:
     conn = _conn()
-    where=[]
-    params=[]
+    rows = conn.execute(f"SELECT * FROM prompts WHERE {where} ORDER BY created_at DESC LIMIT ?", (params or []) + [limit]).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def _get_single_prompt(where: str, params: list) -> Optional[Dict[str, Any]]:
+    rows = _select_prompts(where, params, limit=1)
+    return rows[0] if rows else None
+
+
+def _set_prompt_state(tone: str, version: str, *, active: bool, status: str) -> Optional[Dict[str, Any]]:
+    conn = _conn()
+    if active:
+        conn.execute("UPDATE prompts SET is_active=0, status='archived' WHERE tone=? AND is_active=1", (tone,))
+    conn.execute("UPDATE prompts SET is_active=?, status=? WHERE tone=? AND version=?",
+                 (1 if active else 0, status, tone, version))
+    conn.commit()
+    conn.close()
+    return get_prompt_by_version(tone, version)
+
+
+def list_prompts(tone: Optional[str]=None, status: Optional[str]=None, limit=100) -> List[Dict[str, Any]]:
+    where, params = [], []
     if tone:
         where.append("tone=?")
         params.append(tone)
     if status:
         where.append("status=?")
         params.append(status)
-    where_str = " AND ".join(where) if where else "1=1"
-    rows = conn.execute(f"SELECT * FROM prompts WHERE {where_str} ORDER BY created_at DESC LIMIT ?", params+[limit]).fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
+    return _select_prompts(" AND ".join(where) if where else "1=1", params, limit)
+
 
 def get_active_prompt(tone: str) -> Optional[Dict[str, Any]]:
-    conn = _conn()
-    row = conn.execute("SELECT * FROM prompts WHERE tone=? AND is_active=1 ORDER BY created_at DESC LIMIT 1", (tone,)).fetchone()
-    conn.close()
-    return dict(row) if row else None
+    return _get_single_prompt("tone=? AND is_active=1", [tone])
+
 
 def get_prompt_by_version(tone: str, version: str) -> Optional[Dict[str, Any]]:
-    conn = _conn()
-    row = conn.execute("SELECT * FROM prompts WHERE tone=? AND version=?", (tone, version)).fetchone()
-    conn.close()
-    return dict(row) if row else None
+    return _get_single_prompt("tone=? AND version=?", [tone, version])
 
 def create_prompt(tone: str, text: str, description: Optional[str], created_by: Optional[str], status: str = "pending_approval") -> Dict[str, Any]:
     import hashlib
@@ -348,43 +362,46 @@ def create_prompt(tone: str, text: str, description: Optional[str], created_by: 
     return get_prompt_by_version(tone, version)  # type: ignore
 
 def approve_prompt(tone: str, version: str) -> Optional[Dict[str, Any]]:
-    conn = _conn()
-    # deactivate all for tone
-    conn.execute("UPDATE prompts SET is_active=0, status='archived' WHERE tone=? AND is_active=1", (tone,))
-    # activate target
-    conn.execute("UPDATE prompts SET is_active=1, status='active' WHERE tone=? AND version=?", (tone, version))
-    conn.commit()
-    conn.close()
-    return get_prompt_by_version(tone, version)
+    return _set_prompt_state(tone, version, active=True, status="active")
+
 
 def reject_prompt(tone: str, version: str):
-    conn = _conn()
-    conn.execute("UPDATE prompts SET status='archived', is_active=0 WHERE tone=? AND version=?", (tone, version))
-    conn.commit()
-    conn.close()
+    _set_prompt_state(tone, version, active=False, status="archived")
 
-# ---------- ragas ----------
+
+# ---------- ragas (parametrized upsert/get; old names kept) ----------
+_RAGAS_COLS = ("faithfulness", "context_precision", "context_recall",
+               "answer_relevance", "fluency")
+_RAGAS_COMMENTS = ("faithfulness_comment", "precision_comment", "recall_comment",
+                   "relevance_comment", "fluency_comment")
+def _ragas_row(metrics: Dict[str, Any], raw: Dict[str, Any], now: str, evaluator_model: Optional[str], rid: str, trace_id: str) -> tuple:
+    return (
+        rid, trace_id, *(metrics.get(c) for c in _RAGAS_COLS),
+        *[(metrics.get("faithfulness_comment") or "") if c == "faithfulness_comment"
+          else (metrics.get("context_precision_comment") or "") if c == "precision_comment"
+          else (metrics.get("context_recall_comment") or "") if c == "recall_comment"
+          else (metrics.get("answer_relevance_comment") or "") if c == "relevance_comment"
+          else (metrics.get("fluency_comment") or "") for c in _RAGAS_COMMENTS],
+        json.dumps(metrics.get("failed_metrics") or []), metrics.get("confidence"),
+        json.dumps(raw, ensure_ascii=False), now, evaluator_model,
+    )
+
+
 def upsert_ragas(trace_id: str, metrics: Dict[str, Any], raw: Dict[str,Any], evaluator_model: Optional[str]=None):
-    import hashlib
     rid = uuid.uuid4().hex
     now = datetime.now(timezone.utc).isoformat()
     conn = _conn()
-    # check existing
     existing = conn.execute("SELECT id FROM ragas_evaluations WHERE trace_id=?", (trace_id,)).fetchone()
     if existing:
         conn.execute("""UPDATE ragas_evaluations SET faithfulness=?, context_precision=?, context_recall=?, answer_relevance=?, fluency=?,
             faithfulness_comment=?, precision_comment=?, recall_comment=?, relevance_comment=?, fluency_comment=?,
             failed_metrics=?, confidence=?, raw_json=?, evaluated_at=?, evaluator_model=? WHERE trace_id=?""",
-            (metrics.get("faithfulness"), metrics.get("context_precision"), metrics.get("context_recall"), metrics.get("answer_relevance"), metrics.get("fluency"),
-             metrics.get("faithfulness_comment") or "", metrics.get("context_precision_comment") or "", metrics.get("context_recall_comment") or "", metrics.get("answer_relevance_comment") or "", metrics.get("fluency_comment") or "",
-             json.dumps(metrics.get("failed_metrics") or []), metrics.get("confidence"), json.dumps(raw, ensure_ascii=False), now, evaluator_model, trace_id))
+            _ragas_row(metrics, raw, now, evaluator_model, existing["id"], trace_id)[2:] + (trace_id,))
     else:
         conn.execute("""INSERT INTO ragas_evaluations
             (id, trace_id, faithfulness, context_precision, context_recall, answer_relevance, fluency, faithfulness_comment, precision_comment, recall_comment, relevance_comment, fluency_comment, failed_metrics, confidence, raw_json, evaluated_at, evaluator_model)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (rid, trace_id, metrics.get("faithfulness"), metrics.get("context_precision"), metrics.get("context_recall"), metrics.get("answer_relevance"), metrics.get("fluency"),
-             metrics.get("faithfulness_comment") or "", metrics.get("context_precision_comment") or "", metrics.get("context_recall_comment") or "", metrics.get("answer_relevance_comment") or "", metrics.get("fluency_comment") or "",
-             json.dumps(metrics.get("failed_metrics") or []), metrics.get("confidence"), json.dumps(raw, ensure_ascii=False), now, evaluator_model))
+            _ragas_row(metrics, raw, now, evaluator_model, rid, trace_id))
     conn.commit()
     conn.close()
 

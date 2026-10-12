@@ -40,16 +40,28 @@ def get_nvidia_keys() -> list[str]:
     return keys
 
 
-def _is_rotatable_error(exc: Exception) -> bool:
+def _is_transient_error(exc: Exception | None) -> bool:
+    """Single retryable-error predicate (5xx/401/429 + overload/capacity text).
+
+    Covers both key-rotation and HARD->LIGHT fallback cases.
+    """
+    if exc is None:
+        return False
     status = getattr(exc, "status_code", None)
-    if status in (401, 429, 503, 529):
+    if status in (401, 429, 500, 502, 503, 529):
         return True
     msg = str(exc).lower()
     return ("rate limit" in msg or "ratelimit" in msg or "quota" in msg
             or "too many requests" in msg or "unauthorized" in msg
             or "invalid api key" in msg or "overload" in msg
             or "capacity" in msg or "exhausted" in msg
-            or "temporarily" in msg)
+            or "temporarily" in msg or "bad gateway" in msg
+            or "gateway timeout" in msg or "internal server error" in msg
+            or "server error" in msg)
+
+
+def _is_rotatable_error(exc: Exception) -> bool:
+    return _is_transient_error(exc)
 
 
 def _raise_if_no_keys() -> list[str]:
@@ -90,6 +102,8 @@ def embed_texts(texts: list[str], model: str,
         except Exception as e:  # noqa: BLE001
             last_err = e
             if _is_rotatable_error(e) and i < len(keys) - 1:
+                import time as _t
+                _t.sleep(3)  # transient 5xx/429: nhường backend rồi thử key kế
                 continue
             raise
     raise last_err  # type: ignore[misc]
@@ -101,8 +115,13 @@ class NvidiaEmbeddings:
     def __init__(self, model: str):
         self.model = model
 
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        return embed_texts(texts, self.model, mode="passage")
+    def embed_documents(self, texts: list[str], batch_size: int = 100) -> list[list[float]]:
+        # Batch nhỏ: 1 request với hàng nghìn input bị API 400 (GINA 1875
+        # chunks). Giữ thứ tự, xoay key từng batch như cũ.
+        out: list[list[float]] = []
+        for i in range(0, len(texts), batch_size):
+            out.extend(embed_texts(texts[i:i + batch_size], self.model, mode="passage"))
+        return out
 
     def embed_query(self, text: str) -> list[float]:
         return embed_texts([text], self.model, mode="query")[0]
@@ -152,6 +171,9 @@ def _is_overload(exc: Exception | None) -> bool:
     status = getattr(exc, "status_code", None)
     if status in (503, 529):
         return True
+    # Subset of the single transient predicate (overload-family text only).
+    if not _is_transient_error(exc):
+        return False
     msg = str(exc).lower()
     return "overload" in msg or "capacity" in msg or "exhausted" in msg
 

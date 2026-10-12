@@ -7,6 +7,19 @@ except ImportError:
     from src.shared.config import META_DB_PATH
 
 
+def _connect(db_path=META_DB_PATH):
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute("PRAGMA foreign_keys = ON;")
+    except Exception:
+        pass
+    return conn
+
+
+def _ids_to_placeholders(ids) -> str:
+    return ",".join("?" * len(ids))
+
+
 def init_db(db_path=META_DB_PATH):
     with sqlite3.connect(db_path) as conn:
         conn.execute("PRAGMA journal_mode=WAL;")
@@ -78,8 +91,8 @@ def find_vector_ids_for_chunk_hashes(chunk_hashes, db_path=META_DB_PATH):
         return []
 
     q = "SELECT vector_id FROM chunks WHERE chunk_hash IN ({})".format(
-        ",".join("?"*len(chunk_hashes)))
-    with sqlite3.connect(db_path) as conn:
+        _ids_to_placeholders(chunk_hashes))
+    with _connect(db_path) as conn:
         cur = conn.cursor()
         cur.execute(q, tuple(chunk_hashes))
 
@@ -102,11 +115,10 @@ def delete_chunks_by_hashes(chunk_hashes: list, db_path=META_DB_PATH):
     if not chunk_hashes:
         return
 
-    placeholders = ",".join("?" * len(chunk_hashes))
+    placeholders = _ids_to_placeholders(chunk_hashes)
     q = f"DELETE FROM chunks WHERE chunk_hash IN ({placeholders})"
 
-    with sqlite3.connect(db_path) as conn:
-        conn.execute("PRAGMA foreign_keys = ON;")
+    with _connect(db_path) as conn:
         cur = conn.cursor()
         cur.execute(q, tuple(chunk_hashes))
         conn.commit()

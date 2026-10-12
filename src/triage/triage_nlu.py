@@ -74,10 +74,20 @@ _EXCLUDE_TRIGGERS = (
 )
 
 
-def _unaccent(s: str) -> str:
-    return "".join(
-        c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
-    )
+try:
+    from src.shared.text import unaccent as _unaccent, hit as _hit
+except ImportError:  # pragma: no cover
+    try:
+        from shared.text import unaccent as _unaccent, hit as _hit  # type: ignore
+    except ImportError:
+        def _unaccent(s: str) -> str:  # fallback NFD-strip
+            return "".join(
+                c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
+            )
+        def _hit(text: str, kws) -> bool:
+            lowered = (text or "").lower()
+            plain = _unaccent(lowered)
+            return any(kw in lowered or _unaccent(kw) in plain for kw in kws)
 
 
 def _extract_excluded(text: str) -> List[str]:
@@ -98,12 +108,10 @@ def _extract_excluded(text: str) -> List[str]:
 
 
 def _extract_symptoms(text: str) -> List[Dict[str, str]]:
-    lowered = (text or "").lower()
-    plain = _unaccent(lowered)
     out: List[Dict[str, str]] = []
     for code, _spec, keywords in _SYMPTOMS:
         for kw in keywords:
-            if kw in lowered or _unaccent(kw) in plain:
+            if _hit(text, (kw,)):
                 out.append({"code": code, "text": kw})
                 break
     return out
@@ -111,12 +119,8 @@ def _extract_symptoms(text: str) -> List[Dict[str, str]]:
 
 def _extract_intents(text: str, symptoms: list, requested: Optional[str],
                      excluded: list, simulation: bool = False) -> List[str]:
-    lowered = (text or "").lower()
-    plain = _unaccent(lowered)
     intents: List[str] = []
-    if requested or excluded or any(
-        w in lowered or _unaccent(w) in plain for w in _BOOKING_WORDS
-    ):
+    if requested or excluded or _hit(text, _BOOKING_WORDS):
         intents.append("booking")
     if symptoms:
         intents.append("symptom_note")
@@ -126,28 +130,22 @@ def _extract_intents(text: str, symptoms: list, requested: Optional[str],
 
 
 def _extract_bhyt(text: str) -> bool:
-    lowered = (text or "").lower()
-    plain = _unaccent(lowered)
-    return any(w in lowered or _unaccent(w) in plain for w in _BHYT_WORDS)
+    return _hit(text, _BHYT_WORDS)
 
 
 def _extract_branch_tier(text: str) -> tuple:
     """-> (branch_label|None, tier|None). Central checked first."""
-    lowered = (text or "").lower()
-    plain = _unaccent(lowered)
-    for w in _BRANCH_CENTRAL:
-        if w in lowered or _unaccent(w) in plain:
-            return ("Bạch Mai", "central")
-    for w in _BRANCH_DISTRICT:
-        if w in lowered or _unaccent(w) in plain:
-            return ("Tuyến huyện", "district")
+    for kws, label, tier in (
+        (_BRANCH_CENTRAL, "Bạch Mai", "central"),
+        (_BRANCH_DISTRICT, "Tuyến huyện", "district"),
+    ):
+        if any(_hit(text, (w,)) for w in kws):
+            return (label, tier)
     return (None, None)
 
 
 def _extract_nearby(text: str) -> bool:
-    lowered = (text or "").lower()
-    plain = _unaccent(lowered)
-    return any(w in lowered or _unaccent(w) in plain for w in _NEARBY_WORDS)
+    return _hit(text, _NEARBY_WORDS)
 
 
 def _extract_window(text: str) -> Optional[Dict[str, str]]:
@@ -202,10 +200,9 @@ def _extract_doctors(text: str) -> List[str]:
 
 
 def _extract_simulation(text: str, requested: Optional[str]) -> Dict[str, Any]:
-    lowered = (text or "").lower()
-    plain = _unaccent(lowered)
-    if not any(w in lowered or _unaccent(w) in plain for w in _SIM_WORDS):
+    if not _hit(text, _SIM_WORDS):
         return {"is_simulation": False, "doctor_id": None, "days_off": 0}
+    plain = _unaccent((text or "").lower())
     days = 3
     m = re.search(r"nghi\s*(\d+)\s*ngay", plain) or re.search(r"(\d+)\s*ngay", plain)
     if m:

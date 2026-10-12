@@ -6,14 +6,13 @@ Chạy:  python scripts/nutrition/fetch_quydoi.py
 """
 from __future__ import annotations
 
-import json
-import logging
+import sys
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-log = logging.getLogger(__name__)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-OUT = Path(__file__).resolve().parents[2] / "data" / "raw" / "nutrition" / "_interim"
+from _fetch import OUT, log, save_json
+
 PDF = OUT / "vdd_quy_doi.pdf"
 
 
@@ -36,8 +35,7 @@ def main() -> None:
                          str(rows[0])[:120] if rows else None)
             except Exception as e:  # noqa: BLE001
                 log.warning("  t%d extract fail: %s", ti, str(e)[:100])
-    (OUT / "quydoi_tables.json").write_text(
-        json.dumps(tabs, ensure_ascii=False), encoding="utf-8")
+    save_json(OUT / "quydoi_tables.json", tabs)
     log.info("saved %d tables", len(tabs))
 
 

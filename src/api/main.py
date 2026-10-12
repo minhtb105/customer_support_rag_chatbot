@@ -13,11 +13,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 try:
-    from src.shared.config import API_TITLE, API_VERSION, API_PREFIX, EMBEDDING_PROVIDER, EMBEDDING_MODEL, BASE_DIR
+    from src.shared.config import API_TITLE, API_VERSION, API_PREFIX, EMBEDDING_PROVIDER, EMBEDDING_MODEL, BASE_DIR, DEFAULT_CHUNK_STRATEGY
     from src.api.schemas import HealthResponse
     from src.api.deps import _count_pdfs
 except ImportError:  # pragma: no cover
-    from shared.config import API_TITLE, API_VERSION, API_PREFIX, EMBEDDING_PROVIDER, EMBEDDING_MODEL, BASE_DIR  # type: ignore
+    from shared.config import API_TITLE, API_VERSION, API_PREFIX, EMBEDDING_PROVIDER, EMBEDDING_MODEL, BASE_DIR, DEFAULT_CHUNK_STRATEGY  # type: ignore
     from api.schemas import HealthResponse  # type: ignore
     from api.deps import _count_pdfs  # type: ignore
 
@@ -206,10 +206,13 @@ if LEARN_ENABLED and learn_router is not None:
 @app.get(f"{API_PREFIX}/health", tags=["system"])
 def health():
     total, _ = _count_pdfs()
-    legacy_ready = (BASE_DIR / "embeddings" / "pdf_db" / "structure").exists()
-    openai_ready = (BASE_DIR / "embeddings" / "pdf_db_openai" / "structure").exists()
+    legacy_ready = (BASE_DIR / "embeddings" / "pdf_db" / DEFAULT_CHUNK_STRATEGY).exists()
+    openai_ready = (BASE_DIR / "embeddings" / "pdf_db_openai" / DEFAULT_CHUNK_STRATEGY).exists()
+    nvidia_ready = (BASE_DIR / "embeddings" / "pdf_db_nvidia" / DEFAULT_CHUNK_STRATEGY).exists()
     if EMBEDDING_PROVIDER == "openai":
         vector_ready = openai_ready or legacy_ready
+    elif EMBEDDING_PROVIDER == "nvidia":
+        vector_ready = nvidia_ready
     else:
         vector_ready = legacy_ready
     return HealthResponse(

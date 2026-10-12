@@ -1,5 +1,6 @@
 """Unit tests for Respiratory tracker — peak flow, GOLD, inhaler technique."""
 import pytest
+from tests._helpers import make_crud_case, assert_classify_first
 from src.vitals.respiratory_tracker import (
     classify_peak_flow, classify_gold, _classify_inhaler,
     add_respiratory_log, get_respiratory_logs, get_respiratory_stats, should_escalate_respiratory
@@ -108,3 +109,12 @@ class TestRespiratoryLog:
         # peak yellow + inhaler partial -> yellow
         rec2 = add_respiratory_log(temp_user, peak_flow_percent=65, inhaler_steps_correct=7, inhaler_steps_total=10)
         assert rec2["classification"] == "yellow"
+
+
+@pytest.mark.parametrize("args,expected", [
+    make_crud_case(85, "green"),
+    make_crud_case(65, "yellow"),
+    make_crud_case(40, "red"),
+])
+def test_classify_via_helpers(args, expected):
+    assert_classify_first(classify_peak_flow, args, expected)

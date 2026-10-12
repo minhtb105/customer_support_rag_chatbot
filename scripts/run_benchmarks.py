@@ -35,7 +35,15 @@ warnings.filterwarnings("ignore")
 
 DATASET_PATH = os.path.join(ROOT, "data", "evaluation",
                             "retrieval_evaluation.json")
-STRATEGIES = ["structure", "sliding", "semantic", "hybrid_section_semantic"]
+STRATEGIES = [s.strip() for s in os.getenv(
+    "BENCH_STRATEGIES",
+    "structure,sliding,semantic,hybrid_section_semantic").split(",") if s.strip()]
+try:
+    from shared.config import DEFAULT_CHUNK_STRATEGY as _DEFAULT_STRAT
+except ImportError:
+    from src.shared.config import DEFAULT_CHUNK_STRATEGY as _DEFAULT_STRAT  # type: ignore
+# B2/B3/B5 baseline strategy: explicit override wins, else serving default.
+WINNER = os.getenv("BENCH_WINNER", _DEFAULT_STRAT)
 K = 5
 
 
@@ -84,6 +92,14 @@ def agg(results):
     }
 
 
+def pick_winner(b1_results):
+    """Winner = max Recall@K, tie-break MRR -> Hit@K. Pure (testable)."""
+    def _key(item):
+        _name, m = item
+        return (m.get("Recall@K", 0.0), m.get("MRR", 0.0), m.get("Hit@K", 0.0))
+    return max(b1_results.items(), key=_key)[0]
+
+
 def run_b123(dataset):
     """B1 strategies x vector-only, B2 retriever types, B3 rerank impact."""
     from shared.evaluation import (HybridRetriever, RetrievalEvaluator,
@@ -104,7 +120,7 @@ def run_b123(dataset):
         results[f"vector_only/{strat}"] = agg(rows)
         log(f"B1: {strat} -> {results[f'vector_only/{strat}']}")
 
-    # ---- B2: retriever types (structure index) ----------------------------
+    # ---- B2: retriever types (winner index) ----------------------------
     log("B2: BM25-only...")
     from chat.retriever import get_bm25
     bm25 = get_bm25()
@@ -115,13 +131,13 @@ def run_b123(dataset):
         rows["Recall@K"].append(recall_at_k(ctxs, gold, K))
         rows["Hit@K"].append(hit_at_k(ctxs, gold, K))
         rows["MRR"].append(mean_reciprocal_rank(ctxs, gold, K))
-    results["bm25_only/structure"] = agg(rows)
-    log(f"B2: bm25 -> {results['bm25_only/structure']}")
+    results[f"bm25_only/{WINNER}"] = agg(rows)
+    log(f"B2: bm25 -> {results[f'bm25_only/{WINNER}']}")
 
     log("B2: hybrid retrieval...")
-    ev = RetrievalEvaluator({"hybrid": HybridRetriever()})
-    results["hybrid/structure"] = ev.evaluate(dataset, k=K)["hybrid"]
-    log(f"B2: hybrid -> {results['hybrid/structure']}")
+    ev = RetrievalEvaluator({f"hybrid": HybridRetriever(strategy=WINNER)})
+    results[f"hybrid/{WINNER}"] = ev.evaluate(dataset, k=K)[f"hybrid"]
+    log(f"B2: hybrid -> {results[f'hybrid/{WINNER}']}")
 
     # ---- B3: rerank impact -------------------------------------------------
     log("B3: hybrid + cross-encoder rerank (top_n=5)...")
@@ -131,7 +147,7 @@ def run_b123(dataset):
     for sample in dataset:
         q, gold = sample["question"], sample["gold_sources"]
         t = time.perf_counter()
-        cand = HybridRetriever().retrieve(q)
+        cand = HybridRetriever(strategy=WINNER).retrieve(q)
         reranked = rerank_contexts(q, cand, top_n=5)[:K]
         latencies.append(time.perf_counter() - t)
         rows["Recall@K"].append(recall_at_k(reranked, gold, K))
@@ -139,7 +155,7 @@ def run_b123(dataset):
         rows["MRR"].append(mean_reciprocal_rank(reranked, gold, K))
     res = agg(rows)
     res["avg_latency_s"] = round(statistics.mean(latencies), 3)
-    results["hybrid_reranked/structure"] = res
+    results[f"hybrid_reranked/{WINNER}"] = res
     log(f"B3: hybrid+rerank -> {res}")
 
     return results
@@ -176,11 +192,11 @@ def run_b4(dataset, n):
     questions = [s["question"] for s in dataset[:n]]
 
     # retrieval-only (warm caches)
-    HybridRetriever().retrieve(questions[0])  # warm-up
+    HybridRetriever(strategy=WINNER).retrieve(questions[0])  # warm-up
     lat = []
     for q in questions:
         t = time.perf_counter()
-        HybridRetriever().retrieve(q)
+        HybridRetriever(strategy=WINNER).retrieve(q)
         lat.append(time.perf_counter() - t)
     retrieval_stats = latency_summary(lat)
     log(f"B4 retrieval-only: {retrieval_stats}")
@@ -279,7 +295,7 @@ def run_b5(dataset, max_questions=None):
     scores = []
     for i, s in enumerate(samples):
         q = s["question"]
-        ctxs = HybridRetriever().retrieve(q)
+        ctxs = HybridRetriever(strategy=WINNER).retrieve(q)
         context_text = format_context(ctxs)
         system_prompt = get_system_prompt("balanced")
         user_prompt = (
@@ -374,6 +390,11 @@ def main():
     }
 
     output["b123_retrieval"] = run_b123(dataset)
+    b1 = {k.split("/", 1)[1]: v for k, v in output["b123_retrieval"].items()
+          if k.startswith("vector_only/")}
+    output["meta"]["winner"] = pick_winner(b1)
+    output["meta"]["baseline_strategy"] = WINNER
+    log(f"B1 winner (Recall@K, tie MRR->Hit): {output['meta']['winner']}")
     output["b4_latency"] = run_b4(dataset, n=args.latency_n)
     if not args.skip_judge:
         try:

@@ -24,9 +24,6 @@ except ImportError:  # pragma: no cover
 # Module-namespace patchable + env-overridable (tests cách ly DB dev)
 VITALS_DB_PATH = Path(os.getenv("VITALS_DB_PATH", str(_DEFAULT_VITALS_DB_PATH)))
 
-def _get_conn():
-    return _base_get_conn(VITALS_DB_PATH)
-
 def init_bp_db():
     init_table(
         VITALS_DB_PATH,
@@ -78,7 +75,7 @@ def add_bp_log(user_id: str, systolic: int, diastolic: int, measured_at: Optiona
     if not (50 <= systolic <= 300 and 30 <= diastolic <= 200):
         raise ValueError(f"BP out of range: {systolic}/{diastolic}")
     classification, message = classify_bp(systolic, diastolic)
-    conn = _get_conn()
+    conn = _base_get_conn(VITALS_DB_PATH)
     cur = conn.execute(
         "INSERT INTO bp_logs (user_id, systolic, diastolic, measured_at, context, notes, classification, created_at) VALUES (?,?,?,?,?,?,?,?)",
         (user_id, systolic, diastolic, measured_at.isoformat(), context, notes, classification, datetime.now(timezone.utc).isoformat()),

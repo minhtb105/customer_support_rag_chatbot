@@ -59,9 +59,16 @@ def _db_path(explicit=None) -> Path:
 def _ensure_db(target=None) -> Path:
     """Create both tables on the target DB (precedent: labs _ensure_db)."""
     db = _db_path(target)
-    init_table(db, PROFILE_DDL)
-    init_table(db, PROGRESS_DDL, PROGRESS_INDEX)
-    return db
+    try:
+        try:
+            from src.labs.store import ensure_tables
+        except ImportError:
+            from labs.store import ensure_tables  # type: ignore
+        return ensure_tables(db, [(PROFILE_DDL, None), (PROGRESS_DDL, PROGRESS_INDEX)])
+    except ImportError:
+        init_table(db, PROFILE_DDL)
+        init_table(db, PROGRESS_DDL, PROGRESS_INDEX)
+        return db
 
 
 def _now() -> str:

@@ -15,11 +15,17 @@ import unicodedata
 from typing import Any, Dict, Optional
 
 
-def _unaccent(s: str) -> str:
-    out = "".join(
-        c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
-    )
-    return out.replace("đ", "d").replace("Đ", "D").lower()
+try:
+    from src.shared.text import unaccent as _unaccent
+except ImportError:  # pragma: no cover
+    try:
+        from shared.text import unaccent as _unaccent  # type: ignore
+    except ImportError:
+        def _unaccent(s: str) -> str:  # fallback NFD-strip
+            out = "".join(
+                c for c in unicodedata.normalize("NFD", s or "") if unicodedata.category(c) != "Mn"
+            )
+            return out.replace("đ", "d").replace("Đ", "D").lower()
 
 
 _UNITS = {

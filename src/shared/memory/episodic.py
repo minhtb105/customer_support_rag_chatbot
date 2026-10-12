@@ -32,74 +32,11 @@ class ConversationSummary:
         return asdict(self)
 
 
-class MedicalFactExtractor:
-    """Extracts structured medical facts from conversation text."""
-    
-    def __init__(self):
-        # Medical entity patterns
-        self.medical_patterns = {
-            'medications': [
-                r'\b(paracetamol|ibuprofen|aspirin|antibiotic|insulin)\b',
-                r'\b(medication|drug|treatment|prescription)\b',
-                r'\b(dose|dosage|pill|tablet|capsule)\b'
-            ],
-            'symptoms': [
-                r'\b(headache|fever|cough|pain|nausea|dizziness)\b',
-                r'\b(symptom|discomfort|ache|illness)\b',
-                r'\b(feeling|condition|problem)\b'
-            ],
-            'conditions': [
-                r'\b(diabetes|hypertension|asthma|arthritis|depression)\b',
-                r'\b(condition|disease|disorder|illness)\b',
-                r'\b(diagnosis|medical issue)\b'
-            ],
-            'temporal': [
-                r'\b(yesterday|today|tomorrow|last week|recently)\b',
-                r'\b(when|since|for|ago)\b',
-                r'\b(always|sometimes|never|usually)\b'
-            ]
-        }
-    
-    def extract_facts(self, text: str) -> List[Dict[str, Any]]:
-        """Extract structured facts from conversation text."""
-        import re
-        
-        facts = []
-        
-        # Extract medication facts
-        for pattern in self.medical_patterns['medications']:
-            matches = re.findall(pattern, text, re.IGNORECASE)
-            if matches:
-                facts.append({
-                    'type': 'medication',
-                    'entities': matches,
-                    'text': text[:200] + '...' if len(text) > 200 else text,
-                    'confidence': 0.8
-                })
-        
-        # Extract symptom facts
-        for pattern in self.medical_patterns['symptoms']:
-            matches = re.findall(pattern, text, re.IGNORECASE)
-            if matches:
-                facts.append({
-                    'type': 'symptom',
-                    'entities': matches,
-                    'text': text[:200] + '...' if len(text) > 200 else text,
-                    'confidence': 0.7
-                })
-        
-        # Extract condition facts
-        for pattern in self.medical_patterns['conditions']:
-            matches = re.findall(pattern, text, re.IGNORECASE)
-            if matches:
-                facts.append({
-                    'type': 'condition',
-                    'entities': matches,
-                    'text': text[:200] + '...' if len(text) > 200 else text,
-                    'confidence': 0.9
-                })
-        
-        return facts
+try:
+    from ._extract import MedicalEntityExtractor, MedicalFactExtractor
+except ImportError:  # fallback for non-package import
+    from src.shared.memory._extract import (  # type: ignore
+        MedicalEntityExtractor, MedicalFactExtractor)
 
 
 class ConversationSummarizer:

@@ -3,8 +3,7 @@ import { useState } from "react";
 import { generateSoap, generateSoapMarkdown, getGlucose } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import Link from "next/link";
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, ReferenceLine } from "recharts";
-import { useIsDark } from "./ThemeToggle";
+import GlucoseChart from "./GlucoseChart";
 
 function isAnomalyPoint(v: number){ return v>250 || v<70; }
 
@@ -21,14 +20,6 @@ function renderWithLogLinks(text: string, patientId?: string, staffView?: boolea
     }
     return <span key={i}>{p}</span>;
   });
-}
-
-function AnomalyDot(props:any){
-  const { cx, cy, payload } = props;
-  if(!payload) return <g/>;
-  // Server list first (covers trend windows), local spike check as fallback.
-  const anomaly = payload.anomaly ?? isAnomalyPoint(payload.value);
-  return <circle cx={cx} cy={cy} r={anomaly?7:3} fill={anomaly?"#ef4444":"#0ea5e9"} stroke="#fff" strokeWidth={anomaly?2:1} />;
 }
 
 export default function PrevisitView({ patientId, patientName, title, subtitle }: { patientId: string; patientName?: string; title?: string; subtitle?: string }){
@@ -66,9 +57,6 @@ export default function PrevisitView({ patientId, patientName, title, subtitle }
   const vals = chartData.map((d:any)=>Number(d.value)).filter((v:number)=>Number.isFinite(v));
   const yMin = vals.length? Math.max(30, Math.floor(Math.min(...vals)/10)*10 - 10) : 40;
   const yMax = vals.length? Math.ceil(Math.max(...vals)/10)*10 + 10 : 320;
-  const dark = useIsDark();
-  const gridStroke = dark ? "#334155" : "#e2e8f0";
-  const lineStroke = dark ? "#60a5fa" : "#0ea5e9";
   return (
     <div className="space-y-6">
       <div><h1 className="text-xl font-bold">{title || "Hồ sơ trước tái khám (SOAP)"}</h1>{subtitle && <p className="text-sm text-slate-600 dark:text-slate-300">{subtitle}</p>}</div>
@@ -88,7 +76,7 @@ export default function PrevisitView({ patientId, patientName, title, subtitle }
             <div className="rounded-xl border bg-white p-4 shadow-sm lg:col-span-3 dark:bg-slate-900 dark:border-slate-700">
               <div className="text-xs font-bold">Sparkline {days} ngày (30%)</div>
               <div className="mt-2 h-56">
-                {chartData.length? <ResponsiveContainer width="100%" height="100%"><LineChart data={chartData}><CartesianGrid strokeDasharray="3 3" stroke={gridStroke} /><XAxis dataKey="time" tick={{fontSize:9}} interval="preserveStartEnd" stroke={gridStroke} /><YAxis domain={[yMin, yMax]} tick={{fontSize:10}} stroke={gridStroke} /><Tooltip contentStyle={dark?{backgroundColor:"#0f172a",borderColor:"#334155",color:"#e2e8f0"}:undefined} /><ReferenceLine y={126} stroke="#f59e0b" strokeDasharray="4 4" /><ReferenceLine y={200} stroke="#ef4444" strokeDasharray="4 4" /><ReferenceLine y={70} stroke="#f97316" strokeDasharray="4 4" /><Line type="monotone" dataKey="value" stroke={lineStroke} strokeWidth={1.5} dot={<AnomalyDot />} /></LineChart></ResponsiveContainer> : <div className="flex h-full items-center justify-center text-sm text-slate-500">Chưa có dữ liệu</div>}
+                <GlucoseChart points={chartData} yDomain={[yMin, yMax]} emptyHint="Chưa có dữ liệu" />
               </div>
               <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">Chấm đỏ = anomaly ({anomalySource === "server" ? "theo server: spike + trend cascade" : "spike >250 / <70"}). Click [Xem log #id] để xem log thô.</div>
             </div>

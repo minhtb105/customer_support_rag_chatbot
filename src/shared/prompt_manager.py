@@ -8,10 +8,8 @@ from typing import Any, Dict, Optional
 
 try:
     from src.shared.observability.tracing_db import get_active_prompt, create_prompt, approve_prompt, list_prompts
-    from src.shared.observability.local_tracing import short_hash
 except ImportError:
     from shared.observability.tracing_db import get_active_prompt, create_prompt, approve_prompt, list_prompts  # type: ignore
-    from shared.observability.local_tracing import short_hash  # type: ignore
 
 try:
     from shared.prompt_templates import (
@@ -57,11 +55,10 @@ def _seed_if_empty():
     for tone, spec in PROMPT_REGISTRY.items():
         active = get_active_prompt(tone)
         if not active:
-            create_prompt(tone, spec["local"], spec["description"], created_by="system", status="active")
-            # also mark active
-            import hashlib
-            v = hashlib.sha256(spec["local"].encode()).hexdigest()[:8]
-            approve_prompt(tone, v)
+            created = create_prompt(tone, spec["local"], spec["description"], created_by="system", status="active")
+            # reuse returned version (single sha256 in create_prompt)
+            if created:
+                approve_prompt(tone, created["version"])
 
 # ensure seeded on import (best effort)
 try:
@@ -98,8 +95,8 @@ def get_system_prompt(tone: str = "balanced", refresh: bool = False) -> str:
     return spec["local"]
 
 def get_prompt_version(tone: str) -> str:
-    text = get_system_prompt(tone)
-    return short_hash(text)
+    import hashlib
+    return hashlib.sha256(get_system_prompt(tone).encode()).hexdigest()[:8]
 
 def get_evaluation_prompt() -> str:
     return get_system_prompt("evaluation")

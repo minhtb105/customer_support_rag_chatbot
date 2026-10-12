@@ -31,63 +31,10 @@ class Message:
             self.metadata = {}
 
 
-class MedicalEntityExtractor:
-    """Extracts medical entities from text for importance scoring."""
-    
-    def __init__(self):
-        # Common medical keywords and patterns
-        self.medical_keywords = {
-            'medications': [
-                'paracetamol', 'ibuprofen', 'aspirin', 'antibiotic', 'insulin',
-                'blood pressure', 'cholesterol', 'antidepressant', 'painkiller'
-            ],
-            'symptoms': [
-                'headache', 'fever', 'cough', 'pain', 'nausea', 'dizziness',
-                'fatigue', 'shortness of breath', 'chest pain', 'rash'
-            ],
-            'conditions': [
-                'diabetes', 'hypertension', 'asthma', 'arthritis', 'depression',
-                'anxiety', 'cancer', 'heart disease', 'stroke', 'infection'
-            ],
-            'medical_terms': [
-                'dose', 'side effect', 'allergy', 'prescription', 'diagnosis',
-                'treatment', 'symptom', 'condition', 'medication', 'drug'
-            ]
-        }
-    
-    def extract_entities(self, text: str) -> Dict[str, List[str]]:
-        """Extract medical entities from text."""
-        text_lower = text.lower()
-        entities = {}
-        
-        for category, keywords in self.medical_keywords.items():
-            found = []
-            for keyword in keywords:
-                if keyword in text_lower:
-                    found.append(keyword)
-            if found:
-                entities[category] = found
-                
-        return entities
-    
-    def calculate_importance_score(self, text: str) -> float:
-        """Calculate importance score based on medical entity density."""
-        entities = self.extract_entities(text)
-        
-        # Base score
-        score = 0.5
-        
-        # Boost score based on entity types found
-        if 'medications' in entities:
-            score += 0.3 * len(entities['medications'])
-        if 'symptoms' in entities:
-            score += 0.2 * len(entities['symptoms'])
-        if 'conditions' in entities:
-            score += 0.4 * len(entities['conditions'])
-        if 'medical_terms' in entities:
-            score += 0.1 * len(entities['medical_terms'])
-            
-        return min(score, 1.0)  # Cap at 1.0
+try:
+    from ._extract import MedicalEntityExtractor
+except ImportError:  # fallback for non-package import
+    from src.shared.memory._extract import MedicalEntityExtractor  # type: ignore
 
 
 class ContextCompressor:

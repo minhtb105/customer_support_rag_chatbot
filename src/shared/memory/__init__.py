@@ -7,9 +7,10 @@ Provides comprehensive memory management including:
 - Long-term Memory (Semantic Storage)
 """
 
+from ._extract import MedicalEntityExtractor, MedicalFactExtractor
+
 from .short_term import (
     ShortTermMemory,
-    MedicalEntityExtractor,
     ContextCompressor,
     get_short_term_memory
 )
@@ -17,18 +18,18 @@ from .short_term import (
 from .episodic import (
     EpisodicMemory,
     ConversationSummary,
-    MedicalFactExtractor as EpisodicMedicalFactExtractor,
     ConversationSummarizer,
     get_episodic_memory
 )
+EpisodicMedicalFactExtractor = MedicalFactExtractor
 
 from .long_term import (
     LongTermMemory,
     MedicalFact,
-    MedicalEntityExtractor as LongTermMedicalEntityExtractor,
     TemporalWeighting,
     get_long_term_memory
 )
+LongTermMedicalEntityExtractor = MedicalEntityExtractor
 
 __all__ = [
     'ShortTermMemory',

@@ -46,77 +46,10 @@ class MedicalFact:
         return asdict(self)
 
 
-class MedicalEntityExtractor:
-    """Enhanced medical entity extractor for long-term memory."""
-    
-    def __init__(self):
-        self.medical_patterns = {
-            'medications': [
-                r'\b(paracetamol|ibuprofen|aspirin|antibiotic|insulin|metformin)\b',
-                r'\b(medication|drug|treatment|prescription|medicine)\b',
-                r'\b(dose|dosage|pill|tablet|capsule|injection)\b',
-                # Tiếng Việt (bệnh nhân ĐTĐ)
-                r'\b(thuốc|liều|viên|tiêm|uống thuốc|đơn thuốc|metformin|insulin)\b',
-            ],
-            'symptoms': [
-                r'\b(headache|fever|cough|pain|nausea|dizziness|fatigue)\b',
-                r'\b(symptom|discomfort|ache|illness|condition)\b',
-                r'\b(feeling|problem|issue|complaint)\b',
-                # Tiếng Việt
-                r'\b(mệt|chóng mặt|khát nước|tiểu nhiều|mờ mắt|tê bì|đau đầu|hạ đường huyết|tăng đường huyết|đo đường huyết)\b',
-            ],
-            'conditions': [
-                r'\b(diabetes|hypertension|asthma|arthritis|depression|anxiety)\b',
-                r'\b(condition|disease|disorder|illness|syndrome)\b',
-                r'\b(diagnosis|medical issue|health problem)\b',
-                # Tiếng Việt
-                r'\b(tiểu đường|đái tháo đường|huyết áp|mỡ máu|béo phì|suy thận|tim mạch|gan nhiễm mỡ|tiền tiểu đường)\b',
-            ],
-            'allergies': [
-                r'\b(allergy|allergic|sensitivity|reaction)\b',
-                r'\b(penicillin|peanut|shellfish|pollen)\b',
-                r'\b(dị ứng|mẩn ngứa|phát ban)\b',
-            ],
-            'lifestyle': [
-                r'\b(diet|exercise|sleep|stress|smoking|alcohol)\b',
-                r'\b(lifestyle|habits|routine|wellness)\b',
-                # Tiếng Việt
-                r'\b(ăn ngọt|ăn kiêng|tập thể dục|chạy bộ|đi bộ|mất ngủ|rượu|bia|thuốc lá|trà sữa|chế độ ăn|giảm cân|bỏ bữa)\b',
-            ]
-        }
-    
-    def extract_entities(self, text: str) -> Dict[str, List[str]]:
-        """Extract medical entities from text."""
-        import re
-        
-        entities = {}
-        text_lower = text.lower()
-        
-        for category, patterns in self.medical_patterns.items():
-            found = []
-            for pattern in patterns:
-                matches = re.findall(pattern, text_lower)
-                found.extend(matches)
-            
-            if found:
-                entities[category] = list(set(found))  # Remove duplicates
-        
-        return entities
-    
-    def classify_fact_type(self, entities: Dict[str, List[str]]) -> str:
-        """Classify the type of medical fact based on entities."""
-        if 'medications' in entities:
-            return 'medication'
-        elif 'symptoms' in entities:
-            return 'symptom'
-        elif 'conditions' in entities:
-            return 'condition'
-        elif 'allergies' in entities:
-            return 'allergy'
-        elif 'lifestyle' in entities:
-            return 'lifestyle'
-        else:
-            return 'general'
+try:
+    from ._extract import MedicalEntityExtractor
+except ImportError:  # fallback for non-package import
+    from src.shared.memory._extract import MedicalEntityExtractor  # type: ignore
 
 
 class TemporalWeighting:

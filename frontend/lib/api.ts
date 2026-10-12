@@ -13,6 +13,27 @@ async function authFetch(url: string, opts: RequestInit = {}) {
   return res;
 }
 
+// Shared GET/POST over authFetch: builds query params, throws with slice(0,300).
+async function apiGet<T = any>(path: string, params?: Record<string, any>, label?: string): Promise<T> {
+  const url = new URL(`${API}${path}`);
+  Object.entries(params || {}).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v)); });
+  const res = await authFetch(url.toString(), { method: "GET" });
+  if (!res.ok) throw new Error(`${label || `GET ${path}`} failed ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  return res.json();
+}
+
+async function apiPost<T = any>(path: string, body?: any, label?: string, method = "POST"): Promise<T> {
+  const res = await authFetch(`${API}${path}`, { method, body: body !== undefined ? JSON.stringify(body) : undefined });
+  if (!res.ok) throw new Error(`${label || `POST ${path}`} failed ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  return res.json();
+}
+
+async function apiPostText(path: string, body?: any, label?: string): Promise<string> {
+  const res = await authFetch(`${API}${path}`, { method: "POST", body: body !== undefined ? JSON.stringify(body) : undefined });
+  if (!res.ok) throw new Error(`${label || `POST ${path}`} failed ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  return res.text();
+}
+
 // DB stores failed_metrics as JSON in most rows, but some legacy rows hold
 // a Python-repr string — parse defensively so one bad row never crashes a list.
 export function parseFailedMetrics(v: any): string[] {
@@ -52,16 +73,13 @@ export function fmtDT(iso: any): string {
   });
 }
 
+// Shared RAG request body (queryRag + queryRagStream, same contract).
+function ragBody(query: string, top_k = 5, user_id = "default_user") {
+  return { query, top_k, user_id, include_audit: true };
+}
+
 export async function queryRag(query: string, top_k = 5, user_id = "default_user", language = "vi") {
-  const res = await authFetch(`${API}/v1/query`, {
-    method: "POST",
-    body: JSON.stringify({ query, top_k, user_id, language, include_audit: true }),
-  });
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`query failed ${res.status}: ${txt.slice(0,300)}`);
-  }
-  return res.json();
+  return apiPost("/v1/query", { ...ragBody(query, top_k, user_id), language }, "query");
 }
 
 // SSE streaming for POST /v1/query/stream — yields {event, data} via callback
@@ -72,7 +90,7 @@ export async function queryRagStream(
   const { top_k = 5, user_id = "default_user", onEvent, onToken, signal } = opts;
   const res = await authFetch(`${API}/v1/query/stream`, {
     method: "POST",
-    body: JSON.stringify({ query, top_k, user_id, include_audit: true }),
+    body: JSON.stringify(ragBody(query, top_k, user_id)),
     headers: { Accept: "text/event-stream" },
     signal,
   });
@@ -119,32 +137,23 @@ export async function queryRagStream(
 export interface GlucoseAnomaly { type: "spike" | "trend" | "none"; direction?: string; reason: string; }
 export interface GlucoseLogOut { id: number; user_id: string; value_mgdl: number; measured_at: string; context: string; notes?: string; classification: string; message: string; anomaly?: GlucoseAnomaly | null; follow_up_questions?: string[]; }
 export async function logGlucose(payload: { user_id: string; value_mgdl: number; context: string; notes?: string; measured_at?: string }): Promise<GlucoseLogOut> {
-  const res = await authFetch(`${API}/v1/glucose`, { method: "POST", body: JSON.stringify(payload) });
-  if (!res.ok) throw new Error(`glucose log failed ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost("/v1/glucose", payload, "glucose log");
 }
 export async function getGlucose(user_id: string, limit = 50, days?: number) {
-  const url = new URL(`${API}/v1/glucose/${encodeURIComponent(user_id)}`);
-  url.searchParams.set("limit", String(limit));
-  if (days) url.searchParams.set("days", String(days));
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`get glucose failed ${res.status}`);
-  return res.json();
+  return apiGet(`/v1/glucose/${encodeURIComponent(user_id)}`, { limit, days }, "get glucose");
 }
 export async function saveGlucoseFollowup(payload: { user_id: string; text: string; related_log_id?: number }) {
-  const res = await authFetch(`${API}/v1/glucose/followup`, { method: "POST", body: JSON.stringify(payload) });
-  if (!res.ok) throw new Error(`followup failed ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost("/v1/glucose/followup", payload, "followup");
+}
+// Shared SOAP body (JSON + Markdown share user_id/days/language/disease).
+function soapBody(user_id: string, days = 14, disease: string = "diabetes") {
+  return { user_id, days, language: "vi", disease };
 }
 export async function generateSoap(user_id: string, days = 14, disease: string = "diabetes") {
-  const res = await authFetch(`${API}/v1/soap/generate`, { method: "POST", body: JSON.stringify({ user_id, days, language: "vi", disease }) });
-  if (!res.ok) throw new Error(`soap failed ${res.status}`);
-  return res.json();
+  return apiPost("/v1/soap/generate", soapBody(user_id, days, disease), "soap");
 }
 export async function generateSoapMarkdown(user_id: string, days = 14, disease: string = "diabetes") {
-  const res = await authFetch(`${API}/v1/soap/generate/markdown`, { method: "POST", body: JSON.stringify({ user_id, days, language: "vi", disease }) });
-  if (!res.ok) throw new Error(`soap md failed ${res.status}`);
-  return res.text();
+  return apiPostText("/v1/soap/generate/markdown", soapBody(user_id, days, disease), "soap md");
 }
 export async function getHealth() {
   const res = await fetch(`${API}/v1/health`, { cache: "no-store" });
@@ -154,256 +163,145 @@ export async function getHealth() {
 
 // P3: tra cứu dinh dưỡng cấu trúc (không LLM) — món ăn VN cho tiểu đường.
 export async function lookupNutrition(query: string, profile: "mild" | "severe" | "both" = "both", top_k = 3) {
-  const res = await authFetch(`${API}/v1/nutrition/lookup`, {
-    method: "POST", body: JSON.stringify({ query, profile, top_k }),
-  });
-  if (!res.ok) throw new Error(`lookup failed ${res.status}`);
-  return res.json();
+  return apiPost("/v1/nutrition/lookup", { query, profile, top_k }, "lookup");
 }
 export async function getGuidelinesStatus() {
   const res = await fetch(`${API}/v1/guidelines/status`, { cache: "no-store" });
   if (!res.ok) throw new Error("guidelines failed");
   return res.json();
 }
-// Reviews & notifications
+// Reviews & notifications (shared /v1/reviews base).
+function reviewsPath(me = false) {
+  return me ? "/v1/reviews/me" : "/v1/reviews";
+}
 export async function getReviews(status?: string) {
-  const url = new URL(`${API}/v1/reviews`);
-  if (status) url.searchParams.set("status", status);
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`get reviews failed ${res.status}`);
-  return res.json();
+  return apiGet(reviewsPath(), { status }, "get reviews");
 }
 export async function getMyReviews() {
-  const res = await authFetch(`${API}/v1/reviews/me`, { method: "GET" });
-  if (!res.ok) throw new Error(`my reviews failed`);
-  return res.json();
+  return apiGet(reviewsPath(true), undefined, "my reviews");
 }
 export async function getReviewDetail(id: string) {
-  const res = await authFetch(`${API}/v1/reviews/${id}`, { method: "GET" });
-  if (!res.ok) throw new Error(`review ${res.status}`);
-  return res.json();
+  return apiGet(`/v1/reviews/${id}`, undefined, "review");
 }
 export async function decideReview(id: string, body: { decision: string; final_answer?: string; expert_notes?: string }) {
-  const res = await authFetch(`${API}/v1/reviews/${id}/decide`, { method: "POST", body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(`decide failed ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost(`/v1/reviews/${id}/decide`, body, "decide");
 }
 export async function getNotifications() {
-  const res = await authFetch(`${API}/v1/auth/notifications`, { method: "GET" });
-  if (!res.ok) throw new Error(`notif failed`);
-  return res.json();
+  return apiGet("/v1/auth/notifications", undefined, "notif");
 }
 export async function getQueryHistory() {
-  const res = await authFetch(`${API}/v1/query/history`, { method: "GET" });
-  if (!res.ok) throw new Error(`history failed`);
-  return res.json();
+  return apiGet("/v1/query/history", undefined, "history");
 }
 export async function adminListUsers(role?: string) {
-  const url = new URL(`${API}/v1/auth/users`);
-  if (role) url.searchParams.set("role", role);
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`list users ${res.status}`);
-  return res.json();
+  return apiGet("/v1/auth/users", { role }, "list users");
 }
 export async function adminUpdateUser(id: string, data: any) {
-  const res = await authFetch(`${API}/v1/auth/users/${id}`, { method: "PATCH", body: JSON.stringify(data) });
-  if (!res.ok) throw new Error(`update user ${res.status}`);
-  return res.json();
+  return apiPost(`/v1/auth/users/${id}`, data, "update user", "PATCH");
 }
 export async function adminVerifyExpert(id: string) {
-  const res = await authFetch(`${API}/v1/auth/users/${id}/verify`, { method: "POST" });
-  if (!res.ok) throw new Error(`verify ${res.status}`);
-  return res.json();
+  return apiPost(`/v1/auth/users/${id}/verify`, undefined, "verify");
 }
 // Tracing (admin)
 export async function adminListTraces(params: any = {}) {
-  const url = new URL(`${API}/v1/admin/traces`);
-  Object.entries(params).forEach(([k,v])=>{ if(v!==undefined && v!==null && v!=="") url.searchParams.set(k, String(v)); });
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`traces ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiGet("/v1/admin/traces", params, "traces");
 }
 export async function adminGetTrace(id: string) {
-  const res = await authFetch(`${API}/v1/admin/traces/${id}`, { method: "GET" });
-  if (!res.ok) throw new Error(`trace ${res.status}`);
-  return res.json();
+  return apiGet(`/v1/admin/traces/${id}`, undefined, "trace");
 }
 export async function adminTriggerRagas(id: string) {
-  const res = await authFetch(`${API}/v1/admin/traces/${id}/ragas`, { method: "POST" });
-  if (!res.ok) throw new Error(`ragas ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost(`/v1/admin/traces/${id}/ragas`, undefined, "ragas");
 }
 export async function adminListCollections() {
-  const res = await authFetch(`${API}/v1/admin/collections`, { method: "GET" });
-  if (!res.ok) throw new Error(`collections ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiGet("/v1/admin/collections", undefined, "collections");
 }
 export async function adminListCollectionChunks(strategy: string, params: { page?: number; limit?: number; dataset?: string; q?: string } = {}) {
-  const url = new URL(`${API}/v1/admin/collections/${encodeURIComponent(strategy)}/chunks`);
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v)); });
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`chunks ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiGet(`/v1/admin/collections/${encodeURIComponent(strategy)}/chunks`, params, "chunks");
 }
 export async function adminListUserFacts(user_id: string, params: { page?: number; limit?: number; fact_type?: string; q?: string } = {}) {
-  const url = new URL(`${API}/v1/admin/memory/facts`);
-  url.searchParams.set("user_id", user_id);
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v)); });
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`memory facts ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiGet("/v1/admin/memory/facts", { user_id, ...params }, "memory facts");
 }
 export async function adminListPrompts(tone?: string) {
-  const url = new URL(`${API}/v1/admin/prompts`);
-  if (tone) url.searchParams.set("tone", tone);
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`prompts ${res.status}`);
-  return res.json();
+  return apiGet("/v1/admin/prompts", { tone }, "prompts");
 }
 export async function adminGetPromptTone(tone: string) {
-  const res = await authFetch(`${API}/v1/admin/prompts/${tone}`, { method: "GET" });
-  if (!res.ok) throw new Error(`prompt ${res.status}`);
-  return res.json();
+  return apiGet(`/v1/admin/prompts/${tone}`, undefined, "prompt");
 }
 export async function adminCreatePromptDraft(tone: string, text: string, description?: string) {
-  const res = await authFetch(`${API}/v1/admin/prompts/draft`, { method: "POST", body: JSON.stringify({ tone, text, description }) });
-  if (!res.ok) throw new Error(`draft ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost("/v1/admin/prompts/draft", { tone, text, description }, "draft");
 }
 export async function adminApprovePrompt(tone: string, version: string) {
-  const res = await authFetch(`${API}/v1/admin/prompts/${tone}/approve/${version}`, { method: "POST" });
-  if (!res.ok) throw new Error(`approve ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost(`/v1/admin/prompts/${tone}/approve/${version}`, undefined, "approve");
 }
 export async function adminRejectPrompt(tone: string, version: string) {
-  const res = await authFetch(`${API}/v1/admin/prompts/${tone}/reject/${version}`, { method: "POST" });
-  if (!res.ok) throw new Error(`reject ${res.status}`);
-  return res.json();
+  return apiPost(`/v1/admin/prompts/${tone}/reject/${version}`, undefined, "reject");
 }
 export async function adminDryRun(tone: string, text: string, queries: string[]) {
-  const res = await authFetch(`${API}/v1/admin/prompts/dry-run`, { method: "POST", body: JSON.stringify({ tone, text, queries }) });
-  if (!res.ok) throw new Error(`dry-run ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost("/v1/admin/prompts/dry-run", { tone, text, queries }, "dry-run");
 }
 
 // Monitors
 export async function getMonitorsStatus() {
-  const res = await authFetch(`${API}/v1/monitors/status`, { method: "GET" });
-  if (!res.ok) throw new Error(`monitors status ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiGet("/v1/monitors/status", undefined, "monitors status");
 }
 export async function getMonitorSources() {
-  const res = await authFetch(`${API}/v1/monitors/sources`, { method: "GET" });
-  if (!res.ok) throw new Error(`monitor sources ${res.status}`);
-  return res.json();
+  return apiGet("/v1/monitors/sources", undefined, "monitor sources");
 }
 export async function getMonitorRuns(source_key?: string, limit = 20) {
-  const url = new URL(`${API}/v1/monitors/runs`);
-  if (source_key) url.searchParams.set("source_key", source_key);
-  url.searchParams.set("limit", String(limit));
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`monitor runs ${res.status}`);
-  return res.json();
+  return apiGet("/v1/monitors/runs", { source_key, limit }, "monitor runs");
 }
 export async function triggerGuidelineCheck(source_key?: string, force = true) {
-  const url = new URL(`${API}/v1/monitors/check/guidelines`);
-  if (source_key) url.searchParams.set("source_key", source_key);
-  url.searchParams.set("force", String(force));
-  const res = await authFetch(url.toString(), { method: "POST" });
-  if (!res.ok) throw new Error(`trigger guideline ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost(`/v1/monitors/check/guidelines?source_key=${encodeURIComponent(source_key || "")}&force=${String(force)}`, undefined, "trigger guideline");
 }
 export async function listGuidelines(params: { status?: string; source?: string; limit?: number; offset?: number } = {}) {
-  const url = new URL(`${API}/v1/monitors/guidelines`);
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v)); });
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`list guidelines ${res.status}`);
-  return res.json();
+  return apiGet("/v1/monitors/guidelines", params, "list guidelines");
 }
 export async function getGuideline(gid: string) {
-  const res = await authFetch(`${API}/v1/monitors/guidelines/${encodeURIComponent(gid)}`, { method: "GET" });
-  if (!res.ok) throw new Error(`get guideline ${res.status}`);
-  return res.json();
+  return apiGet(`/v1/monitors/guidelines/${encodeURIComponent(gid)}`, undefined, "get guideline");
 }
 export async function decideGuideline(gid: string, decision: "approved" | "rejected", notes?: string) {
-  const res = await authFetch(`${API}/v1/monitors/guidelines/${encodeURIComponent(gid)}/decision`, { method: "POST", body: JSON.stringify({ decision, notes }) });
-  if (!res.ok) throw new Error(`decide guideline ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost(`/v1/monitors/guidelines/${encodeURIComponent(gid)}/decision`, { decision, notes }, "decide guideline");
 }
 export async function triggerSafetyCheck(source: "fda" | "byt" | "all" = "all") {
-  const res = await authFetch(`${API}/v1/monitors/check/safety?source=${source}`, { method: "POST" });
-  if (!res.ok) throw new Error(`trigger safety ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost(`/v1/monitors/check/safety?source=${source}`, undefined, "trigger safety");
 }
 export async function listAlerts(params: { status?: string; severity?: string; source?: string; limit?: number; offset?: number } = {}) {
-  const url = new URL(`${API}/v1/monitors/alerts`);
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v)); });
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`list alerts ${res.status}`);
-  return res.json();
+  return apiGet("/v1/monitors/alerts", params, "list alerts");
 }
 export async function getAlert(aid: string) {
-  const res = await authFetch(`${API}/v1/monitors/alerts/${encodeURIComponent(aid)}`, { method: "GET" });
-  if (!res.ok) throw new Error(`get alert ${res.status}`);
-  return res.json();
+  return apiGet(`/v1/monitors/alerts/${encodeURIComponent(aid)}`, undefined, "get alert");
 }
 export async function decideAlert(aid: string, decision: "approved" | "dismissed", notes?: string) {
-  const res = await authFetch(`${API}/v1/monitors/alerts/${encodeURIComponent(aid)}/decision`, { method: "POST", body: JSON.stringify({ decision, notes }) });
-  if (!res.ok) throw new Error(`decide alert ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost(`/v1/monitors/alerts/${encodeURIComponent(aid)}/decision`, { decision, notes }, "decide alert");
 }
 export async function getMonitorsStats() {
-  const res = await authFetch(`${API}/v1/monitors/stats`, { method: "GET" });
-  if (!res.ok) throw new Error(`monitors stats ${res.status}`);
-  return res.json();
+  return apiGet("/v1/monitors/stats", undefined, "monitors stats");
 }
 
 export async function getDoctorPatients(limit = 100, offset = 0) {
-  const url = new URL(`${API}/v1/doctor/patients`);
-  url.searchParams.set("limit", String(limit));
-  url.searchParams.set("offset", String(offset));
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`doctor patients ${res.status}`);
-  return res.json();
+  return apiGet("/v1/doctor/patients", { limit, offset }, "doctor patients");
 }
 export async function adminListTriageEvents(params: { page?: number; limit?: number; specialty?: string; emergency?: boolean; q?: string } = {}) {
-  const url = new URL(`${API}/v1/admin/triage/events`);
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v)); });
-  const res = await authFetch(url.toString(), { method: "GET" });
-  if (!res.ok) throw new Error(`triage events ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiGet("/v1/admin/triage/events", params, "triage events");
 }
 export const API_BASE = API;
 
 // Micro-curriculum (learn): lessons + quiz + adaptive + 7-day today.
 export async function getLessons(userId: string) {
-  const res = await authFetch(`${API}/v1/lessons?user_id=${encodeURIComponent(userId)}`, { method: "GET" });
-  if (!res.ok) throw new Error(`lessons ${res.status}`);
-  return res.json();
+  return apiGet("/v1/lessons", { user_id: userId }, "lessons");
 }
 export async function getLesson(lessonId: string, userId: string) {
-  const res = await authFetch(`${API}/v1/lessons/${encodeURIComponent(lessonId)}?user_id=${encodeURIComponent(userId)}`, { method: "GET" });
-  if (!res.ok) throw new Error(`lesson ${res.status}`);
-  return res.json();
+  return apiGet(`/v1/lessons/${encodeURIComponent(lessonId)}`, { user_id: userId }, "lesson");
 }
 export async function submitLessonQuiz(lessonId: string, userId: string, answer: number | string) {
   const body = typeof answer === "string" ? { answer_text: answer } : { answer };
-  const res = await authFetch(`${API}/v1/lessons/${encodeURIComponent(lessonId)}/quiz?user_id=${encodeURIComponent(userId)}`, { method: "POST", body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(`quiz ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost(`/v1/lessons/${encodeURIComponent(lessonId)}/quiz?user_id=${encodeURIComponent(userId)}`, body, "quiz");
 }
 export async function getNextLesson(userId: string) {
-  const res = await authFetch(`${API}/v1/lessons/next?user_id=${encodeURIComponent(userId)}`, { method: "GET" });
-  if (!res.ok) throw new Error(`next lesson ${res.status}`);
-  return res.json();
+  return apiGet("/v1/lessons/next", { user_id: userId }, "next lesson");
 }
 export async function getTodayLesson(userId: string) {
-  const res = await authFetch(`${API}/v1/lessons/today?user_id=${encodeURIComponent(userId)}`, { method: "GET" });
-  if (!res.ok) throw new Error(`today lesson ${res.status}`);
-  return res.json();
+  return apiGet("/v1/lessons/today", { user_id: userId }, "today lesson");
 }
 export async function saveLearnOnboarding(userId: string, data: { age?: number; meds?: string; has_meter?: number }) {
-  const res = await authFetch(`${API}/v1/lessons/onboarding?user_id=${encodeURIComponent(userId)}`, { method: "POST", body: JSON.stringify(data) });
-  if (!res.ok) throw new Error(`learn onboarding ${res.status}: ${await res.text()}`);
-  return res.json();
+  return apiPost(`/v1/lessons/onboarding?user_id=${encodeURIComponent(userId)}`, data, "learn onboarding");
 }

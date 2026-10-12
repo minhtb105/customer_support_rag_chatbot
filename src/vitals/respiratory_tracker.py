@@ -22,9 +22,6 @@ except ImportError:  # pragma: no cover
 # Module-namespace patchable + env-overridable (tests cách ly DB dev)
 VITALS_DB_PATH = Path(os.getenv("VITALS_DB_PATH", str(_DEFAULT_VITALS_DB_PATH)))
 
-def _get_conn():
-    return _base_get_conn(VITALS_DB_PATH)
-
 def init_respiratory_db():
     init_table(
         VITALS_DB_PATH,
@@ -107,7 +104,7 @@ def add_respiratory_log(user_id: str, peak_flow_percent: Optional[int] = None, p
     else:
         classification = peak_zone
         message = f"{peak_msg} {inhaler_msg}"
-    conn = _get_conn()
+    conn = _base_get_conn(VITALS_DB_PATH)
     cur = conn.execute(
         "INSERT INTO respiratory_logs (user_id, peak_flow_percent, personal_best, gold_stage, cat_score, inhaler_correct, inhaler_steps_correct, inhaler_steps_total, measured_at, context, notes, classification, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (user_id, peak_flow_percent, personal_best, gold, cat_score, inhaler_correct, inhaler_steps_correct, inhaler_steps_total, measured_at.isoformat(), context, notes, classification, datetime.now(timezone.utc).isoformat()),

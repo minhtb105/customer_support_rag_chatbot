@@ -29,27 +29,23 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
 
-def job_fda_daily():
-    log.info("[scheduler] FDA daily check start")
-    rid = create_run("fda_recall")
+def run_job(key, fn):
+    """Shared create_run/finish_run wrapper (fail-open, never raises)."""
+    log.info(f"[scheduler] {key} start")
+    rid = create_run(key)
     try:
-        res = check_fda_alerts()
-        finish_run(rid, found_new=res.get("found_new", 0), status="success")
-        log.info(f"[scheduler] FDA done: {res}")
+        res = fn() or {}
+        finish_run(rid, found_new=res.get("found_new", 0) if isinstance(res, dict) else 0, status="success")
+        log.info(f"[scheduler] {key} done: {res}")
     except Exception as e:
         finish_run(rid, status="failed", error=str(e)[:500])
-        log.exception(f"[scheduler] FDA failed: {e}")
+        log.exception(f"[scheduler] {key} failed: {e}")
+
+def job_fda_daily():
+    run_job("fda_recall", check_fda_alerts)
 
 def job_byt_weekly():
-    log.info("[scheduler] BYT/DAV weekly check start")
-    rid = create_run("dav_thuhoi")
-    try:
-        res = fetch_byt_dav_alerts()
-        finish_run(rid, found_new=res.get("found_new", 0), status="success")
-        log.info(f"[scheduler] BYT done: {res}")
-    except Exception as e:
-        finish_run(rid, status="failed", error=str(e)[:500])
-        log.exception(f"[scheduler] BYT failed: {e}")
+    run_job("dav_thuhoi", fetch_byt_dav_alerts)
 
 def job_guideline_monthly_head():
     log.info("[scheduler] Guideline monthly HEAD check start")

@@ -36,6 +36,14 @@ def _call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 1200) -> s
     except Exception as e:
         raise e
 
+def _summarize_or_fallback(system: str, user: str, max_tokens: int, defaults: Dict[str, Any]) -> Dict[str, Any]:
+    """Shared LLM JSON call + setdefaults (throws to caller fallback)."""
+    raw = _call_llm(system, user, max_tokens=max_tokens)
+    parsed = json.loads(raw)
+    for k, v in defaults.items():
+        parsed.setdefault(k, v)
+    return parsed
+
 def summarize_guideline_diff(
     source: str,
     title: str,
@@ -55,18 +63,16 @@ def summarize_guideline_diff(
         "Hãy trả về JSON đúng schema đã mô tả trong system prompt."
     )
     try:
-        raw = _call_llm(system, user, max_tokens=1500)
-        parsed = json.loads(raw)
-        # ensure required keys
-        parsed.setdefault("tom_tat_tieng_viet", "")
-        parsed.setdefault("changed_sections", [])
-        parsed.setdefault("dosage_changes", [])
-        parsed.setdefault("new_recommendations", [])
-        parsed.setdefault("removed_recommendations", [])
-        parsed.setdefault("version_phat_hien", version_hint or "")
-        parsed.setdefault("ngay_xuat_ban", publication_date_hint or "")
-        parsed.setdefault("muc_do_quan_trong", "medium")
-        return parsed
+        return _summarize_or_fallback(system, user, 1500, {
+            "tom_tat_tieng_viet": "",
+            "changed_sections": [],
+            "dosage_changes": [],
+            "new_recommendations": [],
+            "removed_recommendations": [],
+            "version_phat_hien": version_hint or "",
+            "ngay_xuat_ban": publication_date_hint or "",
+            "muc_do_quan_trong": "medium",
+        })
     except Exception as e:
         # heuristic fallback — still VI
         snippet = new_text[:500].replace("\n", " ")
@@ -88,18 +94,17 @@ def summarize_safety_alert(raw_json: Dict[str, Any], source: str) -> Dict[str, A
     system = get_system_prompt("safety_summary")
     user = f"Nguồn: {source}\nDữ liệu thô (JSON):\n{json.dumps(raw_json, ensure_ascii=False)[:7000]}\n\nTrả về JSON đúng schema safety_summary."
     try:
-        raw = _call_llm(system, user, max_tokens=1000)
-        parsed = json.loads(raw)
-        parsed.setdefault("tieu_de_vi", raw_json.get("alert_title") or "Cảnh báo an toàn thuốc")
-        parsed.setdefault("tom_tat_vi", "")
-        parsed.setdefault("thuoc_lien_quan", [])
-        parsed.setdefault("loai_canh_bao", "recall")
-        parsed.setdefault("muc_do", "medium")
-        parsed.setdefault("ly_do", "")
-        parsed.setdefault("khuyen_cao", "")
-        parsed.setdefault("nguon", source)
-        parsed.setdefault("diem_rui_ro", 0.5)
-        return parsed
+        return _summarize_or_fallback(system, user, 1000, {
+            "tieu_de_vi": raw_json.get("alert_title") or "Cảnh báo an toàn thuốc",
+            "tom_tat_vi": "",
+            "thuoc_lien_quan": [],
+            "loai_canh_bao": "recall",
+            "muc_do": "medium",
+            "ly_do": "",
+            "khuyen_cao": "",
+            "nguon": source,
+            "diem_rui_ro": 0.5,
+        })
     except Exception as e:
         # heuristic
         title = raw_json.get("alert_title") or raw_json.get("title") or "Cảnh báo"

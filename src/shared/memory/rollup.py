@@ -16,16 +16,21 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 
-def _current_monday() -> str:
+def _monday_of(week_key: Optional[str] = None) -> str:
+    """Single week-key helper (inlined use in rollup_weekly)."""
+    if week_key:
+        return week_key.strip()
     today = datetime.now(timezone.utc).date()
-    monday = today - timedelta(days=today.weekday())
-    return monday.isoformat()
+    return (today - timedelta(days=today.weekday())).isoformat()
+
+
+# Old names kept as wrappers.
+def _current_monday() -> str:
+    return _monday_of(None)
 
 
 def _normalize_week_key(week_key: Optional[str]) -> str:
-    if week_key:
-        return week_key.strip()
-    return _current_monday()
+    return _monday_of(week_key)
 
 
 def _rollup_key(monday: str) -> str:

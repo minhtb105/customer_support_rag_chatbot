@@ -8,16 +8,13 @@ Chạy:  python scripts/nutrition/parse_sydney.py
 """
 from __future__ import annotations
 
-import csv
-import json
-import logging
 import re
+import sys
 from pathlib import Path
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-log = logging.getLogger(__name__)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-OUT = Path(__file__).resolve().parents[2] / "data" / "raw" / "nutrition" / "_interim"
+from _parse_io import load_json, log, save_csv
 
 PAT = re.compile(
     r"(?m)^(\d{1,4}) \n(.+?) \n([A-Za-z][A-Za-z .'\-()]*?) \n(\d{4}\*?) \n(\d+)±(\d+)? \n(\d+) \n",
@@ -67,14 +64,11 @@ def parse(text: str, tier: str) -> list[dict]:
 
 
 def main() -> None:
-    raw = json.loads((OUT / "sydney_raw.json").read_text(encoding="utf-8"))
+    raw = load_json("sydney_raw.json")
     all_rows = parse(raw["sydney_table1.pdf"], "table1") + parse(
         raw["sydney_table2.pdf"], "table2")
-    with open(OUT / "sydney_gi.csv", "w", newline="", encoding="utf-8-sig") as f:
-        w = csv.DictWriter(f, fieldnames=["ref_id", "food_en", "country", "year",
-                                          "gi", "gl", "tier"])
-        w.writeheader()
-        w.writerows(all_rows)
+    save_csv("sydney_gi.csv", all_rows, ["ref_id", "food_en", "country", "year",
+                                         "gi", "gl", "tier"])
     t1 = sum(1 for r in all_rows if r["tier"] == "table1")
     log.info("Parsed %d rows (table1=%d, table2=%d)", len(all_rows), t1, len(all_rows) - t1)
 

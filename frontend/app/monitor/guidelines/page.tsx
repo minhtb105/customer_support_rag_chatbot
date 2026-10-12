@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { listGuidelines, decideGuideline, triggerGuidelineCheck, fmtDT } from "@/lib/api";
+import { useMonitorList, MonitorMsg, MonitorLoading } from "@/components/MonitorList";
 
 type GItem = {
   id: string;
@@ -17,27 +18,12 @@ type GItem = {
 
 export default function GuidelinesPage() {
   const { user } = useAuth();
-  const [items, setItems] = useState<GItem[]>([]);
-  const [total, setTotal] = useState(0);
   const [status, setStatus] = useState("pending_review");
-  const [msg, setMsg] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  const fetchList = async () => {
-    setLoading(true);
-    try {
-      const j = await listGuidelines({ status, limit: 20 });
-      setItems(j.items || []);
-      setTotal(j.total || 0);
-    } catch (e: any) {
-      setMsg(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    fetchList();
-  }, [status]);
+  const { items, total, msg, setMsg, loading, fetchList } = useMonitorList<GItem>(
+    () => listGuidelines({ status, limit: 20 }),
+    [status]
+  );
 
   const decide = async (gid: string, decision: "approved" | "rejected") => {
     const notes = prompt(`Ghi chú cho ${decision} (để trống nếu không cần):`) || "";
@@ -81,10 +67,8 @@ export default function GuidelinesPage() {
         </button>
         <span className="py-2 text-xs text-slate-500">Tổng: {total}</span>
       </div>
-      {msg && <div className="rounded-lg border bg-slate-50 p-3 text-xs">{msg}</div>}
-      {loading ? (
-        <div className="text-sm text-slate-500">Đang tải…</div>
-      ) : items.length ? (
+      <MonitorMsg msg={msg} />
+      <MonitorLoading loading={loading} empty={!items.length} emptyText={`Không có bản ghi ${status}.`}>
         <div className="space-y-3">
           {items.map((it) => {
             let summary: any = null;
@@ -119,9 +103,7 @@ export default function GuidelinesPage() {
             );
           })}
         </div>
-      ) : (
-        <div className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 text-sm text-slate-500">Không có bản ghi {status}.</div>
-      )}
+      </MonitorLoading>
     </div>
   );
 }
