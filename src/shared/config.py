@@ -33,13 +33,13 @@ SLIDING_OVERLAP = 64
 SEMANTIC_SIM_THRESHOLD = 0.9128
 ATOMIC_TOKEN_SIZE = 120
 SENTENCE_GROUP = 4
-# Index strategies built by `indexer.main()` — default structure-only POC.
-# Existing sliding/semantic/hybrid collections on disk keep serving reads.
-# Re-enable full rebuild with: INDEX_STRATEGIES=structure,sliding,semantic,hybrid_section_semantic
-INDEX_STRATEGIES = [s.strip() for s in os.getenv("INDEX_STRATEGIES", "structure").split(",") if s.strip()]
-# Single-source serving default (env override; stays "structure" until a
-# benchmark winner is locked, then set to the winner name).
-DEFAULT_CHUNK_STRATEGY = os.getenv("DEFAULT_CHUNK_STRATEGY", "structure")
+# Index strategies built by `indexer.main()` — default = benchmark winner
+# (B1 2026-10-12, NVIDIA, 12 strategies: hybrid_section_semantic
+# Recall@5 0.8875 / Hit@5 1.0 / MRR 0.9083).
+INDEX_STRATEGIES = [s.strip() for s in os.getenv("INDEX_STRATEGIES", "hybrid_section_semantic").split(",") if s.strip()]
+# Single-source serving default (env override). Winner locked 2026-10-12:
+# hybrid_section_semantic (beat sentence 0.8625, semantic 0.85, structure 0.8125).
+DEFAULT_CHUNK_STRATEGY = os.getenv("DEFAULT_CHUNK_STRATEGY", "hybrid_section_semantic")
 
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # generator model
 if _env_first("LLM_PROVIDER", "PROVIDER", default="openai").lower() == "nvidia":

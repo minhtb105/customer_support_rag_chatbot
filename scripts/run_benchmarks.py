@@ -389,13 +389,21 @@ def main():
         }
     }
 
-    output["b123_retrieval"] = run_b123(dataset)
-    b1 = {k.split("/", 1)[1]: v for k, v in output["b123_retrieval"].items()
-          if k.startswith("vector_only/")}
-    output["meta"]["winner"] = pick_winner(b1)
+    try:
+        output["b123_retrieval"] = run_b123(dataset)
+        b1 = {k.split("/", 1)[1]: v for k, v in output["b123_retrieval"].items()
+              if k.startswith("vector_only/")}
+        output["meta"]["winner"] = pick_winner(b1)
+    except Exception as e:  # B1 sập giữa chừng vẫn giữ phần đã đo được
+        output["b123_retrieval"] = {"error": f"{type(e).__name__}: {e}"}
+        output["meta"]["winner"] = None
     output["meta"]["baseline_strategy"] = WINNER
     log(f"B1 winner (Recall@K, tie MRR->Hit): {output['meta']['winner']}")
-    output["b4_latency"] = run_b4(dataset, n=args.latency_n)
+    try:
+        output["b4_latency"] = run_b4(dataset, n=args.latency_n)
+    except Exception as e:  # B4 sập vẫn giữ B1-B3
+        output["b4_latency"] = {"error": f"{type(e).__name__}: {e}"}
+        log(f"B4 failed, kept B1-B3: {e}")
     if not args.skip_judge:
         try:
             output["b5_judge"] = run_b5(dataset, max_questions=args.judge_n)

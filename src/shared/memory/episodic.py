@@ -49,6 +49,7 @@ class ConversationSummarizer:
                 model=model_name,
                 device=0  # Use GPU if available
             )
+            self.sentence_model = None  # lazy: chỉ load khi cần extractive fallback
         except:
             # Fallback to simple extractive summarization
             self.summarizer = None
@@ -86,6 +87,13 @@ class ConversationSummarizer:
         sentences = conversation_text.split('. ')
         if len(sentences) <= 3:
             return conversation_text
+
+        # ponytail: positional fallback, no embeddings needed when model unloadable offline
+        if self.sentence_model is None:
+            try:
+                self.sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
+            except Exception:
+                return '. '.join(sentences[:3]) + '.'
         
         # Use sentence embeddings to find most important sentences
         embeddings = self.sentence_model.encode(sentences)

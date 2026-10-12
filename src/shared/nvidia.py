@@ -50,6 +50,10 @@ def _is_transient_error(exc: Exception | None) -> bool:
     status = getattr(exc, "status_code", None)
     if status in (401, 429, 500, 502, 503, 529):
         return True
+    # Lỗi mạng thoáng qua (remote đóng kết nối, timeout): retry xoay vòng keys
+    name = type(exc).__name__.lower()
+    if "connect" in name or "timeout" in name:
+        return True
     msg = str(exc).lower()
     return ("rate limit" in msg or "ratelimit" in msg or "quota" in msg
             or "too many requests" in msg or "unauthorized" in msg
@@ -79,33 +83,34 @@ def embed_texts(texts: list[str], model: str,
 
     keys = _raise_if_no_keys()
     last_err: Exception | None = None
-    for i, key in enumerate(keys):
-        try:
-            with httpx.Client(timeout=120.0) as c:
-                r = c.post(
-                    f"{NVIDIA_BASE_URL}/embeddings",
-                    headers={"Authorization": f"Bearer {key}"},
-                    json={"model": model, "input": texts,
-                          "input_type": mode,
-                          "encoding_format": "float",
-                          "truncate": "END"},
-                )
-                if r.status_code in (401, 429):
-                    class _E(Exception):
-                        pass
-                    e = _E(f"NVIDIA embeddings {r.status_code}: "
-                           f"{r.text[:200]}")
-                    e.status_code = r.status_code  # type: ignore
-                    raise e
-                r.raise_for_status()
-                return [d["embedding"] for d in r.json()["data"]]
-        except Exception as e:  # noqa: BLE001
-            last_err = e
-            if _is_rotatable_error(e) and i < len(keys) - 1:
-                import time as _t
-                _t.sleep(3)  # transient 5xx/429: nhường backend rồi thử key kế
-                continue
-            raise
+    import time as _t
+    for attempt in range(3):  # hết vòng keys mà vẫn transient → nghỉ rồi thử lại
+        for key in keys:
+            try:
+                with httpx.Client(timeout=120.0) as c:
+                    r = c.post(
+                        f"{NVIDIA_BASE_URL}/embeddings",
+                        headers={"Authorization": f"Bearer {key}"},
+                        json={"model": model, "input": texts,
+                              "input_type": mode,
+                              "encoding_format": "float",
+                              "truncate": "END"},
+                    )
+                    if r.status_code in (401, 429):
+                        class _E(Exception):
+                            pass
+                        e = _E(f"NVIDIA embeddings {r.status_code}: "
+                               f"{r.text[:200]}")
+                        e.status_code = r.status_code  # type: ignore
+                        raise e
+                    r.raise_for_status()
+                    return [d["embedding"] for d in r.json()["data"]]
+            except Exception as e:  # noqa: BLE001
+                last_err = e
+                if not _is_transient_error(e):
+                    raise
+                # transient: thử key kế tiếp
+        _t.sleep(3 * (attempt + 1))
     raise last_err  # type: ignore[misc]
 
 
