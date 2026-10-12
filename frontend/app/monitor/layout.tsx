@@ -16,7 +16,7 @@ export default function MonitorLayout({ children }: { children: React.ReactNode 
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-bold">Giám sát — Guidelines & An toàn thuốc</h1>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
           Agent tìm → tóm tắt VI → gắn cờ pending_review → chuyên gia duyệt → mới vào corpus (kèm version/ngày). Chi tiết kỹ thuật trong tài liệu monitoring của repo.
         </p>
       </div>
@@ -25,7 +25,7 @@ export default function MonitorLayout({ children }: { children: React.ReactNode 
           <Link
             key={t.href}
             href={t.href}
-            className={`rounded-full px-4 py-2 text-xs font-medium ${path === t.href ? "bg-slate-900 text-white" : "border bg-white hover:bg-slate-50"}`}
+            className={`rounded-full px-4 py-2 text-xs font-medium ${path === t.href ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900" : "border bg-white hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800"}`}
           >
             {t.label}
           </Link>

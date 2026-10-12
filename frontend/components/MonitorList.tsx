@@ -27,16 +27,16 @@ export function useMonitorList<T>(loader: () => Promise<{ items: T[]; total: num
 
 export function MonitorMsg({ msg }: { msg: string }) {
   if (!msg) return null;
-  return <div className="rounded-lg border bg-slate-50 p-3 text-xs">{msg}</div>;
+  return <div className="rounded-lg border bg-slate-50 p-3 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">{msg}</div>;
 }
 
 export function MonitorLoading({ loading, empty, emptyText, children }: {
   loading: boolean; empty: boolean; emptyText: string; children: React.ReactNode;
 }) {
-  if (loading) return <div className="text-sm text-slate-500">Đang tải…</div>;
+  if (loading) return <div className="text-sm text-slate-500 dark:text-slate-400">Đang tải…</div>;
   if (empty) {
     return (
-      <div className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 text-sm text-slate-500">
+      <div className="rounded-xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 text-sm text-slate-500 dark:text-slate-400">
         {emptyText}
       </div>
     );

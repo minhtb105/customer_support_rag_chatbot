@@ -21,8 +21,8 @@ type AItem = {
 function sevColor(s: string) {
   if (s === "critical") return "bg-red-600 text-white border-red-700";
   if (s === "high") return "bg-amber-100 text-amber-800 border-amber-200";
-  if (s === "medium") return "bg-slate-100 text-slate-700 border-slate-200";
-  return "bg-slate-50 text-slate-600 border-slate-200";
+  if (s === "medium") return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700";
+  return "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
 }
 
 export default function AlertsPage() {
@@ -68,16 +68,16 @@ export default function AlertsPage() {
           <option value="medium">medium</option>
           <option value="low">low</option>
         </select>
-        <button onClick={fetchList} className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-slate-50">
+        <button onClick={fetchList} className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">
           Làm mới
         </button>
-        <button onClick={() => trigger("fda")} className="rounded-lg bg-slate-900 px-3 py-2 text-xs text-white hover:bg-black">
+        <button onClick={() => trigger("fda")} className="rounded-lg bg-slate-900 px-3 py-2 text-xs text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900">
           FDA daily
         </button>
-        <button onClick={() => trigger("byt")} className="rounded-lg border bg-white px-3 py-2 text-xs hover:bg-slate-50">
+        <button onClick={() => trigger("byt")} className="rounded-lg border bg-white px-3 py-2 text-xs hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">
           BYT weekly
         </button>
-        <span className="py-2 text-xs text-slate-500">Tổng pending: {total}</span>
+        <span className="py-2 text-xs text-slate-500 dark:text-slate-400">Tổng pending: {total}</span>
       </div>
       <MonitorMsg msg={msg} />
       <MonitorLoading loading={loading} empty={!items.length} emptyText="Không có cảnh báo pending.">
@@ -93,24 +93,24 @@ export default function AlertsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className={`rounded-full border px-2 py-1 text-[11px] font-medium ${sevColor(it.severity)}`}>{it.severity}</span>
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
                         {it.source} · {it.alert_type} · {fmtDT(it.fetched_at)}
                       </span>
                     </div>
                     <div className="mt-2 text-sm font-semibold">{it.drug_name ? `${it.drug_name} — ` : ""}{it.alert_title}</div>
-                    {sum?.tom_tat_vi && <div className="mt-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">{sum.tom_tat_vi}</div>}
+                    {sum?.tom_tat_vi && <div className="mt-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-100">{sum.tom_tat_vi}</div>}
                     {it.alert_url && (
                       <a href={it.alert_url} target="_blank" className="mt-2 inline-block text-xs text-blue-600 underline">
                         Nguồn
                       </a>
                     )}
-                    <div className="mt-1 text-[11px] font-mono text-slate-500">{it.id.slice(0, 8)} · {it.status}</div>
+                    <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">{it.id.slice(0, 8)} · {it.status}</div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => decide(it.id, "approved")} className="rounded-full bg-emerald-600 px-4 py-2 text-xs text-white hover:bg-emerald-700">
+                    <button onClick={() => decide(it.id, "approved")} className="rounded-full bg-emerald-600 px-4 py-2 min-h-[44px] text-xs text-white hover:bg-emerald-700">
                       Duyệt
                     </button>
-                    <button onClick={() => decide(it.id, "dismissed")} className="rounded-full border bg-white px-4 py-2 text-xs hover:bg-slate-50">
+                    <button onClick={() => decide(it.id, "dismissed")} className="rounded-full border bg-white px-4 py-2 min-h-[44px] text-xs hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">
                       Bỏ qua
                     </button>
                   </div>

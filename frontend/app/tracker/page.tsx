@@ -8,15 +8,16 @@ import StatusBadge from "@/components/StatusBadge";
 import GlucoseChart from "@/components/GlucoseChart";
 import VoiceWidget from "@/components/VoiceWidget";
 import NutritionLookup from "@/components/NutritionLookup";
+import { Siren, TrendingUp, ShieldAlert, CalendarPlus, Phone, Building2, TriangleAlert } from "lucide-react";
 
 const contexts = [
-  { value: "fasting", label: "Đói (fasting)" },
+  { value: "fasting", label: "Lúc đói" },
   { value: "post_meal_2h", label: "Sau ăn 2h" },
   { value: "random", label: "Ngẫu nhiên" },
   { value: "pre_meal", label: "Trước ăn" },
   { value: "bedtime", label: "Trước ngủ" },
 ];
-function classColor(c: string){ if(c==="normal")return "bg-emerald-100 text-emerald-700 border-emerald-200"; if(c==="elevated")return "bg-amber-100 text-amber-700 border-amber-200"; if(c==="high")return "bg-red-100 text-red-700 border-red-200"; if(c==="critical")return "bg-red-600 text-white border-red-700"; if(c==="low")return "bg-orange-100 text-orange-700 border-orange-200"; return "bg-slate-100 text-slate-600";}
+function classColor(c: string){ if(c==="normal")return "bg-emerald-100 text-emerald-700 border-emerald-200"; if(c==="elevated")return "bg-amber-100 text-amber-700 border-amber-200"; if(c==="high")return "bg-red-100 text-red-700 border-red-200"; if(c==="critical")return "bg-red-600 text-white border-red-700"; if(c==="low")return "bg-orange-100 text-orange-700 border-orange-200"; return "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";}
 
 const CRITICAL_TEXT = "CẢNH BÁO: Đường huyết nguy hiểm. Vui lòng liên hệ bác sĩ hoặc cấp cứu ngay lập tức.";
 const GUARD_RE = /thiết kế riêng để theo dõi đường huyết|nằm ngoài phạm vi hỗ trợ/i;
@@ -28,7 +29,7 @@ const EntryAlert = (p: any) => {
       <h2 className="text-sm font-semibold">Nhập chỉ số</h2>
       {isCritical && (
         <div data-testid="critical-banner" role="alert" className="animate-critical-pulse mt-4 rounded-xl border-2 border-red-600 bg-red-600 p-4 text-white shadow-xl">
-          <div className="font-bold text-sm">🚨 {CRITICAL_TEXT}</div>
+          <div className="font-bold text-sm flex items-center gap-1.5"><Siren size={15} aria-hidden /> {CRITICAL_TEXT}</div>
           {anomaly?.reason && <div className="mt-2 text-xs leading-relaxed">{anomaly.reason}</div>}
           {msg && <div className="mt-2 rounded-lg bg-white/10 p-2 text-xs">{msg}</div>}
           <div className="mt-2 text-xs text-red-100">Chat và diễn giải xu hướng đã tạm khóa để ưu tiên an toàn. Nhập một chỉ số an toàn để mở khóa.</div>
@@ -36,19 +37,19 @@ const EntryAlert = (p: any) => {
       )}
       <div className="relative mt-4 space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <div><label className="text-xs text-slate-600">Giá trị (mg/dL)</label><input type="number" value={value} onChange={(e)=>setValue(e.target.value)} placeholder="vd: 110" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm" /></div>
-          <div><label className="text-xs text-slate-600">Bối cảnh</label><select value={context} onChange={(e)=>setContext(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm">{contexts.map(c=> <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
+          <div><label htmlFor="glucose-value" className="text-xs text-slate-600 dark:text-slate-300">Giá trị (mg/dL)</label><input id="glucose-value" type="number" inputMode="decimal" value={value} onChange={(e)=>setValue(e.target.value)} placeholder="vd: 110" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700" /></div>
+          <div><label htmlFor="glucose-context" className="text-xs text-slate-600 dark:text-slate-300">Bối cảnh</label><select id="glucose-context" value={context} onChange={(e)=>setContext(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm min-h-[44px] dark:bg-slate-900 dark:border-slate-700">{contexts.map(c=> <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
         </div>
-        <div><label className="text-xs text-slate-600">Ghi chú</label><input value={notes} onChange={(e)=>setNotes(e.target.value)} placeholder="vd: sau ăn phở" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" /></div>
+        <div><label htmlFor="glucose-notes" className="text-xs text-slate-600 dark:text-slate-300">Ghi chú</label><input id="glucose-notes" value={notes} onChange={(e)=>setNotes(e.target.value)} placeholder="vd: sau ăn phở" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" /></div>
         <button data-testid="tracker-save" onClick={submit} className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 min-h-[44px] focus-visible:outline-2">Lưu chỉ số</button>
-        {msg && <div className="rounded-lg border bg-slate-50 p-3 text-xs">{msg}</div>}
+        {msg && <div role="status" className="rounded-lg border bg-slate-50 p-3 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">{msg}</div>}
         {anomaly && anomaly.type !== "none" && !isCritical && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-            <div className="font-bold">📈 Trend cascade — {anomaly.direction||""}</div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-100">
+            <div className="font-bold flex items-center gap-1.5"><TrendingUp size={14} aria-hidden /> Cảnh báo chuỗi tăng — {anomaly.direction||""}</div>
             <div className="mt-1">{anomaly.reason}</div>
           </div>
         )}
-        <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100">Ngưỡng WHO/ADA: Đói &lt;100, 100–125, ≥126 · Sau ăn &lt;140, 140–199, ≥200 · Hạ &lt;70 · Critical ≥300</div>
+        <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-900">Ngưỡng WHO/ADA: Đói &lt;100, 100–125, ≥126 · Sau ăn &lt;140, 140–199, ≥200 · Hạ &lt;70 · Critical ≥300</div>
       </div>
     </div>
   );
@@ -109,14 +110,14 @@ const FqgChat = (p: any) => {
     <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 shadow-sm dark:bg-blue-950/40 dark:border-blue-900">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">Hỏi thêm ngữ cảnh (FQG)</h3>
-        <button onClick={()=>setOpen((o)=>!o)} className="text-xs text-blue-700 underline dark:text-blue-300 min-h-[44px] px-2">{open?"Thu gọn":"Mở chat"}</button>
+        <button onClick={()=>setOpen((o)=>!o)} aria-expanded={open} className="text-xs text-blue-700 underline dark:text-blue-300 min-h-[44px] px-2">{open?"Thu gọn":"Mở chat"}</button>
       </div>
       {open && (
         <>
           <div className="mt-3 max-h-64 space-y-2 overflow-auto rounded-lg border bg-white p-3 dark:bg-slate-900 dark:border-slate-700">
             {messages.length ? messages.map((m,i)=>(
               <div key={i} className={`rounded-lg p-2 text-sm leading-relaxed ${m.role==="user"?"ml-8 bg-emerald-50 border border-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-100":m.role==="guard"?"bg-red-50 border border-red-200 text-red-800 dark:bg-red-950 dark:border-red-800 dark:text-red-100":m.role==="sys"?"bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300":"mr-8 bg-blue-50 border border-blue-100 text-blue-900 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-100"}`}>
-                {m.role==="guard" && <div className="font-bold">⛔ Ngoài phạm vi hỗ trợ</div>}
+                {m.role==="guard" && <div className="font-bold flex items-center gap-1.5"><ShieldAlert size={14} aria-hidden /> Ngoài phạm vi hỗ trợ</div>}
                 <div className="whitespace-pre-wrap">{m.text}</div>
               </div>
             )) : <div className="p-2 text-sm text-slate-500 dark:text-slate-400">AI sẽ hỏi thêm khi phát hiện trend bất thường.</div>}
@@ -132,6 +133,24 @@ const FqgChat = (p: any) => {
 };
 
 const TRIAGE_API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+// Round-2: map backend codes to patient-facing Vietnamese (display-only).
+const SPECIALTY_VI: Record<string,string> = {
+  Endocrinology_General: "Nội tiết chung",
+  Endocrinology_Complication: "Biến chứng đái tháo đường",
+  Nutrition_Lifestyle: "Dinh dưỡng & Lối sống",
+};
+const SOLVER_VI: Record<string,string> = {
+  greedy: "nhanh",
+  dfs: "xét kỹ ràng buộc",
+  ga: "tối ưu nhiều bệnh nhân",
+};
+const TIER_VI: Record<string,string> = {
+  T0: "T0 (tự động)",
+  T1: "T1 (lễ tân)",
+  T2: "T2 (dược sĩ/điều dưỡng)",
+  T3: "T3 (bác sĩ)",
+};
 
 const TriageWidget = (p: any) => {
   const { effectiveId, hotline } = p;
@@ -161,16 +180,16 @@ const TriageWidget = (p: any) => {
         return;
       }
       const bits: string[] = [];
-      if (data?.suggested_specialty) bits.push(`Chuyên khoa gợi ý: ${data.suggested_specialty}`);
+      if (data?.suggested_specialty) bits.push(`Chuyên khoa gợi ý: ${SPECIALTY_VI[data.suggested_specialty] || data.suggested_specialty}`);
       (data?.recommended_doctors || []).slice(0, 3).forEach((d: any) => {
         const s = (d.slots || []).slice(0, 3).map((x: any) => `${x.weekday} ${x.date?.slice(5)} ${x.time}`).join("; ");
         bits.push(`${d.name} (${d.specialty}) — ${s || "hết slot tuần này"}`);
       });
-      if (data?.followup_question) bits.push(`❓ ${data.followup_question}`);
-      if (data?.solver_used) bits.push(`⚙️ Solver: ${data.solver_used}${data?.routing_reason ? ` — ${data.routing_reason}` : ""}`);
-      if (data?.handoff_tier) bits.push(`🏷️ Handoff tier: ${data.handoff_tier}${data?.what_happens_next ? ` — ${data.what_happens_next}` : ""}`);
-      if (data?.panic) bits.push(`🚨 Panic lab: ${data?.message || "Gọi 115 ngay."}`);
-      if (data?.simulation_summary) bits.push(`📊 GA: ${data.simulation_summary.reassigned} xếp lại / ${data.simulation_summary.unplaced} chưa xếp được, fitness=${data.simulation_summary.fitness}`);
+      if (data?.followup_question) bits.push(`Hỏi thêm: ${data.followup_question}`);
+      if (data?.solver_used) bits.push(`Bộ giải: ${data.solver_used}${SOLVER_VI[data.solver_used] ? ` (${SOLVER_VI[data.solver_used]})` : ""}${data?.routing_reason ? ` — ${data.routing_reason}` : ""}`);
+      if (data?.handoff_tier) bits.push(`Mức bàn giao: ${TIER_VI[data.handoff_tier] || data.handoff_tier}${data?.what_happens_next ? ` — ${data.what_happens_next}` : ""}`);
+      if (data?.panic) bits.push(`Lab nguy hiểm: ${data?.message || "Gọi 115 ngay."}`);
+      if (data?.simulation_summary) bits.push(`Tối ưu GA: ${data.simulation_summary.reassigned} xếp lại / ${data.simulation_summary.unplaced} chưa xếp được, điểm=${data.simulation_summary.fitness}`);
       setMsgs((prev) => [...prev, { role: "ai", text: bits.join("\n") || "Đã ghi nhận." }]);
     } catch (e: any) {
       setMsgs((prev) => [...prev, { role: "sys", text: "Lỗi: " + e.message }]);
@@ -181,28 +200,28 @@ const TriageWidget = (p: any) => {
   return (
     <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">📅 Đặt lịch khám (AI triage)</h3>
+        <h3 className="text-sm font-semibold flex items-center gap-1.5"><CalendarPlus size={15} aria-hidden /> Đặt lịch khám (AI triage)</h3>
         <button onClick={() => setOpen((o) => !o)} className="rounded-full bg-violet-600 px-4 py-2 text-xs text-white hover:bg-violet-700 min-h-[44px]">{open ? "Thu gọn" : "Mở"}</button>
       </div>
       {locked && (
         <div className="mt-3 rounded-xl border-2 border-red-600 bg-red-600 p-4 text-sm font-bold text-white shadow-xl">
-          🚨 CẢNH BÁO CẤP CỨU: Gọi 115 ngay lập tức. Chat đặt lịch đã khóa.
+          <span className="flex items-center gap-1.5"><Siren size={15} aria-hidden /> CẢNH BÁO CẤP CỨU: Gọi 115 ngay lập tức. Chat đặt lịch đã khóa.</span>
           <div className="mt-3 flex flex-wrap gap-2">
-            <a href="tel:115" className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-red-700 hover:bg-red-50">📞 Gọi 115</a>
-            {hotlineNum && <a href={`tel:${hotlineNum}`} className="rounded-full border border-white px-5 py-2.5 text-sm text-white hover:bg-white/10">🏥 Hotline viện: {hotlineNum}</a>}
+            <a href="tel:115" className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-red-700 hover:bg-red-50 inline-flex items-center gap-1.5 min-h-[44px]"><Phone size={15} aria-hidden /> Gọi 115</a>
+            {hotlineNum && <a href={`tel:${hotlineNum}`} className="rounded-full border border-white px-5 py-2.5 text-sm text-white hover:bg-white/10 inline-flex items-center gap-1.5 min-h-[44px]"><Building2 size={15} aria-hidden /> Hotline viện: {hotlineNum}</a>}
           </div>
         </div>
       )}
       {open && !locked && (
         <>
-          <div className="mt-3 max-h-64 space-y-2 overflow-auto rounded-lg border bg-slate-50 p-3">
+          <div className="mt-3 max-h-64 space-y-2 overflow-auto rounded-lg border bg-slate-50 p-3 dark:bg-slate-800 dark:border-slate-700">
             {msgs.length ? msgs.map((m, i) => (
-              <div key={i} className={`rounded-lg p-2 text-xs leading-relaxed whitespace-pre-wrap ${m.role === "user" ? "ml-8 border border-emerald-100 bg-emerald-50 text-emerald-900" : m.role === "emg" ? "border border-red-300 bg-red-50 text-red-800 font-bold" : "mr-8 border border-violet-100 bg-violet-50 text-violet-900"}`}>{m.text}</div>
-            )) : <div className="p-2 text-xs text-slate-500">Mô tả triệu chứng + thời gian muốn khám, vd: “tê chân, mắt mờ, tuần sau trừ T4”.</div>}
+              <div key={i} className={`rounded-lg p-2 text-xs leading-relaxed whitespace-pre-wrap ${m.role === "user" ? "ml-8 border border-emerald-100 bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-100" : m.role === "emg" ? "border border-red-300 bg-red-50 text-red-800 font-bold dark:bg-red-950 dark:border-red-800 dark:text-red-100" : "mr-8 border border-violet-100 bg-violet-50 text-violet-900 dark:bg-violet-950 dark:border-violet-800 dark:text-violet-100"}`}>{m.text}</div>
+            )) : <div className="p-2 text-xs text-slate-500 dark:text-slate-400">Mô tả triệu chứng + thời gian muốn khám, vd: “tê chân, mắt mờ, tuần sau trừ T4”.</div>}
           </div>
           <div className="mt-2 flex gap-2">
-            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") send(); }} placeholder="vd: tê chân, mắt mờ, tuần sau trừ T4" className="w-full rounded-lg border px-3 py-2 text-sm" />
-            <button onClick={send} disabled={sending} className="rounded-lg bg-violet-600 px-4 py-2 text-sm text-white hover:bg-violet-700 disabled:opacity-50">{sending ? "..." : "Gửi"}</button>
+            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") send(); }} placeholder="vd: tê chân, mắt mờ, tuần sau trừ T4" className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" />
+            <button onClick={send} disabled={sending} className="rounded-lg bg-violet-600 px-4 py-2 text-sm text-white hover:bg-violet-700 disabled:opacity-50 min-h-[44px]">{sending ? "..." : "Gửi"}</button>
           </div>
         </>
       )}
@@ -211,9 +230,21 @@ const TriageWidget = (p: any) => {
 };
 
 const MyTracker = (p: any) => {
-  const { data, highlightId, trend, explainTrend, isCritical, anomalySet, hasServerIds, readOnly } = p;
+  const { data, highlightId, trend, explainTrend, isCritical, anomalySet, hasServerIds, readOnly, loaded } = p;
   const points = data?.logs ? [...data.logs].reverse().map((l: any)=>({ time: l.measured_at.slice(5,16).replace("T"," "), value: l.value_mgdl, anomaly: hasServerIds ? anomalySet.has(Number(l.id)) : (l.value_mgdl > 250 || l.value_mgdl < 70) })) : [];
   const isAnom = (l: any) => hasServerIds ? anomalySet.has(Number(l.id)) : (l.value_mgdl > 250 || l.value_mgdl < 70);
+  const vals = points.map((x: any)=>Number(x.value)).filter((v: number)=>Number.isFinite(v));
+  const hotCount = points.filter((x: any)=>x.anomaly).length;
+  const trendSummary = vals.length ? `Tóm tắt xu hướng 14 ngày: ${vals.length} chỉ số, cao nhất ${Math.max(...vals)} mg/dL, thấp nhất ${Math.min(...vals)} mg/dL, ${hotCount} điểm bất thường (hình tam giác trên biểu đồ).` : "Chưa có dữ liệu đường huyết 14 ngày.";
+  if (!loaded && !data) {
+    return (
+      <div className="space-y-6 lg:col-span-2" aria-busy="true">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{[0,1,2,3].map((i)=><div key={i} className="h-16 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-700" />)}</div>
+        <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700"><div className="h-4 w-1/3 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /><div className="mt-4 h-56 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></div>
+        <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700"><div className="h-4 w-1/4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /><div className="mt-3 space-y-2">{[0,1,2].map((i)=><div key={i} className="h-10 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />)}</div></div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6 lg:col-span-2">
       {data?.stats && (
@@ -226,12 +257,13 @@ const MyTracker = (p: any) => {
       )}
       <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
         <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Biểu đồ 14 ngày</h3>{!isCritical && !readOnly && <button data-testid="trend-explain" onClick={explainTrend} className="rounded-full bg-slate-900 px-4 py-2 text-xs text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900 min-h-[44px]">Diễn giải xu hướng (RAG)</button>}</div>
-        <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-slate-500 dark:text-slate-400"><span>● Bình thường</span><span className="text-red-600">● Bất thường (spike/trend)</span><span>Ngưỡng 70 / 126 / 200</span></div>
+        <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-slate-500 dark:text-slate-400"><span className="inline-flex items-center gap-1"><span aria-hidden className="inline-block h-2 w-2 rounded-full bg-slate-400" /> Bình thường (chấm tròn)</span><span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400"><span aria-hidden className="text-red-600">▲</span> Bất thường spike/trend (hình tam giác)</span><span>Ngưỡng 70 / 126 / 200</span></div>
         <div className="mt-4 h-56">
           <GlucoseChart points={points} emptyHint="Chưa có dữ liệu — nhập chỉ số đầu tiên ở khung bên trái." />
         </div>
-        {data?.should_escalate && <div className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-800">⚠️ Khuyến nghị liên hệ bác sĩ</div>}
-        {trend && <div className="mt-4 rounded-lg border bg-slate-50 p-4 text-xs leading-relaxed whitespace-pre-wrap">{trend}</div>}
+        <div className="sr-only"><p>{trendSummary}</p><table><tbody>{points.map((x: any, i: number)=><tr key={i}><td>{x.time}</td><td>{x.value} mg/dL{x.anomaly ? " (bất thường)" : ""}</td></tr>)}</tbody></table></div>
+        {data?.should_escalate && <div className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-800 dark:bg-red-950 dark:border-red-800 dark:text-red-100 flex items-center gap-1.5"><TriangleAlert size={14} aria-hidden /> Khuyến nghị liên hệ bác sĩ</div>}
+        {trend && <div className="mt-4 rounded-lg border bg-slate-50 p-4 text-xs leading-relaxed whitespace-pre-wrap dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">{trend}</div>}
       </div>
       <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
         <h3 className="text-sm font-semibold">Lịch sử</h3>
@@ -239,8 +271,8 @@ const MyTracker = (p: any) => {
           {data?.logs?.length? data.logs.map((l:any)=>{
             const hl = String(l.id)===String(highlightId);
             const an = isAnom(l);
-            return <div key={l.id} id={`log-${l.id}`} className={`flex items-center justify-between gap-2 px-3 py-2 text-sm overflow-x-auto ${hl?"bg-yellow-100 ring-2 ring-yellow-400 dark:bg-yellow-950":""} ${an?"border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-950/40":""}`}><div className="min-w-0"><div className="font-mono text-[11px]">#{l.id} · {fmtDT(l.measured_at)} · {l.value_mgdl} mg/dL</div><div className="text-slate-500 dark:text-slate-400 truncate">{l.context} {l.notes? `· ${l.notes}`:""}</div></div><StatusBadge level={l.classification} text={l.classification} /></div>;
-          }): <div className="p-6 text-center text-sm text-slate-500">Chưa có log — dữ liệu sẽ hiện sau lần lưu đầu tiên.</div>}
+            return <div key={l.id} id={`log-${l.id}`} className={`flex items-center justify-between gap-2 px-3 py-2 text-sm ${hl?"bg-yellow-100 ring-2 ring-yellow-400 dark:bg-yellow-950":""} ${an?"border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-950/40":""}`}><div className="min-w-0 flex-1"><div className="font-mono text-[11px]">#{l.id} · {fmtDT(l.measured_at)} · {l.value_mgdl} mg/dL</div><div className="text-slate-500 dark:text-slate-400 truncate">{l.context} {l.notes? `· ${l.notes}`:""}</div></div><span className="shrink-0"><StatusBadge level={l.classification} text={l.classification} /></span></div>;
+          }): <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">Chưa có log — dữ liệu sẽ hiện sau lần lưu đầu tiên.</div>}
         </div>
       </div>
     </div>
@@ -258,6 +290,7 @@ export default function TrackerPage(){
   const [anomaly,setAnomaly]=useState<any>(null);
   const [fqg,setFqg]=useState<string[]>([]);
   const [lastLogId,setLastLogId]=useState<number|undefined>(undefined);
+  const [loaded,setLoaded]=useState(false);
 
   const effectiveId = user?.id || "";
   const searchParams = useSearchParams();
@@ -282,7 +315,7 @@ export default function TrackerPage(){
   const hasServerIds = Array.isArray(data?.anomaly_ids);
   const refresh = async ()=>{
     if(!fetchId) return;
-    try{ const d=await getGlucose(fetchId,50,14); setData(d);}catch(e:any){ setMsg(e.message); }
+    try{ const d=await getGlucose(fetchId,50,14); setData(d);}catch(e:any){ setMsg(e.message); }finally{ setLoaded(true); }
   };
   useEffect(()=>{ if(fetchId) refresh(); },[fetchId]);
 
@@ -309,7 +342,7 @@ export default function TrackerPage(){
     try{ const ans=await queryRag(q,5,effectiveId); setTrend(ans.status==="pending_review"? `⏳ Đang chờ duyệt (${ans.evaluation?.routed_role}): ${ans.answer.slice(0,300)}` : ans.answer); }catch(e:any){ setTrend("Lỗi RAG: "+e.message); }
   };
 
-  if(!user) return <div className="rounded-2xl border bg-white p-8 text-center">Cần đăng nhập để dùng Nhật ký. <Link href="/login" className="underline">Đăng nhập</Link> hoặc <Link href="/register" className="underline">Đăng ký</Link></div>;
+  if(!user) return <div className="rounded-2xl border bg-white p-8 text-center dark:bg-slate-900 dark:border-slate-700">Cần đăng nhập để dùng Nhật ký. <Link href="/login" className="underline">Đăng nhập</Link> hoặc <Link href="/register" className="underline">Đăng ký</Link></div>;
 
   return (
     <div className="space-y-6">
@@ -319,10 +352,10 @@ export default function TrackerPage(){
           <Link href="/expert/patients" className="underline">← Danh sách bệnh nhân</Link>
         </div>
       )}
-      <div><h1 className="text-xl font-bold">Hướng A — Nhật ký đường huyết</h1><p className="text-sm text-slate-600">{readOnly ? `Bệnh nhân ${viewPatientName || viewPatient.slice(0,8)} (chỉ đọc) · Chỉ escalate khi critical hoặc 3×high.` : `User: ${user.username} (${user.role}) · KPI ≥3 lần/tuần. Chỉ escalate khi critical hoặc 3×high.`}</p></div>
+      <div><h1 className="text-xl font-bold">Hướng A — Nhật ký đường huyết</h1><p className="text-sm text-slate-600 dark:text-slate-300">{readOnly ? `Bệnh nhân ${viewPatientName || viewPatient.slice(0,8)} (chỉ đọc) · Chỉ escalate khi critical hoặc 3×high.` : `User: ${user.username} (${user.role}) · KPI ≥3 lần/tuần. Chỉ escalate khi critical hoặc 3×high.`}</p></div>
       <div className="grid gap-6 lg:grid-cols-3">
         {!readOnly && <EntryAlert value={value} setValue={setValue} context={context} setContext={setContext} notes={notes} setNotes={setNotes} msg={msg} anomaly={anomaly} isCritical={isCritical} submit={submit} />}
-        <MyTracker data={data} highlightId={highlightId} trend={trend} explainTrend={explainTrend} isCritical={isCritical} anomalySet={anomalySet} hasServerIds={hasServerIds} readOnly={readOnly} />
+        <MyTracker data={data} highlightId={highlightId} trend={trend} explainTrend={explainTrend} isCritical={isCritical} anomalySet={anomalySet} hasServerIds={hasServerIds} readOnly={readOnly} loaded={loaded} />
       </div>
       {!readOnly && (
       <>

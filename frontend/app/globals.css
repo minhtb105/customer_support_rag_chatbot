@@ -51,6 +51,10 @@ body {
 .animate-critical-pulse { animation: med-pulse 2s ease-in-out infinite; }
 .animate-fade-in { animation: med-fade-in 0.18s ease-out; }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-critical-pulse, .animate-pulse, .animate-fade-in { animation: none; }
+}
+
 /* a11y: visible focus rings everywhere */
 :focus-visible {
   outline: 2px solid var(--med-primary);

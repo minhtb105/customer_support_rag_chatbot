@@ -38,7 +38,7 @@ export default function TriageMonitorPage() {
 
   return (
     <div className="space-y-4">
-      <div><h1 className="text-xl font-bold">Triage monitor (lễ tân)</h1><p className="text-sm text-slate-600">Log các ca agent đã xử lý — read-only, highlight ca phức tạp/khẩn cấp.</p></div>
+      <div><h1 className="text-xl font-bold">Triage monitor (lễ tân)</h1><p className="text-sm text-slate-600 dark:text-slate-300">Log các ca agent đã xử lý — read-only, highlight ca phức tạp/khẩn cấp.</p></div>
       <div className="flex flex-wrap gap-2 rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <select value={specialty} onChange={(e) => setSpecialty(e.target.value)} className="rounded-lg border px-3 py-2 text-sm">
           <option value="">Mọi chuyên khoa</option>
@@ -60,23 +60,23 @@ export default function TriageMonitorPage() {
           const hot = e.emergency;
           const complex = (e.specialty || "") === "Endocrinology_Complication";
           return (
-            <div key={i} className={`rounded-xl border bg-white p-3 text-xs shadow-sm ${hot ? "border-red-500 ring-2 ring-red-300" : complex ? "border-amber-400 bg-amber-50/50" : ""}`}>
+            <div key={i} className={`rounded-xl border bg-white p-3 text-xs shadow-sm dark:bg-slate-900 dark:border-slate-700 ${hot ? "border-red-500 ring-2 ring-red-300" : complex ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/40" : ""}`}>
               <div className="flex flex-wrap items-center gap-2">
-                {hot && <span className="rounded-full bg-red-600 px-2 py-0.5 font-bold text-white">🚨 KHẨN CẤP</span>}
-                {complex && <span className="rounded-full border border-amber-400 bg-amber-100 px-2 py-0.5 text-amber-800">Biến chứng ĐTĐ</span>}
-                {e.solver_used && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{e.solver_used}</span>}
-                <span className="text-slate-500">{fmtDT(e.ts)}</span>
+                {hot && <span className="rounded-full bg-red-600 px-2 py-0.5 font-bold text-white">KHẨN CẤP</span>}
+                {complex && <span className="rounded-full border border-amber-400 bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-950 dark:text-amber-200">Biến chứng ĐTĐ</span>}
+                {e.solver_used && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-300">{e.solver_used}</span>}
+                <span className="text-slate-500 dark:text-slate-400">{fmtDT(e.ts)}</span>
               </div>
               <div className="mt-1 whitespace-pre-wrap">{e.excerpt || ""}</div>
             </div>
           );
         })}
-        {!events.length && !err && <div className="rounded-2xl border border-dashed bg-slate-50 p-8 text-center text-sm text-slate-600">Chưa có event nào.</div>}
+        {!events.length && !err && <div className="rounded-2xl border border-dashed bg-slate-50 p-8 text-center text-sm text-slate-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300">Chưa có event nào.</div>}
       </div>
       <div className="flex items-center gap-3">
-        <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="rounded-lg border bg-white px-4 py-2 text-sm disabled:opacity-50">Trước</button>
-        <span className="text-xs text-slate-600">Trang {page} · {total} events</span>
-        <button disabled={page * limit >= total} onClick={() => setPage((p) => p + 1)} className="rounded-lg border bg-white px-4 py-2 text-sm disabled:opacity-50">Sau</button>
+        <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="rounded-lg border bg-white px-4 py-2 text-sm disabled:opacity-50 dark:bg-slate-900 dark:border-slate-700">Trước</button>
+        <span className="text-xs text-slate-600 dark:text-slate-300">Trang {page} · {total} events</span>
+        <button disabled={page * limit >= total} onClick={() => setPage((p) => p + 1)} className="rounded-lg border bg-white px-4 py-2 text-sm disabled:opacity-50 dark:bg-slate-900 dark:border-slate-700">Sau</button>
       </div>
     </div>
   );

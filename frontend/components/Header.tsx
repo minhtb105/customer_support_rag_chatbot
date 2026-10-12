@@ -82,14 +82,14 @@ export default function Header() {
           <ThemeToggle />
           {loading ? <span className="text-slate-400">…</span> : user ? (
             <>
-              <span className="hidden shrink-0 rounded-full bg-slate-100 px-2 py-1 border xl:inline">{user.username} <span className="text-slate-500">· {user.role}</span></span>
+              <span className="hidden shrink-0 rounded-full bg-slate-100 px-2 py-1 border xl:inline dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">{user.username} <span className="text-slate-500 dark:text-slate-400">· {user.role}</span></span>
               {unread > 0 && <span className="rounded-full bg-red-500 text-white px-2 py-1">{unread}</span>}
               <button onClick={async () => { await logout(); router.push("/login"); }} className="rounded-full bg-slate-900 text-white px-3 py-1.5 hover:bg-black">Đăng xuất</button>
             </>
           ) : (
             <>
               <Link href="/login" className="rounded-full bg-slate-900 text-white px-3 py-1.5 hover:bg-black">Đăng nhập</Link>
-              <Link href="/register" className="rounded-full border px-3 py-1.5 hover:bg-slate-50">Đăng ký</Link>
+              <Link href="/register" className="rounded-full border px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800">Đăng ký</Link>
             </>
           )}
         </div>

@@ -13,9 +13,11 @@ export default function GlucoseChart({ points, yDomain, emptyHint }: {
 }) {
   const dark = useIsDark();
   const gridStroke = dark ? "#334155" : "#e2e8f0";
-  const lineStroke = dark ? "#60a5fa" : "#0ea5e9";
+  const lineStroke = "var(--med-primary)";
+  const anomalyStroke = "var(--med-critical)";
+  const warnStroke = "var(--med-warning)";
   if (!points.length) {
-    return <div className="flex h-full items-center justify-center text-sm text-slate-500">{emptyHint || "Chưa có dữ liệu"}</div>;
+    return <div className="flex h-full items-center justify-center text-sm text-slate-500 dark:text-slate-400">{emptyHint || "Chưa có dữ liệu"}</div>;
   }
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -24,14 +26,19 @@ export default function GlucoseChart({ points, yDomain, emptyHint }: {
         <XAxis dataKey="time" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={40} stroke={gridStroke} />
         <YAxis domain={yDomain || [40, 320]} tick={{ fontSize: 10 }} stroke={gridStroke} />
         <Tooltip contentStyle={dark ? { backgroundColor: "#0f172a", borderColor: "#334155", color: "#e2e8f0" } : undefined} />
-        <ReferenceLine y={126} stroke="#f59e0b" strokeDasharray="4 4" label={{ value: "126", fontSize: 10 }} />
-        <ReferenceLine y={200} stroke="#ef4444" strokeDasharray="4 4" label={{ value: "200", fontSize: 10 }} />
-        <ReferenceLine y={70} stroke="#f97316" strokeDasharray="4 4" />
+        <ReferenceLine y={126} stroke={warnStroke} strokeDasharray="4 4" label={{ value: "126", fontSize: 10 }} />
+        <ReferenceLine y={200} stroke={anomalyStroke} strokeDasharray="4 4" label={{ value: "200", fontSize: 10 }} />
+        <ReferenceLine y={70} stroke={warnStroke} strokeDasharray="4 4" />
         <Line
           type="monotone" dataKey="value" stroke={lineStroke} strokeWidth={2}
           dot={(props: any) => {
             const hot = !!props?.payload?.anomaly;
-            return <circle cx={props.cx} cy={props.cy} r={hot ? 5 : 3} fill={hot ? "#ef4444" : "#0ea5e9"} stroke="#fff" strokeWidth={1} />;
+            if (hot) {
+              // distinct shape (triangle), not color-only, for colorblind users
+              const { cx, cy } = props;
+              return <path d={`M ${cx} ${cy - 6} L ${cx + 5.5} ${cy + 4} L ${cx - 5.5} ${cy + 4} Z`} fill={anomalyStroke} stroke="#fff" strokeWidth={1} />;
+            }
+            return <circle cx={props.cx} cy={props.cy} r={3} fill={lineStroke} stroke="#fff" strokeWidth={1} />;
           }}
         />
       </LineChart>

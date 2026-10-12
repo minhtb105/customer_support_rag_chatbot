@@ -207,7 +207,7 @@ export default function LessonPage({ params }: { params: { id: string } }) {
           >
             {recording ? "🎤 Đang nghe… (tối đa 8s)" : "🎤 Trả lời bằng giọng nói"}
           </button>
-          <div className="mt-1 text-xs text-slate-500">Nói “đáp án A/B/C” — nút A/B/C vẫn là cách chính.</div>
+          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">Nói “đáp án A/B/C” — nút A/B/C vẫn là cách chính.</div>
           {voiceEmergency && (
             <div role="alert" className="mt-2 rounded-xl border-2 border-red-600 bg-red-600 p-3 text-xs font-bold text-white">
               🚨 {voiceEmergency} <a href="tel:115" className="ml-2 rounded-full bg-white px-4 py-2 text-red-700">📞 Gọi 115</a>

@@ -83,7 +83,7 @@ export default function VoicePersonaPicker({
       </div>
       {showSkip && (
         <div className="mt-4 text-center">
-          <button onClick={() => save("lan")} disabled={busy !== ""} className="text-xs text-slate-500 underline min-h-[44px] px-3 py-2">
+          <button onClick={() => save("lan")} disabled={busy !== ""} className="text-xs text-slate-500 dark:text-slate-400 underline min-h-[44px] px-3 py-2">
             Bỏ qua (dùng giọng Bắc mặc định)
           </button>
         </div>

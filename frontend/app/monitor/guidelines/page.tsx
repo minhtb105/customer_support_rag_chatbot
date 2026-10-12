@@ -59,13 +59,13 @@ export default function GuidelinesPage() {
           <option value="rejected">rejected</option>
           <option value="superseded">superseded</option>
         </select>
-        <button onClick={fetchList} className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-slate-50">
+        <button onClick={fetchList} className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">
           Làm mới
         </button>
-        <button onClick={trigger} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white hover:bg-black">
+        <button onClick={trigger} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900">
           Kiểm tra ngay
         </button>
-        <span className="py-2 text-xs text-slate-500">Tổng: {total}</span>
+        <span className="py-2 text-xs text-slate-500 dark:text-slate-400">Tổng: {total}</span>
       </div>
       <MonitorMsg msg={msg} />
       <MonitorLoading loading={loading} empty={!items.length} emptyText={`Không có bản ghi ${status}.`}>
@@ -82,18 +82,18 @@ export default function GuidelinesPage() {
                     <div className="text-sm font-semibold">
                       [{it.source}] {it.title}
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
                       v: {it.version_label || "—"} · {it.status} · {fmtDT(it.fetched_at)} · {it.id.slice(0, 8)}
                     </div>
-                    {summary?.tom_tat_tieng_viet && <div className="mt-2 rounded-lg bg-blue-50 p-3 text-xs text-blue-900">{summary.tom_tat_tieng_viet}</div>}
-                    {it.sha256 && <div className="mt-1 text-[11px] font-mono text-slate-500">sha256 {it.sha256.slice(0, 16)}…</div>}
+                    {summary?.tom_tat_tieng_viet && <div className="mt-2 rounded-lg bg-blue-50 p-3 text-xs text-blue-900 dark:bg-blue-950 dark:text-blue-100">{summary.tom_tat_tieng_viet}</div>}
+                    {it.sha256 && <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">sha256 {it.sha256.slice(0, 16)}…</div>}
                   </div>
                   {it.status === "pending_review" && (
                     <div className="flex gap-2">
-                      <button onClick={() => decide(it.id, "approved")} className="rounded-full bg-emerald-600 px-4 py-2 text-xs text-white hover:bg-emerald-700">
+                      <button onClick={() => decide(it.id, "approved")} className="rounded-full bg-emerald-600 px-4 py-2 min-h-[44px] text-xs text-white hover:bg-emerald-700">
                         Duyệt
                       </button>
-                      <button onClick={() => decide(it.id, "rejected")} className="rounded-full border bg-white px-4 py-2 text-xs hover:bg-slate-50">
+                      <button onClick={() => decide(it.id, "rejected")} className="rounded-full border bg-white px-4 py-2 min-h-[44px] text-xs hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">
                         Từ chối
                       </button>
                     </div>

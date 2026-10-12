@@ -36,8 +36,8 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold">Quản trị User & Expert</h1>
-        <p className="text-xs text-slate-600">Admin tạo/duyệt expert (doctor/pharmacist/specialist).</p>
-      {msg && <div className="rounded-lg border bg-amber-50 p-2 text-xs">{msg}</div>}
+        <p className="text-xs text-slate-600 dark:text-slate-300">Admin tạo/duyệt expert (doctor/pharmacist/specialist).</p>
+      {msg && <div className="rounded-lg border bg-amber-50 p-2 text-xs dark:bg-amber-950 dark:border-amber-800 dark:text-amber-100">{msg}</div>}
       <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Tạo expert mới (admin)</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-5">
@@ -59,7 +59,7 @@ export default function AdminUsersPage() {
             <tbody>
               {users.map((u:any)=>(
                 <tr key={u.id} className="border-b">
-                  <td className="py-2">{u.username}<br/><span className="text-slate-500">{u.email}</span></td>
+                  <td className="py-2">{u.username}<br/><span className="text-slate-500 dark:text-slate-400">{u.email}</span></td>
                   <td>
                     <select value={u.role} onChange={(e)=>changeRole(u, e.target.value)} className="rounded border px-1 py-1 text-xs">
                       <option value="user">user</option><option value="doctor">doctor</option><option value="pharmacist">pharmacist</option><option value="specialist">specialist</option><option value="admin">admin</option>

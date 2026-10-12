@@ -110,7 +110,7 @@ test.describe('Tracker A — Guided UI', () => {
     await page.goto('/tracker');
     await page.locator('input[type="number"]').first().fill('140');
     await page.getByRole('button', { name: /Lưu chỉ số/ }).click();
-    await expect(page.getByText(/Trend cascade/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/Cảnh báo chuỗi tăng/)).toBeVisible({ timeout: 5000 });
     await expect(page.getByText(/Hỏi thêm ngữ cảnh/)).toBeVisible();
     await expect(page.getByTestId('fqg-input')).toBeVisible();
     await page.getByPlaceholder('vd: ăn 2 miếng bánh ngọt').fill('ăn 2 miếng bánh ngọt');

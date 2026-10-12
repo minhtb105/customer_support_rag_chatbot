@@ -21,7 +21,7 @@ export default function NutritionLookup() {
   return (
     <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
       <h2 className="text-sm font-semibold">Tra cứu món ăn (số liệu chuẩn)</h2>
-      <p className="mt-1 text-xs text-slate-500">Hỏi “ăn bao nhiêu ổi” → số gram + GL + carb-choice, không qua AI diễn giải.</p>
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Hỏi “ăn bao nhiêu ổi” → số gram + GL + carb-choice, không qua AI diễn giải.</p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
         <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") go(); }} placeholder="vd: ổi, sầu riêng, trà sữa" className="flex-1 rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" />
         <select value={profile} onChange={(e) => setProfile(e.target.value as any)} className="rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]">
@@ -32,12 +32,12 @@ export default function NutritionLookup() {
         <button onClick={go} disabled={loading} className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50 min-h-[44px]">{loading ? "Đang tra..." : "Tra cứu"}</button>
       </div>
       {msg && <div className="mt-2 text-xs text-red-600">{msg}</div>}
-      {res && res.count === 0 && <div className="mt-2 text-xs text-slate-500">Không tìm thấy món “{res.query}”. Thử tên khác (vd: chuối, phở bò, nước dừa).</div>}
+      {res && res.count === 0 && <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">Không tìm thấy món “{res.query}”. Thử tên khác (vd: chuối, phở bò, nước dừa).</div>}
       {(res?.matches || []).map((m: any) => {
         const r = rec(m) || {};
         return (
           <div key={m.food_id} className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 dark:bg-emerald-950/30 dark:border-emerald-900">
-            <div className="text-sm font-bold">{m.vi} <span className="font-normal text-slate-500">({m.en})</span></div>
+            <div className="text-sm font-bold">{m.vi} <span className="font-normal text-slate-500 dark:text-slate-400">({m.en})</span></div>
             <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
               Khẩu phần chuẩn {m.serving.size_g}g ({m.serving.description}) · {m.per_100g.energy_kcal} kcal/100g ·
               carbs {m.per_100g.total_carbohydrate_g}g (đường {m.per_100g.sugars_g}g, xơ {m.per_100g.dietary_fiber_g}g)
@@ -49,7 +49,7 @@ export default function NutritionLookup() {
                 <span> · Kiểm soát kém: {m.recommendation.severe.serving_g}g (~{m.recommendation.severe.carb_choices} carb-choice{m.recommendation.severe.gl != null ? `, GL ${m.recommendation.severe.gl}` : ""})</span>
               )}
             </div>
-            <div className="mt-1 text-[11px] text-slate-500">{m.notes}</div>
+            <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{m.notes}</div>
           </div>
         );
       })}

@@ -26,7 +26,7 @@ export default function RegisterPage() {
   return (
     <div className="mx-auto max-w-md rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 shadow-sm">
       <h1 className="text-lg font-bold">Đăng ký</h1>
-      <p className="text-xs text-slate-500">Mặc định role <b>user</b>. Expert do admin tạo/duyệt.</p>
+      <p className="text-xs text-slate-500 dark:text-slate-400">Mặc định role <b>user</b>. Expert do admin tạo/duyệt.</p>
       <form onSubmit={submit} className="mt-4 space-y-3">
         <input placeholder="Username *" value={username} onChange={(e)=>setUsername(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm" required />
         <input placeholder="Email" value={email} onChange={(e)=>setEmail(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm" />

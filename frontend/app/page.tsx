@@ -45,10 +45,10 @@ export default function OverviewPage() {
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:items-end">
-            <div className="rounded-xl bg-white p-3 text-slate-900 shadow">
-              <div className="text-xs text-slate-500">API Status</div>
+            <div className="rounded-xl bg-white p-3 text-slate-900 shadow dark:bg-slate-900 dark:text-slate-100">
+              <div className="text-xs text-slate-500 dark:text-slate-400">API Status</div>
               <div className="text-sm font-mono">{health ? `${health.embedding_provider} · ${health.embedding_model}` : "…"}</div>
-              <div className="text-xs text-slate-500">{API_BASE}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">{API_BASE}</div>
             </div>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function OverviewPage() {
         <h2 className="text-sm font-semibold">Bằng chứng định lượng — khoảng trống tái khám</h2>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="border-b text-left text-xs text-slate-500">
+            <thead className="border-b text-left text-xs text-slate-500 dark:text-slate-400">
               <tr>
                 <th className="py-2">Nghiên cứu</th>
                 <th>Uống thuốc</th>
@@ -95,7 +95,7 @@ export default function OverviewPage() {
               <tr>
                 <td className="py-2">BV Thống Nhất 2023 (n=255)</td>
                 <td>83,5%</td>
-                <td colSpan={2} className="text-slate-600">63,1% (gộp)</td>
+                <td colSpan={2} className="text-slate-600 dark:text-slate-300">63,1% (gộp)</td>
               </tr>
               <tr>
                 <td className="py-2">PK ĐH YTCC 2022 (n=240)</td>
@@ -105,7 +105,7 @@ export default function OverviewPage() {
               </tr>
             </tbody>
           </table>
-          <div className="mt-2 text-xs text-slate-500">Nguồn: Tạp chí Y học Việt Nam 2022/2025; vista.gov.vn 2023. Chuẩn HbA1c mỗi 3 tháng.</div>
+          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">Nguồn: Tạp chí Y học Việt Nam 2022/2025; vista.gov.vn 2023. Chuẩn HbA1c mỗi 3 tháng.</div>
         </div>
       </section>
 
@@ -146,36 +146,36 @@ export default function OverviewPage() {
         {guidelines ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {Object.entries(guidelines.by_source || {}).map(([k, v]) => (
-              <span key={k} className="rounded-full border bg-slate-50 px-3 py-1 text-xs">
+              <span key={k} className="rounded-full border bg-slate-50 px-3 py-1 text-xs dark:bg-slate-800 dark:border-slate-700">
                 {k}: <b>{String(v)}</b> PDFs
               </span>
             ))}
             <span className="rounded-full bg-slate-900 px-3 py-1 text-xs text-white">Tổng {guidelines.total_pdfs} PDFs</span>
           </div>
         ) : (
-          <div className="mt-3 text-xs text-slate-500">Đang tải… (cần FastAPI chạy tại {API_BASE})</div>
+          <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">Đang tải… (cần FastAPI chạy tại {API_BASE})</div>
         )}
-        <div className="mt-3 text-xs text-slate-500">
+        <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
           Pipeline: <code>scripts/crawl_guidelines.py</code> — WHO IRIS (DSpace 7 API), ADA, GOLD/GINA, BYT (QĐ 3319). Indexer đệ quy <code>data/raw/pdfs/**/*.pdf</code> → Chroma (
           {health?.embedding_model || "text-embedding-3-small"}).
         </div>
       </section>
 
       <div className="flex flex-wrap gap-2 text-xs">
-        <a href="https://iris.who.int/handle/10665/325182" target="_blank" className="rounded-full border bg-white px-3 py-1 hover:bg-slate-50">WHO Classification 2019</a>
-        <a href="https://iris.who.int/handle/10665/331710" target="_blank" className="rounded-full border bg-white px-3 py-1 hover:bg-slate-50">WHO HEARTS-D 2020</a>
-        <a href="https://iris.who.int/handle/10665/334186" target="_blank" className="rounded-full border bg-white px-3 py-1 hover:bg-slate-50">WHO PEN 2020</a>
+        <a href="https://iris.who.int/handle/10665/325182" target="_blank" className="rounded-full border bg-white px-3 py-1 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">WHO Classification 2019</a>
+        <a href="https://iris.who.int/handle/10665/331710" target="_blank" className="rounded-full border bg-white px-3 py-1 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">WHO HEARTS-D 2020</a>
+        <a href="https://iris.who.int/handle/10665/334186" target="_blank" className="rounded-full border bg-white px-3 py-1 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">WHO PEN 2020</a>
         <Link href="/api-playground" className="rounded-full bg-slate-900 px-3 py-1 text-white">Thử hỏi “dấu hiệu đái tháo đường type 2?” →</Link>
       </div>
 
       {/* Video demo (file phuc vu tu /public/demo.webm, canonical giu o docs/demo/) */}
       <section id="demo" className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
         <h2 className="text-sm font-semibold">Xem demo 4 phút: bệnh nhân → bác sĩ → audit</h2>
-        <p className="mt-1 text-xs text-slate-500">Nhập 280 → banner đỏ • trend 3 ngày → chat hỏi ngữ cảnh • safeguard kháng sinh • bác sĩ xem sparkline 90 ngày + SOAP</p>
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Nhập 280 → banner đỏ • trend 3 ngày → chat hỏi ngữ cảnh • safeguard kháng sinh • bác sĩ xem sparkline 90 ngày + SOAP</p>
         <video controls preload="none" src="/demo.webm" className="mt-3 aspect-video w-full rounded-xl bg-black">
           Trình duyệt không hỗ trợ video. Tải tại <a href="/demo.webm" className="underline">demo.webm</a>.
         </video>
-        <div className="mt-2 text-xs text-slate-500">Kịch bản chi tiết: <code>docs/demo/script.md</code> • File gốc: <code>docs/demo/demo.webm</code></div>
+        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">Kịch bản chi tiết: <code>docs/demo/script.md</code> • File gốc: <code>docs/demo/demo.webm</code></div>
       </section>
 
       {/* Final CTA + disclaimer demo-only */}
@@ -210,9 +210,9 @@ function Stat({ k, v, sub }: { k: string; v: string; sub?: string }) {
 }
 function Criteria({ n, t, d, ok, warn }: { n: string; t: string; d: string; ok?: boolean; warn?: boolean }) {
   return (
-    <div className={`rounded-xl border p-3 ${ok ? "bg-emerald-50 border-emerald-200" : warn ? "bg-amber-50 border-amber-200" : "bg-white"}`}>
+    <div className={`rounded-xl border p-3 ${ok ? "bg-emerald-50 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-800" : warn ? "bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800" : "bg-white dark:bg-slate-900 dark:border-slate-700"}`}>
       <div className="text-xs font-bold">{n}. {t}</div>
-      <div className="mt-1 text-xs text-slate-600">{d}</div>
+      <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">{d}</div>
       <div className="mt-2 text-[11px]">{ok ? "● Mạnh" : warn ? "● Lưu ý" : ""}</div>
     </div>
   );
