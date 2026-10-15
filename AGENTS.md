@@ -3,14 +3,16 @@
 ## Quick Start (copy-paste)
 
 ```bash
-pip install -e .              # openai-only base; local embeddings: pip install .[local]
+.\.venv\Scripts\python.exe ...  # luôn dùng venv của repo, không dùng python hệ thống
+$env:PYTHONIOENCODING='utf-8'    # set trước mọi lệnh python (giữ chữ Việt trên PowerShell)
+pip install -e .              # base; local embeddings: pip install .[local]
 uvicorn src.api.main:app --reload --port 8000   # backend, http://localhost:8000
 cd frontend && npm install && npm run dev       # frontend, http://localhost:3000
 pytest -q                                       # backend tests (testpaths=tests, pythonpath=src+.)
 npx tsc --noEmit                                # frontend typecheck (run in frontend/)
 ```
 
-Env (gitignored, never commit): `.env` needs `OPENAI_API_KEY`; `frontend/.env.local` needs `NEXT_PUBLIC_API_URL=http://localhost:8000`.
+Env (gitignored, never commit): `.env` chạy NVIDIA (`LLM_PROVIDER=nvidia`, `EMBEDDING_PROVIDER=nvidia`, keys `NVDIA_API_KEY/2/3` — giữ đúng chính tả này); `frontend/.env.local` needs `NEXT_PUBLIC_API_URL=http://localhost:8000`.
 
 ## Architecture
 
@@ -20,6 +22,7 @@ Env (gitignored, never commit): `.env` needs `OPENAI_API_KEY`; `frontend/.env.lo
 - `scripts/` — one-shot tooling. Shared helpers: `nutrition/_fetch.py` (download), `nutrition/_parse_io.py`, `nutrition/_ingest.py --src md|json`, `reembed.py --provider local|nvidia`. Keep CLIs working when editing.
 - `frontend/app/` — Next.js routes (`tracker`, `previsit`, `monitor/*`, `admin/*`, `expert/*`); shared UI in `frontend/components/` (`AdminTable`, `ChatBox`, `GlucoseChart`, `MonitorList`); API wrappers in `frontend/lib/api.ts` via `apiGet`/`apiPost`.
 - `tests/` — pytest; shared fixtures in `tests/_helpers.py` (extend it, don't copy-paste cases).
+- Chunking: `src/shared/chunk_strategies.py::VARIANTS` (registry `tên → (base, overrides)`; unknown name thì raise — không đặt tên tự do). Serving default single-source `src/shared/config.py::DEFAULT_CHUNK_STRATEGY` (hiện `hybrid_section_semantic`, winner B1 2026-10-12). Index tách theo provider: `embeddings/pdf_db_nvidia/<strategy>/` (2048d).
 
 ## Test-DB isolation
 
@@ -32,9 +35,11 @@ Env (gitignored, never commit): `.env` needs `OPENAI_API_KEY`; `frontend/.env.lo
 
 ```bash
 python scripts/run_benchmarks.py [--skip-judge] [--latency-n 10]   # B1-B5 RAG over data/evaluation/
-BENCH_STRATEGIES=hybrid_section_semantic BENCH_WINNER=<name> python scripts/run_benchmarks.py
+BENCH_STRATEGIES=<slate> BENCH_WINNER=<name> DEFAULT_CHUNK_STRATEGY=<name> python scripts/run_benchmarks.py
 ```
 - B1 chunking (Recall@5/Hit@5/MRR) → B2 retriever (bm25/vector/hybrid) → B3 rerank → B4 latency P50/P95 → B5 LLM-judge (faithfulness/precision/recall/fluency 0-5). Results land in `data/evaluation/results_benchmark_<ts>.json`.
+- Winner = max Recall@5 (tie-break MRR → Hit@5), hàm thuần `pick_winner` trong script. Slate đầy đủ = keys của `VARIANTS` (12 strategies; winner đã lock 2026-10-12: `hybrid_section_semantic` R 0.8875/Hit 1.0/MRR 0.9083).
+- B4/B5 E2E ghi rác vào dev DB (facts của user `default_user` trong memory Chroma + traces `fresh benchmark question...`) — dọn sau mỗi run. Results JSON commit bằng `git add -f` (`data/*` đang gitignored).
 - B6-B8 (triage/labs/solvers, pure functions, 0 LLM calls) are opt-in via `--services`; gold sets live in `data/evaluation/`. B5 judge follows `LLM_PROVIDER` (`openai` default; `nvidia` uses `NVIDIA_JUDGE_MODEL`); `--skip-judge` for offline runs (`HF_HUB_OFFLINE=1` is set by the script).
 
 ## Conventions
@@ -51,3 +56,6 @@ BENCH_STRATEGIES=hybrid_section_semantic BENCH_WINNER=<name> python scripts/run_
 - `scripts/reembed_local.py`, `reembed_nvidia.py`, `seed_admin.py` are thin shims — edit the real targets (`reembed.py`, `seed_demo_users.py --force`).
 - e2e (`frontend/e2e/`) needs a live backend + seeds; `demo_recorder` is manual-only, not CI.
 - Secrets: no real keys on disk or in prompts. `.env` files stay gitignored; README shows only an `sk-proj-...` placeholder.
+- PowerShell phá quoting `python -c` nhiều dòng: viết script vào `C:\Users\DELL\AppData\Local\Temp\opencode\*.py` rồi chạy (pre-approved cho thư mục temp này), không inline.
+- Frontend: cấm emoji làm icon (dùng `lucide-react` có sẵn); giữ nguyên mọi `data-testid`; đổi copy UI phải update `frontend/e2e/*.spec.ts` trong cùng diff.
+- Backend suite hiện ~444 tests (~10 phút). Lỗi mạng thoáng qua tới NVIDIA API (ConnectError/10054) đã có retry xoay keys trong `src/shared/nvidia.py` — gặp thì chạy lại là được, không sửa code.
