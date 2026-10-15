@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { adminListCollections, adminListCollectionChunks, API_BASE, fmtDT } from "@/lib/api";
+import { adminListCollections, adminListCollectionChunks, fmtDT } from "@/lib/api";
 import { AdminTable, AdminEmpty, AdminPagination, AdminFilterBar, AdminSkeletonRows } from "@/components/AdminTable";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
@@ -60,7 +60,7 @@ export default function ChunksPage(){
       <div>
         <h1 className="text-xl font-bold">Admin — Chunks</h1>
         <p className="text-xs text-slate-600 dark:text-slate-300">Duyệt toàn bộ corpus vector DB theo từng collection. 10 chunks/trang. Chỉ admin.</p>
-        <div className="text-xs text-slate-500 dark:text-slate-400">{API_BASE} · Tổng {total} chunks · <Link href="/admin/tracing" className="text-blue-700 hover:underline font-medium dark:text-blue-300">← Traces</Link> · <Link href="/admin/tracing/memory" className="text-blue-700 hover:underline font-medium dark:text-blue-300">Memory →</Link></div>
+        <div className="text-xs text-slate-500 dark:text-slate-400">Tổng {total} chunks · <Link href="/admin/tracing" className="text-blue-700 hover:underline font-medium dark:text-blue-300">← Traces</Link> · <Link href="/admin/tracing/memory" className="text-blue-700 hover:underline font-medium dark:text-blue-300">Memory →</Link></div>
       </div>
       <AdminFilterBar>
         <div><label className="text-xs">Collection</label>

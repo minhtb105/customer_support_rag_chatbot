@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { adminListTraces, API_BASE, fmtDT } from "@/lib/api";
+import { adminListTraces, fmtDT } from "@/lib/api";
 import { AdminTable, AdminEmpty, AdminPagination, AdminFilterBar, AdminSkeletonRows } from "@/components/AdminTable";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
@@ -45,7 +45,7 @@ export default function TracingListPage(){
       <div>
         <h1 className="text-xl font-bold">Admin — Tracing</h1>
         <p className="text-xs text-slate-600 dark:text-slate-300">Truy vết user query → chunks retrieved → final answer + RAGAS. Lưu 30 ngày, 10 trace/trang. Chỉ admin.</p>
-        <div className="text-xs text-slate-500 dark:text-slate-400">{API_BASE} · Tổng {total} traces · <Link href="/admin/tracing/chunks" className="text-blue-700 hover:underline font-medium dark:text-blue-300">Chunks →</Link> · <Link href="/admin/tracing/memory" className="text-blue-700 hover:underline font-medium dark:text-blue-300">Memory →</Link></div>
+        <div className="text-xs text-slate-500 dark:text-slate-400">Tổng {total} traces · <Link href="/admin/tracing/chunks" className="text-blue-700 hover:underline font-medium dark:text-blue-300">Chunks →</Link> · <Link href="/admin/tracing/memory" className="text-blue-700 hover:underline font-medium dark:text-blue-300">Memory →</Link></div>
       </div>
       <AdminFilterBar>
         <div><label className="text-xs" htmlFor="trace-q">Tìm kiếm</label><input id="trace-q" aria-label="Tìm kiếm trace (câu hỏi, câu trả lời hoặc ID)" value={q} onChange={(e)=>setQ(e.target.value)} placeholder="câu hỏi/câu trả lời/ID" className="ml-2 rounded border px-2 py-1 text-xs" /></div>

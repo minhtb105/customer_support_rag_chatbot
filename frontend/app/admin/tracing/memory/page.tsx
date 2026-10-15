@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { adminListUserFacts, adminListUsers, API_BASE } from "@/lib/api";
+import { adminListUserFacts, adminListUsers } from "@/lib/api";
 import { AdminTable, AdminEmpty, AdminPagination, AdminFilterBar, AdminSkeletonRows } from "@/components/AdminTable";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
@@ -52,7 +52,7 @@ export default function MemoryFactsPage() {
       <div>
         <h1 className="text-xl font-bold">Admin — Memory</h1>
         <p className="text-xs text-slate-600 dark:text-slate-300">Xem long-term facts theo user. 10 facts/trang. Chỉ admin.</p>
-        <div className="text-xs text-slate-500 dark:text-slate-400">{API_BASE} · Tổng {total} facts · <Link href="/admin/tracing" className="text-blue-700 hover:underline font-medium dark:text-blue-300">← Traces</Link> · <Link href="/admin/tracing/chunks" className="text-blue-700 hover:underline font-medium dark:text-blue-300">Chunks →</Link></div>
+        <div className="text-xs text-slate-500 dark:text-slate-400">Tổng {total} facts · <Link href="/admin/tracing" className="text-blue-700 hover:underline font-medium dark:text-blue-300">← Traces</Link> · <Link href="/admin/tracing/chunks" className="text-blue-700 hover:underline font-medium dark:text-blue-300">Chunks →</Link></div>
       </div>
       <AdminFilterBar>
         <div>

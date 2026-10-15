@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getMyReviews, getQueryHistory, getNotifications, API_BASE, fmtDT } from "@/lib/api";
+import { getMyReviews, getQueryHistory, getNotifications, fmtDT } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import Link from "next/link";
 
@@ -29,7 +29,7 @@ export default function MyReviewsPage() {
       <div>
         <h1 className="text-xl font-bold">Lịch sử & Review của tôi</h1>
         <p className="text-xs text-slate-600 dark:text-slate-300" title="Trang tự động tải lại định kỳ để cập nhật trạng thái duyệt">Tự động làm mới định kỳ. Khi AI pending → expert duyệt → cập nhật vào lịch sử và notification.</p>
-        <div className="text-xs text-slate-500 dark:text-slate-400">{API_BASE} · user {user.username} ({user.role})</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400">user {user.username} ({user.role})</div>
       </div>
       {notif && (
         <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
