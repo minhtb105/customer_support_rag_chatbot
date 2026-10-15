@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { adminGetTrace, adminTriggerRagas, adminAddTraceFeedback, parseFailedMetrics, formatRawJson, fmtDT } from "@/lib/api";
 import { useParams } from "next/navigation";
-import { Check, X, Copy, Star } from "lucide-react";
+import { Check, X, Copy, Star, ChevronRight, ChevronDown } from "lucide-react";
 
 const TABS = ["Tổng quan", "Chunks", "Memory", "RAGAS", "Raw"] as const;
 
@@ -55,6 +55,16 @@ export default function TraceDetailPage(){
   const [tab,setTab]=useState<string>("Tổng quan");
   const [selSpan,setSelSpan]=useState<string | null>(null);
   const [expanded,setExpanded]=useState<Record<string,boolean>>({});
+  // Phase B: cây span theo parent_id (rows cũ flat → toàn roots, view như cũ).
+  const [treeClosed,setTreeClosed]=useState<Record<string,boolean>>({});
+  const spanKids = (() => {
+    const m: Record<string, any[]> = { ROOT: [] };
+    for (const s of (spans || [])) {
+      const p = (s as any).parent_id || "ROOT";
+      (m[p] = m[p] || []).push(s);
+    }
+    return m;
+  })();
   const [fbScore,setFbScore]=useState(0);
   const [fbComment,setFbComment]=useState("");
   const [fbBusy,setFbBusy]=useState(false);
@@ -78,6 +88,44 @@ export default function TraceDetailPage(){
   // A1: thanh duration tương đối theo span dài nhất.
   const maxDur = Math.max(1, ...(spans || []).map((s: any) => Number(s.duration_ms) || 0));
   const toggleRow=(id:string)=>setExpanded(s=>({ ...s, [id]: !s[id] }));
+  // Phase B: node đệ quy — con thụt đầu dòng, collapse theo parent; flat cũ = roots.
+  const SpanNode = ({ s, depth }: { s: any; depth: number }) => {
+    const pct = Math.max(2, Math.round(((Number(s.duration_ms) || 0) / maxDur) * 100));
+    const open = selSpan === s.id;
+    const kids = spanKids[s.id] || [];
+    const closed = !!treeClosed[s.id];
+    const toggleTree = (e: any) => { e.stopPropagation(); setTreeClosed((t) => ({ ...t, [s.id]: !t[s.id] })); };
+    const toggleOpen = () => setSelSpan(open ? null : s.id);
+    return (
+      <div style={{ marginLeft: depth ? depth * 16 : 0 }}>
+        <div onClick={toggleOpen} role="button" tabIndex={0} aria-expanded={open} onKeyDown={(e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggleOpen(); } }} className="cursor-pointer rounded-xl border p-3 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 hover:border-violet-300">
+          <div className="flex justify-between text-xs">
+            <span className="font-bold flex items-center gap-1">
+              {kids.length > 0 && (
+                <button onClick={toggleTree} aria-expanded={!closed} aria-label={closed ? "Mở rộng cây con" : "Thu gọn cây con"} className="rounded p-0.5 hover:bg-slate-200 dark:hover:bg-slate-700 min-h-[32px] min-w-[32px] inline-flex items-center justify-center">
+                  {closed ? <ChevronRight size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
+                </button>
+              )}
+              {s.name}
+            </span>
+            <span className="flex items-center gap-2">{s.duration_ms? Math.round(s.duration_ms)+"ms":"—"} · {s.start_at?.slice(11,19)} <CopyBtn text={s.id} label="Copy span ID" /></span>
+          </div>
+          <div className="mt-1 h-1.5 rounded bg-slate-200 dark:bg-slate-700"><div className="h-1.5 rounded bg-violet-500" style={{ width: `${pct}%` }} /></div>
+          {s.inputs_json && <div className="text-[11px] text-slate-600 dark:text-slate-300">in: {s.inputs_json.slice(0,200)}</div>}
+          {s.outputs_json && <div className="text-[11px] text-slate-600 dark:text-slate-300">out: {s.outputs_json.slice(0,200)}</div>}
+          {s.metadata_json && <div className="text-[11px] text-slate-500 dark:text-slate-400">meta: {s.metadata_json.slice(0,300)}</div>}
+        </div>
+        {open && (
+          <div className="ml-4 mt-1 rounded-xl border border-violet-200 p-3 dark:border-violet-800">
+            <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400"><span className="font-mono">{s.id}</span><CopyBtn text={s.id} label="Copy span ID" /></div>
+            {s.inputs_json ? <><div className="mt-2 text-xs font-semibold">Input</div><JsonBlock text={s.inputs_json} /></> : <div className="mt-2 text-xs text-slate-500">Không có input</div>}
+            {s.outputs_json ? <><div className="mt-2 text-xs font-semibold">Output</div><JsonBlock text={s.outputs_json} /></> : <div className="mt-2 text-xs text-slate-500">Không có output</div>}
+          </div>
+        )}
+        {!closed && kids.map((k: any) => <SpanNode key={k.id} s={k} depth={depth + 1} />)}
+      </div>
+    );
+  };
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
@@ -98,28 +146,9 @@ export default function TraceDetailPage(){
       <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Waterfall — Spans</h2>
         <div className="mt-3 space-y-2">
-          {spans?.map((s:any)=>{
-            const pct = Math.max(2, Math.round(((Number(s.duration_ms) || 0) / maxDur) * 100));
-            const open = selSpan===s.id;
-            return (
-            <div key={s.id}>
-              <div onClick={()=>setSelSpan(open?null:s.id)} role="button" tabIndex={0} aria-expanded={open} onKeyDown={(e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); setSelSpan(open?null:s.id); } }} className="cursor-pointer rounded-xl border p-3 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 hover:border-violet-300">
-                <div className="flex justify-between text-xs"><span className="font-bold">{s.name}</span><span className="flex items-center gap-2">{s.duration_ms? Math.round(s.duration_ms)+"ms":"—"} · {s.start_at?.slice(11,19)} <CopyBtn text={s.id} label="Copy span ID" /></span></div>
-                <div className="mt-1 h-1.5 rounded bg-slate-200 dark:bg-slate-700"><div className="h-1.5 rounded bg-violet-500" style={{ width: `${pct}%` }} /></div>
-                {s.inputs_json && <div className="text-[11px] text-slate-600 dark:text-slate-300">in: {s.inputs_json.slice(0,200)}</div>}
-                {s.outputs_json && <div className="text-[11px] text-slate-600 dark:text-slate-300">out: {s.outputs_json.slice(0,200)}</div>}
-                {s.metadata_json && <div className="text-[11px] text-slate-500 dark:text-slate-400">meta: {s.metadata_json.slice(0,300)}</div>}
-              </div>
-              {open && (
-                <div className="ml-4 mt-1 rounded-xl border border-violet-200 p-3 dark:border-violet-800">
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400"><span className="font-mono">{s.id}</span><CopyBtn text={s.id} label="Copy span ID" /></div>
-                  {s.inputs_json ? <><div className="mt-2 text-xs font-semibold">Input</div><JsonBlock text={s.inputs_json} /></> : <div className="mt-2 text-xs text-slate-500">Không có input</div>}
-                  {s.outputs_json ? <><div className="mt-2 text-xs font-semibold">Output</div><JsonBlock text={s.outputs_json} /></> : <div className="mt-2 text-xs text-slate-500">Không có output</div>}
-                </div>
-              )}
-            </div>
-            );
-          })}
+          {spanKids.ROOT?.map((s:any)=>(
+            <SpanNode key={s.id} s={s} depth={0} />
+          ))}
         </div>
       </div>
       )}

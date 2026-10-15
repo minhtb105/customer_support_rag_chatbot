@@ -109,6 +109,8 @@ def rag_chat(question: str, top_k: int = TOP_K, user_id: str = "default_user", u
         tone = "balanced"
     # start trace
     trace_id = start_trace(user_id=user_id, username=username, query=question, tone=tone, model=model, embedding_model=EMBEDDING_MODEL, chunking_strategy=DEFAULT_CHUNK_STRATEGY, top_k=top_k)
+    # Phase B: root span để các span con nest (cũ flat vì finish_span clear hết stack).
+    s_root = start_span("rag_chat", inputs={"query": question[:200]})
     # also need prompt version
     try:
         prompt_version = get_prompt_version(tone)
@@ -134,6 +136,7 @@ def rag_chat(question: str, top_k: int = TOP_K, user_id: str = "default_user", u
         finish_span(s_fmt, outputs={"len": len(formatted)})
         _update_memories(question, cached.answer, user_id)
         total_ms = sum(timings.values())*1000
+        finish_span(s_root, outputs={"cache_hit": True})
         end_trace(trace_id, answer=cached.answer, status="answered", total_latency_ms=total_ms, prompt_version=prompt_version)
         return {
             "raw_answer": cached.model_dump(),
@@ -228,6 +231,7 @@ def rag_chat(question: str, top_k: int = TOP_K, user_id: str = "default_user", u
     finish_span(s_fmt2)
 
     total_ms = sum(timings.values())*1000
+    finish_span(s_root, outputs={"cache_hit": False})
     end_trace(trace_id, answer=llm_output.answer, status="answered", total_latency_ms=total_ms, prompt_version=prompt_version)
 
     return {
@@ -295,6 +299,8 @@ def rag_chat_stream(question: str, top_k: int = TOP_K, user_id: str = "default_u
     except Exception:
         tone = "balanced"
     trace_id = start_trace(user_id=user_id, username=username, query=question, tone=tone, model=model, embedding_model=EMBEDDING_MODEL, chunking_strategy=DEFAULT_CHUNK_STRATEGY, top_k=top_k)
+    # Phase B: root span để các span con nest (xem path non-stream).
+    s_root = start_span("rag_chat", inputs={"query": question[:200]})
     try:
         prompt_version = get_prompt_version(tone)
     except Exception:
@@ -328,6 +334,7 @@ def rag_chat_stream(question: str, top_k: int = TOP_K, user_id: str = "default_u
         timings['update_memories'] = time.perf_counter() - t_mem
         finish_span(s_mem)
         total_ms = sum(timings.values())*1000
+        finish_span(s_root, outputs={"cache_hit": True})
         end_trace(trace_id, answer=ans, status="answered", total_latency_ms=total_ms, prompt_version=prompt_version)
         formatted = format_answer_for_ui(cached)
         # HILT evaluation for cached too (best effort)
@@ -426,6 +433,7 @@ def rag_chat_stream(question: str, top_k: int = TOP_K, user_id: str = "default_u
     except Exception as e:
         finish_span(s_gen, outputs={"error": str(e)}, metadata={"tone": tone})
         yield {"event": "error", "data": {"error": f"generate_stream error: {e}"}}
+        finish_span(s_root, outputs={"error": str(e)[:200]})
         end_trace(trace_id, answer=full_answer, status="failed", total_latency_ms=sum(timings.values())*1000, prompt_version=prompt_version)
         return
     timings['generate_answer'] = time.perf_counter() - t5
@@ -515,6 +523,7 @@ def rag_chat_stream(question: str, top_k: int = TOP_K, user_id: str = "default_u
 
     total_ms = sum(timings.values())*1000
     # end trace with final status
+    finish_span(s_root, outputs={"cache_hit": False})
     end_trace(trace_id, answer=full_answer, status=status_str, total_latency_ms=total_ms, prompt_version=prompt_version)
 
     yield {"event": "done", "data": {

@@ -13,7 +13,9 @@ except ImportError:
     from shared.observability.tracing_db import create_trace, update_trace, create_span, end_span, add_span_chunks  # type: ignore
 
 _trace_ctx: contextvars.ContextVar[Optional[Dict[str, Any]]] = contextvars.ContextVar("current_trace", default=None)
-_span_ctx: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("current_span", default=None)
+# Span stack (immutable tuple, per-task): start_span push, finish_span pop.
+# Thay single current_span vì finish_span cũ clear về None làm mọi span flat.
+_span_ctx: contextvars.ContextVar[tuple] = contextvars.ContextVar("span_stack", default=())
 
 def short_hash(text: str, length: int = 8) -> str:
     return hashlib.sha256((text or "").encode()).hexdigest()[:length]
@@ -46,23 +48,28 @@ def end_trace(trace_id: str, answer: Optional[str]=None, status: Optional[str]=N
     if fields:
         update_trace(trace_id, **fields)
     _trace_ctx.set(None)
+    _span_ctx.set(())
 
 def start_span(name: str, inputs: Optional[Dict]=None) -> str:
     trace_id = get_current_trace_id()
     if not trace_id:
         # create detached span id but not persisted
         return f"noop_{uuid.uuid4().hex[:8]}"
-    parent = _span_ctx.get()
+    stack = _span_ctx.get()
+    parent = stack[-1] if stack else None
     sid = create_span(trace_id=trace_id, name=name, parent_id=parent, inputs=inputs)
-    _span_ctx.set(sid)
+    _span_ctx.set(stack + (sid,))
     return sid
 
 def finish_span(span_id: str, outputs: Optional[Dict]=None, metadata: Optional[Dict]=None):
     if span_id.startswith("noop"):
         return
     end_span(span_id, outputs=outputs, metadata=metadata)
-    # reset to parent? For simplicity clear
-    _span_ctx.set(None)
+    # pop đúng id (chịu finish out-of-order); không thấy thì giữ stack nguyên
+    stack = _span_ctx.get()
+    if span_id in stack:
+        idx = len(stack) - 1 - stack[::-1].index(span_id)
+        _span_ctx.set(stack[:idx] + stack[idx + 1:])
 
 def trace_span(name: str):
     def decorator(fn: Callable):
