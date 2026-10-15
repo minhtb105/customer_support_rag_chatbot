@@ -172,9 +172,15 @@ def get_trace(trace_id: str) -> Optional[Dict[str, Any]]:
     conn.close()
     return dict(row) if row else None
 
-def list_traces(limit: int = 10, offset: int = 0, user_id: Optional[str] = None, tone: Optional[str] = None, status: Optional[str] = None, q: Optional[str] = None, is_low: Optional[bool] = None) -> List[Dict[str, Any]]:
+_SORT_COLUMNS = {"created_at": "created_at", "total_latency_ms": "total_latency_ms"}
+_SORT_ORDERS = {"asc": "ASC", "desc": "DESC"}
+
+def list_traces(limit: int = 10, offset: int = 0, user_id: Optional[str] = None, tone: Optional[str] = None, status: Optional[str] = None, q: Optional[str] = None, is_low: Optional[bool] = None, sort_by: str = "created_at", order: str = "desc", date_from: Optional[str] = None, date_to: Optional[str] = None) -> List[Dict[str, Any]]:
     # enforce 30 days retention filter
     cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+    # whitelist sort (invalid -> default; API layer returns 422 — see tracing_router)
+    sort_col = _SORT_COLUMNS.get((sort_by or "created_at").lower(), "created_at")
+    sort_dir = _SORT_ORDERS.get((order or "desc").lower(), "DESC")
     conn = _conn()
     where = ["created_at >= ?"]
     params: List[Any] = [cutoff]
@@ -188,13 +194,19 @@ def list_traces(limit: int = 10, offset: int = 0, user_id: Optional[str] = None,
         where.append("status=?")
         params.append(status)
     if q:
-        where.append("(query LIKE ? OR answer LIKE ?)")
-        params.extend([f"%{q}%", f"%{q}%"])
+        where.append("(query LIKE ? OR answer LIKE ? OR id = ?)")
+        params.extend([f"%{q}%", f"%{q}%", q])
     if is_low is not None:
         where.append("is_low_confidence=?")
         params.append(1 if is_low else 0)
+    if date_from:
+        where.append("created_at >= ?")
+        params.append(date_from)
+    if date_to:
+        where.append("created_at <= ?")
+        params.append(date_to)
     where_str = " AND ".join(where)
-    rows = conn.execute(f"SELECT * FROM traces WHERE {where_str} ORDER BY created_at DESC LIMIT ? OFFSET ?", params + [limit, offset]).fetchall()
+    rows = conn.execute(f"SELECT * FROM traces WHERE {where_str} ORDER BY {sort_col} {sort_dir} LIMIT ? OFFSET ?", params + [limit, offset]).fetchall()
     # total count
     total_row = conn.execute(f"SELECT COUNT(*) as c FROM traces WHERE {where_str}", params).fetchone()
     total = total_row["c"] if total_row else 0
@@ -418,6 +430,24 @@ def get_ragas(trace_id: str) -> Optional[Dict[str, Any]]:
     except Exception:
         pass
     return d
+
+# ---------- feedback ----------
+def add_feedback(trace_id: str, key: Optional[str] = None, score: Optional[float] = None, value: Optional[str] = None, comment: Optional[str] = None, user_id: Optional[str] = None) -> Dict[str, Any]:
+    fid = uuid.uuid4().hex
+    now = datetime.now(timezone.utc).isoformat()
+    conn = _conn()
+    conn.execute("INSERT INTO feedback (id, trace_id, user_id, key, score, value, comment, created_at) VALUES (?,?,?,?,?,?,?,?)",
+                 (fid, trace_id, user_id, key, score, value, comment, now))
+    conn.commit()
+    conn.close()
+    return {"id": fid, "trace_id": trace_id, "user_id": user_id, "key": key, "score": score, "value": value, "comment": comment, "created_at": now}
+
+
+def list_feedback(trace_id: str) -> List[Dict[str, Any]]:
+    conn = _conn()
+    rows = conn.execute("SELECT * FROM feedback WHERE trace_id=? ORDER BY created_at DESC", (trace_id,)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 # init on import
 try:

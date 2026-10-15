@@ -98,6 +98,7 @@ export default function ChunksPage(){
             </>)}
       </AdminTable>
       <AdminPagination page={page} totalPages={totalPages} total={total} label="chunks" go={go} />
+      <div className="text-[11px] text-slate-500 dark:text-slate-400">Nguồn Chroma collections: xem trước cắt 500 ký tự, bản đầy đủ 4000 ký tự.</div>
     </div>
   );
 }

@@ -211,6 +211,9 @@ export async function adminGetTrace(id: string) {
 export async function adminTriggerRagas(id: string) {
   return apiPost(`/v1/admin/traces/${id}/ragas`, undefined, "ragas");
 }
+export async function adminAddTraceFeedback(id: string, body: { key?: string; score?: number; value?: string; comment?: string }) {
+  return apiPost(`/v1/admin/traces/${id}/feedback`, body, "feedback");
+}
 export async function adminListCollections() {
   return apiGet("/v1/admin/collections", undefined, "collections");
 }

@@ -7,14 +7,15 @@ from pydantic import BaseModel
 try:
     from src.auth.dependencies import require_admin
     from src.shared.observability.tracing_db import (
-        list_traces, get_trace, list_spans, list_chunks, get_ragas, upsert_ragas, delete_expired_traces
+        list_traces, get_trace, list_spans, list_chunks, get_ragas, upsert_ragas, delete_expired_traces,
+        add_feedback, list_feedback
     )
     from src.shared.observability.tracing_db import TRACING_DB_PATH
     from src.reviews.evaluator import evaluate_rag
     from src.shared.config import TRACING_PAGE_SIZE, EMBEDDING_PROVIDER, EMBEDDING_MODEL
 except ImportError:
     from auth.dependencies import require_admin  # type: ignore
-    from shared.observability.tracing_db import list_traces, get_trace, list_spans, list_chunks, get_ragas, upsert_ragas, delete_expired_traces  # type: ignore
+    from shared.observability.tracing_db import list_traces, get_trace, list_spans, list_chunks, get_ragas, upsert_ragas, delete_expired_traces, add_feedback, list_feedback  # type: ignore
     from shared.observability.tracing_db import TRACING_DB_PATH  # type: ignore
     from reviews.evaluator import evaluate_rag  # type: ignore
     from shared.config import TRACING_PAGE_SIZE, EMBEDDING_PROVIDER, EMBEDDING_MODEL  # type: ignore
@@ -120,6 +121,30 @@ def _serialize_chunk(vector_id: str, doc: str, meta: dict) -> dict:
 class RagasTriggerRequest(BaseModel):
     pass
 
+
+class FeedbackRequest(BaseModel):
+    key: Optional[str] = None
+    score: Optional[float] = None
+    value: Optional[str] = None
+    comment: Optional[str] = None
+
+
+_TRACE_SORT_COLUMNS = {"created_at", "total_latency_ms"}
+_TRACE_SORT_ORDERS = {"asc", "desc"}
+
+
+def _parse_iso_date(v: Optional[str], name: str) -> Optional[str]:
+    v = (v or "").strip()
+    if not v:
+        return None
+    try:
+        from datetime import datetime as _dt
+        _dt.fromisoformat(v.replace("Z", "+00:00"))
+        return v
+    except Exception:
+        raise HTTPException(status_code=422, detail=f"Invalid ISO date for {name}: {v}")
+
+
 @router.get("/traces")
 def admin_list_traces(
     page: int = Query(1, ge=1),
@@ -129,6 +154,10 @@ def admin_list_traces(
     status: Optional[str] = None,
     is_low_confidence: Optional[bool] = None,
     user_id: Optional[str] = None,
+    sort_by: str = Query("created_at", description="created_at|total_latency_ms"),
+    order: str = Query("desc", description="asc|desc"),
+    from_: Optional[str] = Query(None, alias="from", description="ISO date lower bound"),
+    to: Optional[str] = Query(None, alias="to", description="ISO date upper bound"),
     current_user=Depends(require_admin)
 ):
     # cleanup expired on each list (cheap)
@@ -136,8 +165,18 @@ def admin_list_traces(
         delete_expired_traces()
     except Exception:
         pass
+    sb = (sort_by or "created_at").lower()
+    od = (order or "desc").lower()
+    if sb not in _TRACE_SORT_COLUMNS:
+        raise HTTPException(status_code=422, detail=f"Invalid sort_by: {sort_by} (allowed: created_at, total_latency_ms)")
+    if od not in _TRACE_SORT_ORDERS:
+        raise HTTPException(status_code=422, detail=f"Invalid order: {order} (allowed: asc, desc)")
+    date_from = _parse_iso_date(from_, "from")
+    date_to = _parse_iso_date(to, "to")
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(status_code=422, detail="from must be <= to")
     offset = (page - 1) * limit
-    rows, total = list_traces(limit=limit, offset=offset, q=q, tone=tone, status=status, is_low=is_low_confidence, user_id=user_id)
+    rows, total = list_traces(limit=limit, offset=offset, q=q, tone=tone, status=status, is_low=is_low_confidence, user_id=user_id, sort_by=sb, order=od, date_from=date_from, date_to=date_to)
     # enrich with ragas flag
     for r in rows:
         rag = get_ragas(r["id"])
@@ -166,7 +205,22 @@ def admin_get_trace(trace_id: str, current_user=Depends(require_admin)):
                 review = get_review(trace["review_id"])
             except Exception:
                 pass
-    return {"trace": trace, "spans": spans, "chunks": chunks, "ragas": ragas, "review": review}
+    return {"trace": trace, "spans": spans, "chunks": chunks, "ragas": ragas, "review": review, "feedback": list_feedback(trace_id)}
+
+
+@router.post("/traces/{trace_id}/feedback", status_code=201)
+def admin_add_trace_feedback(trace_id: str, body: FeedbackRequest, current_user=Depends(require_admin)):
+    trace = get_trace(trace_id)
+    if not trace:
+        raise HTTPException(status_code=404, detail="Trace not found")
+    if body.score is not None and not (1 <= body.score <= 5):
+        raise HTTPException(status_code=422, detail="score must be between 1 and 5")
+    user_id = None
+    try:
+        user_id = (current_user.get("id") or current_user.get("username")) if isinstance(current_user, dict) else getattr(current_user, "id", None)
+    except Exception:
+        user_id = None
+    return add_feedback(trace_id, key=body.key, score=body.score, value=body.value, comment=body.comment, user_id=user_id)
 
 @router.post("/traces/{trace_id}/ragas")
 def admin_trigger_ragas(trace_id: str, current_user=Depends(require_admin)):
