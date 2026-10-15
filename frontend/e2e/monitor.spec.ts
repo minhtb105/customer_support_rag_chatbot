@@ -1,7 +1,14 @@
 import { test, expect } from './fixtures';
 
+function mockRole(page: any, role: string) {
+  return page.route('**/v1/auth/me', async (route: any) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'u1', username: 'spec', role, is_active: true, is_verified: true }) });
+  });
+}
+
 test.describe('Monitor — Guidelines & Alerts', () => {
   test('monitor layout renders tabs', async ({ page }) => {
+    await mockRole(page, 'admin');
     await page.goto('/monitor/guidelines');
     await expect(page.getByText('Giám sát — Guidelines & An toàn thuốc')).toBeVisible();
     await expect(page.getByText('Guidelines').first()).toBeVisible();
@@ -11,12 +18,12 @@ test.describe('Monitor — Guidelines & Alerts', () => {
   test('guidelines page shows auth guard for anonymous', async ({ page }) => {
     await page.goto('/monitor/guidelines');
     // Should show login guard or list (depending on auth) — at least heading visible
-    await expect(page.getByText(/Giám sát|Cần đăng nhập|Cần role/)).toBeVisible();
+    await expect(page.getByText(/Giám sát|Cần đăng nhập|Cần role/).first()).toBeVisible();
   });
 
   test('alerts page shows auth guard for anonymous', async ({ page }) => {
     await page.goto('/monitor/alerts');
-    await expect(page.getByText(/Giám sát|Cần đăng nhập|Cần role/)).toBeVisible();
+    await expect(page.getByText(/Giám sát|Cần đăng nhập|Cần role/).first()).toBeVisible();
   });
 
   test('guidelines pending list mock', async ({ page }) => {

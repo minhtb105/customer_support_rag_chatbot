@@ -1,5 +1,12 @@
 import { test, expect } from './fixtures';
 
+// Tracker/previsit yêu cầu đăng nhập (useAuth) — mock session như tracker.spec.ts.
+function mockSession(page: any) {
+  return page.route('**/v1/auth/me', async (route: any) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'e2e_user', username: 'e2e_user', role: 'user', is_active: true, is_verified: true }) });
+  });
+}
+
 test.describe('Overview — Market Evidence & Navigation', () => {
   test('renders hero stats and 5-criteria framework', async ({ page }) => {
     await page.goto('/');
@@ -25,7 +32,8 @@ test.describe('Overview — Market Evidence & Navigation', () => {
     await expect(page.locator('a[href*="/tracker"]').first()).toBeVisible();
     await expect(page.locator('a[href*="/previsit"]').first()).toBeVisible();
     await expect(page.locator('a[href*="/api-playground"]').first()).toBeVisible();
-    // Direct navigation verifies routes exist and render
+    // Direct navigation verifies routes exist and render (cần login cho tracker/previsit)
+    await mockSession(page);
     await page.goto('/tracker');
     await expect(page.getByText(/Nhật ký đường huyết/)).toBeVisible();
     await page.goto('/previsit');
