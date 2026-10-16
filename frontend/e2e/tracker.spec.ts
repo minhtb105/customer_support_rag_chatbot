@@ -137,4 +137,101 @@ test.describe('Tracker A — Guided UI', () => {
     await page.getByRole('button', { name: /Diễn giải xu hướng/ }).click();
     await expect(page.getByText(/Xu hướng tăng nhẹ/)).toBeVisible({ timeout: 5000 });
   });
+
+  test('voice mic transcribes ambiguous then auto-sends via existing path', async ({ page }) => {
+    await page.addInitScript(() => {
+      const g = navigator as any;
+      if (!g.mediaDevices) (g as any).mediaDevices = {};
+      (g.mediaDevices as any).getUserMedia = async () => ({ getTracks: () => [] });
+      (window as any).MediaRecorder = class {
+        ondataavailable: any = null;
+        onstop: any = null;
+        stream: any;
+        constructor(stream: any) { this.stream = stream; }
+        start() {}
+        stop() { if (this.onstop) this.onstop(); }
+      };
+    });
+    await mockSession(page);
+    await mockGlucosePost(page, {
+      anomaly: { type: 'trend', direction: 'up', reason: 'cascade test' },
+      follow_up_questions: ['Khẩu phần ăn gần đây thế nào?'],
+    });
+    await mockGlucoseGet(page, []);
+    await page.route('**/v1/voice/transcribe', async (route: any) => {
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ text: 'ăn 2 miếng bánh ngọt', emergency: false, parse: { value: null, context: null, ambiguous: true, reason: 'no_number', confirm_text: '' } }),
+      });
+    });
+    await page.route('**/v1/query', async (route: any) => {
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ answer: 'Trả lời voice rút gọn.', contexts: [] }),
+      });
+    });
+    await page.route('**/v1/glucose/followup', async (route: any) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ saved: true }) });
+    });
+    await page.route('**/v1/voice/speak', async (route: any) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ audio_available: false, text: '' }) });
+    });
+
+    await page.goto('/tracker');
+    await page.locator('input[type="number"]').first().fill('140');
+    await page.getByRole('button', { name: /Lưu chỉ số/ }).click();
+    await expect(page.getByText(/Hỏi thêm ngữ cảnh/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('mic-btn')).toBeVisible();
+    await page.getByTestId('mic-btn').click();
+    await page.getByTestId('mic-btn').click();
+    await expect(page.getByText('Trả lời voice rút gọn.')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByPlaceholder('vd: ăn 2 miếng bánh ngọt')).toBeVisible();
+  });
+
+  test('voice STT failure shows sys message and no auto-send', async ({ page }) => {
+    await page.addInitScript(() => {
+      const g = navigator as any;
+      if (!g.mediaDevices) (g as any).mediaDevices = {};
+      (g.mediaDevices as any).getUserMedia = async () => ({ getTracks: () => [] });
+      (window as any).MediaRecorder = class {
+        ondataavailable: any = null;
+        onstop: any = null;
+        stream: any;
+        constructor(stream: any) { this.stream = stream; }
+        start() {}
+        stop() { if (this.onstop) this.onstop(); }
+      };
+    });
+    await mockSession(page);
+    await mockGlucosePost(page, {
+      anomaly: { type: 'trend', direction: 'up', reason: 'cascade test' },
+      follow_up_questions: ['Khẩu phần ăn gần đây thế nào?'],
+    });
+    await mockGlucoseGet(page, []);
+    await page.route('**/v1/voice/transcribe', async (route: any) => {
+      await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ detail: 'transcribe failed' }) });
+    });
+    let queryCalls = 0;
+    await page.route('**/v1/query', async (route: any) => {
+      queryCalls += 1;
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ answer: 'Không được gọi.', contexts: [] }),
+      });
+    });
+    await page.route('**/v1/voice/speak', async (route: any) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ audio_available: false, text: '' }) });
+    });
+
+    await page.goto('/tracker');
+    await page.locator('input[type="number"]').first().fill('140');
+    await page.getByRole('button', { name: /Lưu chỉ số/ }).click();
+    await expect(page.getByText(/Hỏi thêm ngữ cảnh/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('mic-btn')).toBeVisible();
+    await page.getByTestId('mic-btn').click();
+    await page.getByTestId('mic-btn').click();
+    await expect(page.getByText(/Không nghe rõ/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText('Không được gọi.')).toBeHidden();
+    expect(queryCalls).toBe(0);
+  });
 });

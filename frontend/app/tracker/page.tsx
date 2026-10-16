@@ -1,14 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { logGlucose, getGlucose, queryRag, saveGlucoseFollowup, getDoctorPatients, fmtDT } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
 import GlucoseChart from "@/components/GlucoseChart";
-import VoiceWidget from "@/components/VoiceWidget";
+import VoiceWidget, { playServerAudio } from "@/components/VoiceWidget";
 import NutritionLookup from "@/components/NutritionLookup";
-import { Siren, TrendingUp, ShieldAlert, CalendarPlus, Phone, Building2, TriangleAlert } from "lucide-react";
+import { Siren, TrendingUp, ShieldAlert, CalendarPlus, Phone, Building2, TriangleAlert, Mic, Square } from "lucide-react";
 
 const contexts = [
   { value: "fasting", label: "Lúc đói" },
@@ -56,12 +56,16 @@ const EntryAlert = (p: any) => {
 };
 
 const FqgChat = (p: any) => {
-  const { isCritical, fqg, effectiveId, lastLogId } = p;
+  const { isCritical, fqg, effectiveId, lastLogId, onAnomaly } = p;
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const [open, setOpen] = useState(false);
   const [fqgMode, setFqgMode] = useState(false);
   const [sending, setSending] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [voicePending, setVoicePending] = useState<any>(null);
+  const mediaRef = useRef<any>(null);
+  const chunksRef = useRef<Blob[]>([]);
   useEffect(()=>{
     if (fqg.length && !isCritical) {
       setFqgMode(true);
@@ -73,11 +77,11 @@ const FqgChat = (p: any) => {
     }
   },[fqg, isCritical]);
   if (isCritical) return null;
-  const send = async ()=>{
-    const text = input.trim();
+  const send = async (textOverride?: string)=>{
+    const text = (textOverride ?? input).trim();
     if (!text || sending) return;
     if (!effectiveId) { setMessages((prev)=>[...prev, { role: "sys", text: "Cần đăng nhập" }]); return; }
-    setInput("");
+    if (textOverride === undefined) setInput("");
     setOpen(true);
     setMessages((prev)=>[...prev, { role: "user", text }]);
     setSending(true);
@@ -86,7 +90,7 @@ const FqgChat = (p: any) => {
       const answer: string = res?.answer || "";
       if (res?.safeguard === true || GUARD_RE.test(answer)) {
         setMessages((prev)=>[...prev, { role: "guard", text: answer || "Hệ thống này được thiết kế riêng để theo dõi đường huyết. Vấn đề này nằm ngoài phạm vi hỗ trợ và an toàn y khoa. Vui lòng tham vấn bác sĩ tại buổi khám tới." }]);
-        return;
+        return "";
       }
       const short = answer.length > 500 ? answer.slice(0, 500) + "…" : answer;
       if (short) setMessages((prev)=>[...prev, { role: "ai", text: short }]);
@@ -99,10 +103,85 @@ const FqgChat = (p: any) => {
         }
         setFqgMode(false);
       }
+      return short;
     } catch (e: any) {
       setMessages((prev)=>[...prev, { role: "sys", text: "Lỗi: " + e.message }]);
+      return "";
     } finally {
       setSending(false);
+    }
+  };
+  const transcribeBlob = async (blob: Blob)=>{
+    const fd = new FormData();
+    fd.append("audio", blob, "voice.webm");
+    const res = await fetch(`${TRIAGE_API}/v1/voice/transcribe`, { method: "POST", credentials: "include" as const, body: fd });
+    if (!res.ok) throw new Error(`transcribe ${res.status}`);
+    return res.json();
+  };
+  const handleVoiceBlob = async (blob: Blob)=>{
+    if (!effectiveId) { setMessages((prev)=>[...prev, { role: "sys", text: "Cần đăng nhập" }]); return; }
+    setOpen(true);
+    let data: any;
+    try {
+      data = await transcribeBlob(blob);
+    } catch (e: any) {
+      setMessages((prev)=>[...prev, { role: "sys", text: "Không nghe rõ. Bác gõ giúp con nhé." }]);
+      return;
+    }
+    const transcript = (data?.text || "").trim();
+    if (data?.emergency === true) {
+      const emgText = data?.message || "Gọi 115 ngay.";
+      setMessages((prev)=>[...prev, { role: "emg", text: emgText }]);
+      try { await playServerAudio(emgText); } catch { /* fail-open */ }
+      return;
+    }
+    if (data?.parse && !data.parse.ambiguous) {
+      if (transcript) setMessages((prev)=>[...prev, { role: "user", text: transcript }]);
+      setVoicePending({ parse: data.parse, transcript });
+      try { await playServerAudio(data.parse.confirm_text || ""); } catch { /* fail-open */ }
+      return;
+    }
+    if (!transcript) {
+      setMessages((prev)=>[...prev, { role: "sys", text: "Con nghe chưa rõ. Bác bấm mic nói lại giúp con nhé." }]);
+      return;
+    }
+    const answer = await send(transcript);
+    if (answer) { try { await playServerAudio(answer); } catch { /* fail-open */ } }
+  };
+  const toggleMic = async ()=>{
+    if (recording) {
+      try { mediaRef.current?.stop(); } catch { setRecording(false); }
+      return;
+    }
+    setVoicePending(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      chunksRef.current = [];
+      mr.ondataavailable = (e: any)=>{ if (e.data?.size) chunksRef.current.push(e.data); };
+      mr.onstop = async ()=>{
+        setRecording(false);
+        try { stream.getTracks().forEach((t: any)=>t.stop()); } catch { /* noop */ }
+        await handleVoiceBlob(new Blob(chunksRef.current, { type: "audio/webm" }));
+      };
+      mediaRef.current = mr;
+      mr.start();
+      setRecording(true);
+    } catch {
+      setOpen(true);
+      setMessages((prev)=>[...prev, { role: "sys", text: "Không mở được mic. Bác gõ giúp con nhé." }]);
+    }
+  };
+  const confirmVoiceSave = async ()=>{
+    if (!voicePending?.parse || voicePending.parse.ambiguous) return;
+    if (!effectiveId) { setMessages((prev)=>[...prev, { role: "sys", text: "Cần đăng nhập" }]); return; }
+    try {
+      const rec: any = await logGlucose({ user_id: effectiveId, value_mgdl: voicePending.parse.value, context: voicePending.parse.context });
+      setMessages((prev)=>[...prev, { role: "sys", text: `Đã lưu ${rec.value_mgdl} mg/dL (${rec.context}).` }]);
+      try { await (onAnomaly?.(rec.anomaly, rec.follow_up_questions, rec)); } catch { /* fail-open */ }
+      setVoicePending(null);
+    } catch (e: any) {
+      setMessages((prev)=>[...prev, { role: "sys", text: "Lỗi lưu: " + e.message }]);
     }
   };
   if (!open && !fqg.length) return null;
@@ -116,15 +195,32 @@ const FqgChat = (p: any) => {
         <>
           <div className="mt-3 max-h-64 space-y-2 overflow-auto rounded-lg border bg-white p-3 dark:bg-slate-900 dark:border-slate-700">
             {messages.length ? messages.map((m,i)=>(
+              m.role==="emg" ? (
+                <div key={i} role="alert" className="rounded-lg border-2 border-red-600 bg-red-50 p-2 text-sm font-bold text-red-800 dark:bg-red-950 dark:border-red-500 dark:text-red-100">
+                  <div className="whitespace-pre-wrap">{m.text}</div>
+                  <a href="tel:115" aria-label="Gọi cấp cứu 115" className="mt-2 inline-flex min-h-[44px] items-center rounded-full bg-red-600 px-5 py-2 text-sm font-bold text-white hover:bg-red-700">Gọi 115</a>
+                </div>
+              ) : (
               <div key={i} className={`rounded-lg p-2 text-sm leading-relaxed ${m.role==="user"?"ml-8 bg-emerald-50 border border-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-100":m.role==="guard"?"bg-red-50 border border-red-200 text-red-800 dark:bg-red-950 dark:border-red-800 dark:text-red-100":m.role==="sys"?"bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300":"mr-8 bg-blue-50 border border-blue-100 text-blue-900 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-100"}`}>
                 {m.role==="guard" && <div className="font-bold flex items-center gap-1.5"><ShieldAlert size={14} aria-hidden /> Ngoài phạm vi hỗ trợ</div>}
                 <div className="whitespace-pre-wrap">{m.text}</div>
               </div>
+              )
             )) : <div className="p-2 text-sm text-slate-500 dark:text-slate-400">AI sẽ hỏi thêm khi phát hiện trend bất thường.</div>}
           </div>
+          {voicePending?.parse && !voicePending.parse.ambiguous && (
+            <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:bg-blue-950 dark:border-blue-800">
+              <div className="text-sm font-semibold text-blue-900 dark:text-blue-100">{voicePending.parse.confirm_text}</div>
+              <div className="mt-3 flex gap-2">
+                <button onClick={confirmVoiceSave} aria-label="Xác nhận đúng, lưu chỉ số" className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700 min-h-[44px]">Đúng, lưu</button>
+                <button onClick={()=>{ setVoicePending(null); toggleMic(); }} aria-label="Nói lại chỉ số" className="rounded-lg border border-blue-300 px-6 py-3 text-sm text-blue-900 dark:text-blue-100 dark:border-blue-700 min-h-[44px]">Nói lại</button>
+              </div>
+            </div>
+          )}
           <div className="mt-2 flex gap-2">
             <input data-testid="fqg-input" value={input} onChange={(e)=>setInput(e.target.value)} onKeyDown={(e)=>{ if(e.key==="Enter") send(); }} placeholder="vd: ăn 2 miếng bánh ngọt" className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" />
-            <button data-testid="fqg-send" onClick={send} disabled={sending} className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 min-h-[44px]">{sending?"...":"Gửi"}</button>
+            <button data-testid="mic-btn" onClick={toggleMic} aria-label={recording ? "Dừng ghi âm" : "Bắt đầu ghi âm bằng giọng nói"} title={recording ? "Dừng ghi âm" : "Nói thay vì gõ"} className={`rounded-lg px-4 py-2 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center ${recording ? "bg-red-600 text-white animate-pulse" : "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"}`}>{recording ? <Square size={16} aria-hidden /> : <Mic size={16} aria-hidden />}</button>
+            <button data-testid="fqg-send" onClick={()=>send()} disabled={sending} className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 min-h-[44px]">{sending?"...":"Gửi"}</button>
           </div>
         </>
       )}
@@ -341,6 +437,13 @@ export default function TrackerPage(){
     const q=`Tôi có các chỉ số đường huyết gần đây: ${last}. Trung bình 7 ngày ${stats.last_7_days_avg}mg/dL, tần suất ${stats.logs_per_week}/tuần, streak ${stats.streak_days} ngày. Hãy diễn giải xu hướng bằng tiếng Việt, dùng guideline WHO/ADA/BYT, chỉ escalate nếu critical hoặc 3 lần high liên tiếp.`;
     try{ const ans=await queryRag(q,5,effectiveId); setTrend(ans.status==="pending_review"? `⏳ Đang chờ duyệt (${ans.evaluation?.routed_role}): ${ans.answer.slice(0,300)}` : ans.answer); }catch(e:any){ setTrend("Lỗi RAG: "+e.message); }
   };
+  const handleFqgAnomaly = async (anomaly: any, followUp: string[], rec?: any)=>{
+    if (anomaly && anomaly.type && anomaly.type !== "none") setAnomaly(anomaly);
+    if (rec && typeof rec.id === "number") setLastLogId(rec.id);
+    if (rec?.classification && rec?.message) setMsg(`${String(rec.classification).toUpperCase()}: ${rec.message}`);
+    if (Array.isArray(followUp) && followUp.length) setFqg(followUp);
+    await refresh();
+  };
 
   if(!user) return <div className="rounded-2xl border bg-white p-8 text-center dark:bg-slate-900 dark:border-slate-700">Cần đăng nhập để dùng Nhật ký. <Link href="/login" className="underline">Đăng nhập</Link> hoặc <Link href="/register" className="underline">Đăng ký</Link></div>;
 
@@ -359,7 +462,7 @@ export default function TrackerPage(){
       </div>
       {!readOnly && (
       <>
-      <FqgChat isCritical={isCritical} fqg={fqg} effectiveId={effectiveId} lastLogId={lastLogId} />
+      <FqgChat isCritical={isCritical} fqg={fqg} effectiveId={effectiveId} lastLogId={lastLogId} onAnomaly={handleFqgAnomaly} />
       <NutritionLookup />
       <VoiceWidget userId={effectiveId} />
       <TriageWidget effectiveId={effectiveId} />
