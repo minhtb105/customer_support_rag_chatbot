@@ -4,6 +4,38 @@ import { test, expect } from './fixtures';
 // BE is not started by webServer, so API is mocked to match current UI contracts.
 const ME = { id: 'e2e_user', username: 'e2e_user', role: 'user', is_active: true, is_verified: true };
 
+// 44-byte header-only silent WAV; the Audio stub never decodes it.
+const SILENT_WAV = 'UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+
+// Voice-mode loop stubs: getUserMedia + auto-stopping MediaRecorder + Audio whose
+// play() resolves and fires onended immediately (so a turn completes deterministically).
+function mockVoiceLoop(page: any) {
+  return page.addInitScript(() => {
+    const g = navigator as any;
+    if (!g.mediaDevices) (g as any).mediaDevices = {};
+    (g.mediaDevices as any).getUserMedia = async () => ({ getTracks: () => [] });
+    (window as any).MediaRecorder = class {
+      ondataavailable: any = null;
+      onstop: any = null;
+      stream: any;
+      constructor(stream: any) { this.stream = stream; }
+      start() { setTimeout(() => { if (this.ondataavailable) this.ondataavailable({ data: new Blob(['voice']) }); this.stop(); }, 30); }
+      stop() { if (this.onstop) this.onstop(); }
+    };
+    (window as any).Audio = class {
+      _onended: any = null;
+      _onerror: any = null;
+      src: string;
+      constructor(src: string) { this.src = src; }
+      set onended(fn: any) { this._onended = fn; }
+      get onended() { return this._onended; }
+      set onerror(fn: any) { this._onerror = fn; }
+      get onerror() { return this._onerror; }
+      play() { setTimeout(() => { if (this._onended) this._onended(); }, 0); return Promise.resolve(); }
+    };
+  });
+}
+
 function dayIso(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, '0');
@@ -232,6 +264,86 @@ test.describe('Tracker A — Guided UI', () => {
     await page.getByTestId('mic-btn').click();
     await expect(page.getByText(/Không nghe rõ/)).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Không được gọi.')).toBeHidden();
+    expect(queryCalls).toBe(0);
+  });
+
+  test('voice mode auto-advances to turn 2 after TTS end, Stop halts further turns', async ({ page }) => {
+    await mockVoiceLoop(page);
+    await mockSession(page);
+    await mockGlucosePost(page, {
+      anomaly: { type: 'trend', direction: 'up', reason: 'cascade test' },
+      follow_up_questions: ['Khẩu phần ăn gần đây thế nào?'],
+    });
+    await mockGlucoseGet(page, []);
+    let transcribeCalls = 0;
+    await page.route('**/v1/voice/transcribe', async (route: any) => {
+      transcribeCalls += 1;
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ text: 'ăn 2 miếng bánh ngọt', emergency: false, parse: null }),
+      });
+    });
+    await page.route('**/v1/query', async (route: any) => {
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ answer: 'Trả lời voice mode.', contexts: [] }),
+      });
+    });
+    await page.route('**/v1/glucose/followup', async (route: any) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ saved: true }) });
+    });
+    await page.route('**/v1/voice/speak', async (route: any) => {
+      await route.fulfill({
+        status: 200, contentType: 'application/json',
+        body: JSON.stringify({ audio_available: true, mime: 'audio/wav', audio_base64: SILENT_WAV }),
+      });
+    });
+
+    await page.goto('/tracker');
+    await page.locator('input[type="number"]').first().fill('140');
+    await page.getByRole('button', { name: /Lưu chỉ số/ }).click();
+    await expect(page.getByText(/Hỏi thêm ngữ cảnh/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId('voice-mode-btn')).toBeVisible();
+    await page.getByTestId('voice-mode-btn').click();
+    // Turn 1: auto-stop -> transcribe -> send -> TTS ended -> gap -> turn 2 transcribe.
+    await expect.poll(() => transcribeCalls, { timeout: 15000, intervals: [50] }).toBe(2);
+    await page.getByTestId('voice-mode-btn').click(); // Stop
+    await expect(page.getByText('Trả lời voice mode.').first()).toBeVisible();
+    await page.waitForTimeout(1200);
+    expect(transcribeCalls).toBe(2);
+  });
+
+  test('voice mode stops when STT fails', async ({ page }) => {
+    await mockVoiceLoop(page);
+    await mockSession(page);
+    await mockGlucosePost(page, {
+      anomaly: { type: 'trend', direction: 'up', reason: 'cascade test' },
+      follow_up_questions: ['Khẩu phần ăn gần đây thế nào?'],
+    });
+    await mockGlucoseGet(page, []);
+    let transcribeCalls = 0;
+    await page.route('**/v1/voice/transcribe', async (route: any) => {
+      transcribeCalls += 1;
+      await route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ detail: 'transcribe failed' }) });
+    });
+    let queryCalls = 0;
+    await page.route('**/v1/query', async (route: any) => {
+      queryCalls += 1;
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ answer: 'Không được gọi.', contexts: [] }) });
+    });
+    await page.route('**/v1/voice/speak', async (route: any) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ audio_available: false, text: '' }) });
+    });
+
+    await page.goto('/tracker');
+    await page.locator('input[type="number"]').first().fill('140');
+    await page.getByRole('button', { name: /Lưu chỉ số/ }).click();
+    await expect(page.getByText(/Hỏi thêm ngữ cảnh/)).toBeVisible({ timeout: 5000 });
+    await page.getByTestId('voice-mode-btn').click();
+    await expect(page.getByText(/Không nghe rõ/)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId('voice-mode-btn')).toHaveAttribute('aria-label', 'Bật chế độ nói liên tục');
+    await page.waitForTimeout(800);
+    expect(transcribeCalls).toBe(1);
     expect(queryCalls).toBe(0);
   });
 });

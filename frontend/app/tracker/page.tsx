@@ -8,7 +8,7 @@ import StatusBadge from "@/components/StatusBadge";
 import GlucoseChart from "@/components/GlucoseChart";
 import { playServerAudio, loadPersona, vnToday } from "@/lib/voice";
 import NutritionLookup from "@/components/NutritionLookup";
-import { Siren, TrendingUp, ShieldAlert, CalendarPlus, Phone, Building2, TriangleAlert, Mic, Square } from "lucide-react";
+import { Siren, TrendingUp, ShieldAlert, CalendarPlus, Phone, Building2, TriangleAlert, Mic, Square, AudioLines } from "lucide-react";
 
 const contexts = [
   { value: "fasting", label: "Lúc đói" },
@@ -55,6 +55,13 @@ const EntryAlert = (p: any) => {
   );
 };
 
+// Voice-mode hands-free loop tuning (constants pinned by debate D2 / plan B2).
+const GAP_MS = 600;
+const TURN_WINDOW_MS = 7000;
+const MAX_VOICE_TURNS = 20;
+const MAX_EMPTY_STREAK = 2;
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
 const FqgChat = (p: any) => {
   const { isCritical, fqg, effectiveId, lastLogId, onAnomaly, persona } = p;
   const [messages, setMessages] = useState<any[]>([]);
@@ -66,6 +73,15 @@ const FqgChat = (p: any) => {
   const [voicePending, setVoicePending] = useState<any>(null);
   const mediaRef = useRef<any>(null);
   const chunksRef = useRef<Blob[]>([]);
+  // === Voice-mode loop state (P1) — delimited block, liftable to a hook later ===
+  const [voiceLoop, setVoiceLoop] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const loopRef = useRef(false);
+  const cancelledRef = useRef(false);
+  const streamRef = useRef<any>(null);
+  const turnTimerRef = useRef<any>(null);
+  const turnCountRef = useRef(0);
+  const emptyStreakRef = useRef(0);
   useEffect(()=>{
     if (fqg.length && !isCritical) {
       setFqgMode(true);
@@ -76,6 +92,9 @@ const FqgChat = (p: any) => {
       });
     }
   },[fqg, isCritical]);
+  // D4 lifecycle: critical flip and unmount must abort the loop (release mic/timers).
+  useEffect(()=>{ if (isCritical) stopLoop(); },[isCritical]);
+  useEffect(()=>()=>{ stopLoop(); },[]);
   if (isCritical) return null;
   const send = async (textOverride?: string)=>{
     const text = (textOverride ?? input).trim();
@@ -118,35 +137,44 @@ const FqgChat = (p: any) => {
     if (!res.ok) throw new Error(`transcribe ${res.status}`);
     return res.json();
   };
-  const handleVoiceBlob = async (blob: Blob)=>{
-    if (!effectiveId) { setMessages((prev)=>[...prev, { role: "sys", text: "Cần đăng nhập" }]); return; }
+  // D3 outcome contract: the loop branches on this; single-turn mic ignores the return.
+  const handleVoiceBlob = async (blob: Blob): Promise<"emergency"|"confirm"|"answered"|"empty"|"error"> => {
+    if (!effectiveId) { setMessages((prev)=>[...prev, { role: "sys", text: "Cần đăng nhập" }]); return "error"; }
     setOpen(true);
     let data: any;
     try {
       data = await transcribeBlob(blob);
     } catch (e: any) {
       setMessages((prev)=>[...prev, { role: "sys", text: "Không nghe rõ. Bác gõ giúp con nhé." }]);
-      return;
+      return "error";
     }
+    if (cancelledRef.current) return "error";
     const transcript = (data?.text || "").trim();
     if (data?.emergency === true) {
       const emgText = data?.message || "Gọi 115 ngay.";
       setMessages((prev)=>[...prev, { role: "emg", text: emgText }]);
-      try { await playServerAudio(emgText, { persona }); } catch { /* fail-open */ }
-      return;
+      await playServerAudio(emgText, { persona });
+      return "emergency";
     }
     if (data?.parse && !data.parse.ambiguous) {
       if (transcript) setMessages((prev)=>[...prev, { role: "user", text: transcript }]);
       setVoicePending({ parse: data.parse, transcript });
-      try { await playServerAudio(data.parse.confirm_text || "", { persona }); } catch { /* fail-open */ }
-      return;
+      const tts = await playServerAudio(data.parse.confirm_text || "", { persona });
+      if (cancelledRef.current) return "error";
+      return tts === "error" ? "error" : "confirm";
     }
     if (!transcript) {
       setMessages((prev)=>[...prev, { role: "sys", text: "Con nghe chưa rõ. Bác bấm mic nói lại giúp con nhé." }]);
-      return;
+      return "empty";
     }
     const answer = await send(transcript);
-    if (answer) { try { await playServerAudio(answer, { persona }); } catch { /* fail-open */ } }
+    if (cancelledRef.current) return "error";
+    if (answer) {
+      const tts = await playServerAudio(answer, { persona });
+      if (cancelledRef.current) return "error";
+      if (tts === "error") return "error"; // fail-open: answer text already shown; loop stops
+    }
+    return "answered";
   };
   const toggleMic = async ()=>{
     if (recording) {
@@ -154,6 +182,7 @@ const FqgChat = (p: any) => {
       return;
     }
     setVoicePending(null);
+    cancelledRef.current = false; // new single-turn recording: clear any stale loop cancel
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream);
@@ -180,10 +209,104 @@ const FqgChat = (p: any) => {
       setMessages((prev)=>[...prev, { role: "sys", text: `Đã lưu ${rec.value_mgdl} mg/dL (${rec.context}).` }]);
       try { await (onAnomaly?.(rec.anomaly, rec.follow_up_questions, rec)); } catch { /* fail-open */ }
       setVoicePending(null);
+      // Loop paused on the confirm card: resume listening once the user saved.
+      if (loopRef.current && !cancelledRef.current) {
+        await sleep(GAP_MS);
+        if (loopRef.current && !cancelledRef.current) startListen();
+      }
     } catch (e: any) {
       setMessages((prev)=>[...prev, { role: "sys", text: "Lỗi lưu: " + e.message }]);
     }
   };
+  // === Voice-mode loop controller (P1) — single delimited block, liftable to a hook later ===
+  // Idempotent teardown: stop timer, recorder, and release the mic stream.
+  // Hoisted function (not const): the [isCritical]/unmount effects below run even on
+  // renders that early-return before this block, so `stopLoop` must exist already.
+  function stopLoop(){
+    loopRef.current = false;
+    cancelledRef.current = true;
+    if (turnTimerRef.current) { clearTimeout(turnTimerRef.current); turnTimerRef.current = null; }
+    try { mediaRef.current?.stop(); } catch { /* noop */ }
+    try { streamRef.current?.getTracks?.().forEach((t: any)=>t.stop()); } catch { /* noop */ }
+    streamRef.current = null;
+    setVoiceLoop(false);
+    setCountdown(null);
+  }
+  // One listen turn on the kept stream: fixed window auto-stop + tap/Stop early finish.
+  const startListen = ()=>{
+    if (!loopRef.current || cancelledRef.current) return;
+    const stream = streamRef.current;
+    if (!stream) { stopLoop(); return; }
+    let mr: any;
+    try { mr = new MediaRecorder(stream); } catch { stopLoop(); return; }
+    const chunks: Blob[] = [];
+    mr.ondataavailable = (e: any)=>{ if (e.data?.size) chunks.push(e.data); };
+    mr.onstop = async ()=>{
+      if (turnTimerRef.current) { clearTimeout(turnTimerRef.current); turnTimerRef.current = null; }
+      setCountdown(null);
+      if (cancelledRef.current || !loopRef.current) return;
+      const outcome = await handleVoiceBlob(new Blob(chunks, { type: "audio/webm" }));
+      if (cancelledRef.current || !loopRef.current) return;
+      if (outcome === "emergency" || outcome === "error") { stopLoop(); return; }
+      if (outcome === "confirm") return; // PAUSE: resume from the confirm card's Đúng/Nói lại
+      if (outcome === "empty") {
+        emptyStreakRef.current += 1;
+        if (emptyStreakRef.current >= MAX_EMPTY_STREAK) {
+          setMessages((prev)=>[...prev, { role: "sys", text: "Không nghe rõ 2 lần liên tiếp. Con tắt voice mode." }]);
+          stopLoop();
+          return;
+        }
+        await sleep(GAP_MS);
+        if (cancelledRef.current || !loopRef.current) return;
+        startListen();
+        return;
+      }
+      // answered
+      emptyStreakRef.current = 0;
+      turnCountRef.current += 1;
+      if (turnCountRef.current >= MAX_VOICE_TURNS) {
+        setMessages((prev)=>[...prev, { role: "sys", text: "Kết thúc voice mode (giới hạn 20 lượt)." }]);
+        stopLoop();
+        return;
+      }
+      await sleep(GAP_MS);
+      if (cancelledRef.current || !loopRef.current) return;
+      startListen();
+    };
+    mediaRef.current = mr;
+    try { mr.start(); } catch { stopLoop(); return; }
+    setCountdown(Math.ceil(TURN_WINDOW_MS / 1000));
+    const startAt = Date.now();
+    const tick = ()=>{
+      if (!loopRef.current || cancelledRef.current) return;
+      const remain = Math.ceil((TURN_WINDOW_MS - (Date.now() - startAt)) / 1000);
+      if (remain <= 0) { try { mr.stop(); } catch { /* noop */ } return; }
+      setCountdown(remain);
+      turnTimerRef.current = setTimeout(tick, Math.min(1000, TURN_WINDOW_MS - (Date.now() - startAt)));
+    };
+    turnTimerRef.current = setTimeout(tick, 1000);
+  };
+  const startLoop = async ()=>{
+    if (loopRef.current) return;
+    setVoicePending(null);
+    loopRef.current = true;
+    cancelledRef.current = false;
+    turnCountRef.current = 0;
+    emptyStreakRef.current = 0;
+    setOpen(true);
+    setVoiceLoop(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (cancelledRef.current || !loopRef.current) { try { stream.getTracks().forEach((t: any)=>t.stop()); } catch { /* noop */ } return; }
+      streamRef.current = stream;
+    } catch {
+      stopLoop();
+      setMessages((prev)=>[...prev, { role: "sys", text: "Không mở được mic. Bác gõ giúp con nhé." }]);
+      return;
+    }
+    startListen();
+  };
+  const toggleVoiceMode = ()=>{ if (loopRef.current) stopLoop(); else startLoop(); };
   if (!open && !fqg.length) return null;
   return (
     <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 shadow-sm dark:bg-blue-950/40 dark:border-blue-900">
@@ -213,15 +336,19 @@ const FqgChat = (p: any) => {
               <div className="text-sm font-semibold text-blue-900 dark:text-blue-100">{voicePending.parse.confirm_text}</div>
               <div className="mt-3 flex gap-2">
                 <button onClick={confirmVoiceSave} aria-label="Xác nhận đúng, lưu chỉ số" className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700 min-h-[44px]">Đúng, lưu</button>
-                <button onClick={()=>{ setVoicePending(null); toggleMic(); }} aria-label="Nói lại chỉ số" className="rounded-lg border border-blue-300 px-6 py-3 text-sm text-blue-900 dark:text-blue-100 dark:border-blue-700 min-h-[44px]">Nói lại</button>
+                <button onClick={()=>{ setVoicePending(null); if (loopRef.current && !cancelledRef.current) startListen(); else toggleMic(); }} aria-label="Nói lại chỉ số" className="rounded-lg border border-blue-300 px-6 py-3 text-sm text-blue-900 dark:text-blue-100 dark:border-blue-700 min-h-[44px]">Nói lại</button>
               </div>
             </div>
           )}
           <div className="mt-2 flex gap-2">
             <input data-testid="fqg-input" value={input} onChange={(e)=>setInput(e.target.value)} onKeyDown={(e)=>{ if(e.key==="Enter") send(); }} placeholder="vd: ăn 2 miếng bánh ngọt" className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" />
-            <button data-testid="mic-btn" onClick={toggleMic} aria-label={recording ? "Dừng ghi âm" : "Bắt đầu ghi âm bằng giọng nói"} title={recording ? "Dừng ghi âm" : "Nói thay vì gõ"} className={`rounded-lg px-4 py-2 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center ${recording ? "bg-red-600 text-white animate-pulse" : "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"}`}>{recording ? <Square size={16} aria-hidden /> : <Mic size={16} aria-hidden />}</button>
+            <button data-testid="mic-btn" onClick={toggleMic} disabled={voiceLoop} aria-label={recording ? "Dừng ghi âm" : "Bắt đầu ghi âm bằng giọng nói"} title={recording ? "Dừng ghi âm" : "Nói thay vì gõ"} className={`rounded-lg px-4 py-2 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50 ${recording ? "bg-red-600 text-white animate-pulse" : "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"}`}>{recording ? <Square size={16} aria-hidden /> : <Mic size={16} aria-hidden />}</button>
+            <button data-testid="voice-mode-btn" onClick={toggleVoiceMode} disabled={recording} aria-label={voiceLoop ? "Dừng voice mode" : "Bật chế độ nói liên tục"} title={voiceLoop ? "Dừng voice mode" : "Nói liên tục (hands-free)"} className={`rounded-lg px-4 py-2 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50 ${voiceLoop ? "bg-red-600 text-white" : "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-100 dark:hover:bg-blue-800"}`}>{voiceLoop ? <Square size={16} aria-hidden /> : <AudioLines size={16} aria-hidden />}</button>
             <button data-testid="fqg-send" onClick={()=>send()} disabled={sending} className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 min-h-[44px]">{sending?"...":"Gửi"}</button>
           </div>
+          {voiceLoop && countdown !== null && (
+            <div role="status" className="mt-2 text-xs text-red-700 dark:text-red-300">Đang nghe... (tự dừng sau {countdown}s)</div>
+          )}
         </>
       )}
     </div>
