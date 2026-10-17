@@ -1,10 +1,8 @@
 """Local tracing engine — ContextVar based, no LangSmith"""
 from __future__ import annotations
 import contextvars
-import functools
-import time
 import uuid
-from typing import Optional, Dict, Any, Callable
+from typing import Optional, Dict, Any
 import hashlib
 
 try:
@@ -70,22 +68,3 @@ def finish_span(span_id: str, outputs: Optional[Dict]=None, metadata: Optional[D
     if span_id in stack:
         idx = len(stack) - 1 - stack[::-1].index(span_id)
         _span_ctx.set(stack[:idx] + stack[idx + 1:])
-
-def trace_span(name: str):
-    def decorator(fn: Callable):
-        @functools.wraps(fn)
-        def wrapper(*args, **kwargs):
-            sid = start_span(name, inputs={"args": str(args)[:500]})
-            t0 = time.perf_counter()
-            try:
-                result = fn(*args, **kwargs)
-                dur = (time.perf_counter()-t0)*1000
-                # try to capture output snippet
-                out = {"result": str(result)[:1000]} if result is not None else {}
-                finish_span(sid, outputs=out, metadata={"duration_ms": dur})
-                return result
-            except Exception as e:
-                finish_span(sid, outputs={"error": str(e)}, metadata={"duration_ms": (time.perf_counter()-t0)*1000})
-                raise
-        return wrapper
-    return decorator
