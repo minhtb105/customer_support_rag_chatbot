@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
 import { lookupNutrition } from "@/lib/api";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 // P3 UI hookup: tra cứu món ăn -> số liệu + khẩu phần mild/severe, không LLM.
 export default function NutritionLookup() {
@@ -19,17 +22,17 @@ export default function NutritionLookup() {
   const rec = (m: any) =>
     profile === "severe" ? m.recommendation?.severe : m.recommendation?.mild;
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+    <Card className="p-5">
       <h2 className="text-sm font-semibold">Tra cứu món ăn (số liệu chuẩn)</h2>
       <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Hỏi “ăn bao nhiêu ổi” → số gram + GL + carb-choice, không qua AI diễn giải.</p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-        <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") go(); }} placeholder="vd: ổi, sầu riêng, trà sữa" className="flex-1 rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") go(); }} placeholder="vd: ổi, sầu riêng, trà sữa" className="flex-1" />
         <select value={profile} onChange={(e) => setProfile(e.target.value as any)} className="rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]">
           <option value="both">Cả 2 mức</option>
           <option value="mild">Kiểm soát tốt</option>
           <option value="severe">Kiểm soát kém</option>
         </select>
-        <button onClick={go} disabled={loading} className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50 min-h-[44px]">{loading ? "Đang tra..." : "Tra cứu"}</button>
+        <Button onClick={go} disabled={loading} variant="success" className="px-5">{loading ? "Đang tra..." : "Tra cứu"}</Button>
       </div>
       {msg && <div className="mt-2 text-xs text-red-600">{msg}</div>}
       {res && res.count === 0 && <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">Không tìm thấy món “{res.query}”. Thử tên khác (vd: chuối, phở bò, nước dừa).</div>}
@@ -53,6 +56,6 @@ export default function NutritionLookup() {
           </div>
         );
       })}
-    </div>
+    </Card>
   );
 }

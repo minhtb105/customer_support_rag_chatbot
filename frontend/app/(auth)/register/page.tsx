@@ -3,6 +3,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -24,18 +27,18 @@ export default function RegisterPage() {
     }
   };
   return (
-    <div className="mx-auto max-w-md rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-6 shadow-sm">
+    <Card className="mx-auto max-w-md p-6">
       <h1 className="text-lg font-bold">Đăng ký</h1>
       <p className="text-xs text-slate-500 dark:text-slate-400">Mặc định role <b>user</b>. Expert do admin tạo/duyệt.</p>
       <form onSubmit={submit} className="mt-4 space-y-3">
-        <input placeholder="Username *" value={username} onChange={(e)=>setUsername(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm" required />
-        <input placeholder="Email" value={email} onChange={(e)=>setEmail(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm" />
-        <input placeholder="Full name" value={fullName} onChange={(e)=>setFullName(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm" />
-        <input type="password" placeholder="Password *" value={password} onChange={(e)=>setPassword(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm" required />
-        <button type="submit" className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-700">Tạo tài khoản</button>
+        <Input placeholder="Username *" value={username} onChange={(e)=>setUsername(e.target.value)} required />
+        <Input placeholder="Email" value={email} onChange={(e)=>setEmail(e.target.value)} />
+        <Input placeholder="Full name" value={fullName} onChange={(e)=>setFullName(e.target.value)} />
+        <Input type="password" placeholder="Password *" value={password} onChange={(e)=>setPassword(e.target.value)} required />
+        <Button type="submit" variant="success" className="w-full">Tạo tài khoản</Button>
         {msg && <div className="rounded-lg bg-red-50 border border-red-200 p-2 text-xs text-red-700">{msg}</div>}
       </form>
       <div className="mt-3 text-xs"><Link href="/login" className="underline">Đã có tài khoản? Đăng nhập</Link></div>
-    </div>
+    </Card>
   );
 }

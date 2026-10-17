@@ -8,6 +8,11 @@ import StatusBadge from "@/components/StatusBadge";
 import GlucoseChart from "@/components/GlucoseChart";
 import { playServerAudio, loadPersona, vnToday } from "@/lib/voice";
 import NutritionLookup from "@/components/NutritionLookup";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Alert } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Siren, TrendingUp, ShieldAlert, CalendarPlus, Phone, Building2, TriangleAlert, Mic, Square, AudioLines } from "lucide-react";
 
 const contexts = [
@@ -25,7 +30,7 @@ const GUARD_RE = /thiết kế riêng để theo dõi đường huyết|nằm ng
 const EntryAlert = (p: any) => {
   const { value, setValue, context, setContext, notes, setNotes, msg, anomaly, isCritical, submit } = p;
   return (
-    <div id="manual-entry" className="rounded-2xl border bg-white p-5 shadow-sm lg:col-span-1 dark:bg-slate-900 dark:border-slate-700">
+    <Card id="manual-entry" className="p-5 lg:col-span-1">
       <h2 className="text-sm font-semibold">Nhập chỉ số</h2>
       {isCritical && (
         <div data-testid="critical-banner" role="alert" className="animate-critical-pulse mt-4 rounded-xl border-2 border-red-600 bg-red-600 p-4 text-white shadow-xl">
@@ -37,21 +42,21 @@ const EntryAlert = (p: any) => {
       )}
       <div className="relative mt-4 space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <div><label htmlFor="glucose-value" className="text-xs text-slate-600 dark:text-slate-300">Giá trị (mg/dL)</label><input id="glucose-value" type="number" inputMode="decimal" value={value} onChange={(e)=>setValue(e.target.value)} placeholder="vd: 110" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700" /></div>
+          <div><label htmlFor="glucose-value" className="text-xs text-slate-600 dark:text-slate-300">Giá trị (mg/dL)</label><Input id="glucose-value" type="number" inputMode="decimal" value={value} onChange={(e)=>setValue(e.target.value)} placeholder="vd: 110" className="mt-1" /></div>
           <div><label htmlFor="glucose-context" className="text-xs text-slate-600 dark:text-slate-300">Bối cảnh</label><select id="glucose-context" value={context} onChange={(e)=>setContext(e.target.value)} className="mt-1 w-full rounded-lg border px-3 py-2 text-sm min-h-[44px] dark:bg-slate-900 dark:border-slate-700">{contexts.map(c=> <option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
         </div>
-        <div><label htmlFor="glucose-notes" className="text-xs text-slate-600 dark:text-slate-300">Ghi chú</label><input id="glucose-notes" value={notes} onChange={(e)=>setNotes(e.target.value)} placeholder="vd: sau ăn phở" className="mt-1 w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" /></div>
-        <button data-testid="tracker-save" onClick={submit} className="w-full rounded-lg bg-emerald-600 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 min-h-[44px] focus-visible:outline-2">Lưu chỉ số</button>
+        <div><label htmlFor="glucose-notes" className="text-xs text-slate-600 dark:text-slate-300">Ghi chú</label><Input id="glucose-notes" value={notes} onChange={(e)=>setNotes(e.target.value)} placeholder="vd: sau ăn phở" className="mt-1" /></div>
+        <Button data-testid="tracker-save" onClick={submit} variant="success" className="w-full">Lưu chỉ số</Button>
         {msg && <div role="status" className="rounded-lg border bg-slate-50 p-3 text-xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">{msg}</div>}
         {anomaly && anomaly.type !== "none" && !isCritical && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-100">
+          <Alert className="border-amber-200 bg-amber-50 text-xs text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-100">
             <div className="font-bold flex items-center gap-1.5"><TrendingUp size={14} aria-hidden /> Cảnh báo chuỗi tăng — {anomaly.direction||""}</div>
             <div className="mt-1">{anomaly.reason}</div>
-          </div>
+          </Alert>
         )}
-        <div className="rounded-lg bg-blue-50 p-3 text-xs text-blue-800 border border-blue-100 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-900">Ngưỡng WHO/ADA: Đói &lt;100, 100–125, ≥126 · Sau ăn &lt;140, 140–199, ≥200 · Hạ &lt;70 · Critical ≥300</div>
+        <Alert className="bg-blue-50 text-xs text-blue-800 border-blue-100 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-900">Ngưỡng WHO/ADA: Đói &lt;100, 100–125, ≥126 · Sau ăn &lt;140, 140–199, ≥200 · Hạ &lt;70 · Critical ≥300</Alert>
       </div>
-    </div>
+    </Card>
   );
 };
 
@@ -315,7 +320,7 @@ const FqgChat = (p: any) => {
           <img src={recording || voiceLoop ? "/cocon-listen.png" : "/cocon.png"} alt="Cò Con" className="h-10 w-auto rounded-lg" />
           <h3 className="text-sm font-semibold">Hỏi thêm ngữ cảnh (FQG)</h3>
         </div>
-        <button onClick={()=>setOpen((o)=>!o)} aria-expanded={open} className="text-xs text-blue-700 underline dark:text-blue-300 min-h-[44px] px-2">{open?"Thu gọn":"Mở chat"}</button>
+        <Button variant="link" onClick={()=>setOpen((o)=>!o)} aria-expanded={open} className="text-xs px-2">{open?"Thu gọn":"Mở chat"}</Button>
       </div>
       {open && (
         <>
@@ -345,16 +350,16 @@ const FqgChat = (p: any) => {
             <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:bg-blue-950 dark:border-blue-800">
               <div className="text-sm font-semibold text-blue-900 dark:text-blue-100">{voicePending.parse.confirm_text}</div>
               <div className="mt-3 flex gap-2">
-                <button onClick={confirmVoiceSave} aria-label="Xác nhận đúng, lưu chỉ số" className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-bold text-white hover:bg-emerald-700 min-h-[44px]">Đúng, lưu</button>
-                <button onClick={()=>{ setVoicePending(null); if (loopRef.current && !cancelledRef.current) startListen(); else toggleMic(); }} aria-label="Nói lại chỉ số" className="rounded-lg border border-blue-300 px-6 py-3 text-sm text-blue-900 dark:text-blue-100 dark:border-blue-700 min-h-[44px]">Nói lại</button>
+                <Button variant="success" onClick={confirmVoiceSave} aria-label="Xác nhận đúng, lưu chỉ số" className="px-6 py-3 font-bold">Đúng, lưu</Button>
+                <Button variant="outline" onClick={()=>{ setVoicePending(null); if (loopRef.current && !cancelledRef.current) startListen(); else toggleMic(); }} aria-label="Nói lại chỉ số" className="px-6 py-3 border-blue-300 text-blue-900 dark:text-blue-100 dark:border-blue-700">Nói lại</Button>
               </div>
             </div>
           )}
           <div className="mt-2 flex gap-2">
-            <input data-testid="fqg-input" value={input} onChange={(e)=>setInput(e.target.value)} onKeyDown={(e)=>{ if(e.key==="Enter") send(); }} placeholder="vd: ăn 2 miếng bánh ngọt" className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" />
+            <Input data-testid="fqg-input" value={input} onChange={(e)=>setInput(e.target.value)} onKeyDown={(e)=>{ if(e.key==="Enter") send(); }} placeholder="vd: ăn 2 miếng bánh ngọt" />
             <button data-testid="mic-btn" onClick={toggleMic} disabled={voiceLoop} aria-label={recording ? "Dừng ghi âm" : "Bắt đầu ghi âm bằng giọng nói"} title={recording ? "Dừng ghi âm" : "Nói thay vì gõ"} className={`rounded-lg px-4 py-2 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50 ${recording ? "bg-red-600 text-white animate-pulse" : "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"}`}>{recording ? <Square size={16} aria-hidden /> : <Mic size={16} aria-hidden />}</button>
             <button data-testid="voice-mode-btn" onClick={toggleVoiceMode} disabled={recording} aria-label={voiceLoop ? "Dừng voice mode" : "Bật chế độ nói liên tục"} title={voiceLoop ? "Dừng voice mode" : "Nói liên tục (hands-free)"} className={`rounded-lg px-4 py-2 text-sm min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50 ${voiceLoop ? "bg-red-600 text-white" : "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-100 dark:hover:bg-blue-800"}`}>{voiceLoop ? <Square size={16} aria-hidden /> : <AudioLines size={16} aria-hidden />}</button>
-            <button data-testid="fqg-send" onClick={()=>send()} disabled={sending} className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50 min-h-[44px]">{sending?"...":"Gửi"}</button>
+            <Button data-testid="fqg-send" onClick={()=>send()} disabled={sending} className="px-4">{sending?"...":"Gửi"}</Button>
           </div>
           {voiceLoop && countdown !== null && (
             <div role="status" className="mt-2 text-xs text-red-700 dark:text-red-300">Đang nghe... (tự dừng sau {countdown}s)</div>
@@ -431,10 +436,10 @@ const TriageWidget = (p: any) => {
     }
   };
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+    <Card className="p-5">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold flex items-center gap-1.5"><CalendarPlus size={15} aria-hidden /> Đặt lịch khám (AI triage)</h3>
-        <button onClick={() => setOpen((o) => !o)} className="rounded-full bg-violet-600 px-4 py-2 text-xs text-white hover:bg-violet-700 min-h-[44px]">{open ? "Thu gọn" : "Mở"}</button>
+        <Button variant="accent" onClick={() => setOpen((o) => !o)} className="rounded-full px-4 text-xs">{open ? "Thu gọn" : "Mở"}</Button>
       </div>
       {locked && (
         <div className="mt-3 rounded-xl border-2 border-red-600 bg-red-600 p-4 text-sm font-bold text-white shadow-xl">
@@ -453,12 +458,12 @@ const TriageWidget = (p: any) => {
             )) : <div className="p-2 text-xs text-slate-500 dark:text-slate-400">Mô tả triệu chứng + thời gian muốn khám, vd: “tê chân, mắt mờ, tuần sau trừ T4”.</div>}
           </div>
           <div className="mt-2 flex gap-2">
-            <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") send(); }} placeholder="vd: tê chân, mắt mờ, tuần sau trừ T4" className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" />
-            <button onClick={send} disabled={sending} className="rounded-lg bg-violet-600 px-4 py-2 text-sm text-white hover:bg-violet-700 disabled:opacity-50 min-h-[44px]">{sending ? "..." : "Gửi"}</button>
+            <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") send(); }} placeholder="vd: tê chân, mắt mờ, tuần sau trừ T4" />
+            <Button variant="accent" onClick={send} disabled={sending} className="px-4 shrink-0">{sending ? "..." : "Gửi"}</Button>
           </div>
         </>
       )}
-    </div>
+    </Card>
   );
 };
 
@@ -487,12 +492,12 @@ const DailyCheckBanner = (p: any) => {
   }, [userId, persona]);
   if (!daily?.missing_slots?.length) return null;
   return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-100">
+    <Alert className="border-amber-200 bg-amber-50 text-sm text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-100">
       <div className="flex items-start justify-between gap-2">
         <span>{daily.greeting}</span>
         <a href="#manual-entry" className="shrink-0 px-2 py-2 text-xs underline min-h-[44px]">Tự điền</a>
       </div>
-    </div>
+    </Alert>
   );
 };
 
@@ -506,9 +511,9 @@ const MyTracker = (p: any) => {
   if (!loaded && !data) {
     return (
       <div className="space-y-6 lg:col-span-2" aria-busy="true">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{[0,1,2,3].map((i)=><div key={i} className="h-16 animate-pulse rounded-xl bg-slate-200 dark:bg-slate-700" />)}</div>
-        <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700"><div className="h-4 w-1/3 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /><div className="mt-4 h-56 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /></div>
-        <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700"><div className="h-4 w-1/4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" /><div className="mt-3 space-y-2">{[0,1,2].map((i)=><div key={i} className="h-10 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />)}</div></div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{[0,1,2,3].map((i)=><Skeleton key={i} className="h-16 rounded-xl bg-slate-200 dark:bg-slate-700" />)}</div>
+        <Card className="p-5"><Skeleton className="h-4 w-1/3 bg-slate-200 dark:bg-slate-700" /><Skeleton className="mt-4 h-56 bg-slate-200 dark:bg-slate-700" /></Card>
+        <Card className="p-5"><Skeleton className="h-4 w-1/4 bg-slate-200 dark:bg-slate-700" /><div className="mt-3 space-y-2">{[0,1,2].map((i)=><Skeleton key={i} className="h-10 bg-slate-200 dark:bg-slate-700" />)}</div></Card>
       </div>
     );
   }
@@ -522,8 +527,8 @@ const MyTracker = (p: any) => {
           <Kpi label="Tần suất" value={`${data.stats.logs_per_week}/tuần`} sub={data.stats.logs_per_week<3? "Chưa đạt KPI":"Đạt KPI"} alert={data.stats.logs_per_week<3} />
         </div>
       )}
-      <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
-        <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Biểu đồ 14 ngày</h3>{!isCritical && !readOnly && <button data-testid="trend-explain" onClick={explainTrend} className="rounded-full bg-slate-900 px-4 py-2 text-xs text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900 min-h-[44px]">Diễn giải xu hướng (RAG)</button>}</div>
+      <Card className="p-5">
+        <div className="flex items-center justify-between"><h3 className="text-sm font-semibold">Biểu đồ 14 ngày</h3>{!isCritical && !readOnly && <Button data-testid="trend-explain" variant="dark" onClick={explainTrend} className="rounded-full px-4 text-xs">Diễn giải xu hướng (RAG)</Button>}</div>
         <div className="mt-1 flex flex-wrap gap-3 text-[11px] text-slate-500 dark:text-slate-400"><span className="inline-flex items-center gap-1"><span aria-hidden className="inline-block h-2 w-2 rounded-full bg-slate-400" /> Bình thường (chấm tròn)</span><span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400"><span aria-hidden className="text-red-600">▲</span> Bất thường spike/trend (hình tam giác)</span><span>Ngưỡng 70 / 126 / 200</span></div>
         <div className="mt-4 h-56">
           <GlucoseChart points={points} emptyHint="Chưa có dữ liệu — nhập chỉ số đầu tiên ở khung bên trái." />
@@ -531,8 +536,8 @@ const MyTracker = (p: any) => {
         <div className="sr-only"><p>{trendSummary}</p><table><tbody>{points.map((x: any, i: number)=><tr key={i}><td>{x.time}</td><td>{x.value} mg/dL{x.anomaly ? " (bất thường)" : ""}</td></tr>)}</tbody></table></div>
         {data?.should_escalate && <div className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-xs text-red-800 dark:bg-red-950 dark:border-red-800 dark:text-red-100 flex items-center gap-1.5"><TriangleAlert size={14} aria-hidden /> Khuyến nghị liên hệ bác sĩ</div>}
         {trend && <div className="mt-4 rounded-lg border bg-slate-50 p-4 text-xs leading-relaxed whitespace-pre-wrap dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">{trend}</div>}
-      </div>
-      <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+      </Card>
+      <Card className="p-5">
         <h3 className="text-sm font-semibold">Lịch sử</h3>
         <div className="mt-3 max-h-72 overflow-auto divide-y rounded-lg border dark:border-slate-700">
           {data?.logs?.length? data.logs.map((l:any)=>{
@@ -541,7 +546,7 @@ const MyTracker = (p: any) => {
             return <div key={l.id} id={`log-${l.id}`} className={`flex items-center justify-between gap-2 px-3 py-2 text-sm ${hl?"bg-yellow-100 ring-2 ring-yellow-400 dark:bg-yellow-950":""} ${an?"border-l-4 border-l-orange-500 bg-orange-50 dark:bg-orange-950/40":""}`}><div className="min-w-0 flex-1"><div className="font-mono text-[11px]">#{l.id} · {fmtDT(l.measured_at)} · {l.value_mgdl} mg/dL</div><div className="text-slate-500 dark:text-slate-400 truncate">{l.context} {l.notes? `· ${l.notes}`:""}</div></div><span className="shrink-0"><StatusBadge level={l.classification} text={l.classification} /></span></div>;
           }): <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">Chưa có log — dữ liệu sẽ hiện sau lần lưu đầu tiên.</div>}
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
@@ -619,15 +624,15 @@ export default function TrackerPage(){
     await refresh();
   };
 
-  if(!user) return <div className="rounded-2xl border bg-white p-8 text-center dark:bg-slate-900 dark:border-slate-700">Cần đăng nhập để dùng Nhật ký. <Link href="/login" className="underline">Đăng nhập</Link> hoặc <Link href="/register" className="underline">Đăng ký</Link></div>;
+  if(!user) return <Card className="p-8 text-center">Cần đăng nhập để dùng Nhật ký. <Link href="/login" className="underline">Đăng nhập</Link> hoặc <Link href="/register" className="underline">Đăng ký</Link></Card>;
 
   return (
     <div className="space-y-6">
       {readOnly && (
-        <div className="rounded-xl border-2 border-blue-600 bg-blue-50 p-4 text-sm text-blue-900 dark:bg-blue-950 dark:border-blue-700 dark:text-blue-100">
+        <Alert className="border-2 border-blue-600 bg-blue-50 p-4 text-sm text-blue-900 dark:bg-blue-950 dark:border-blue-700 dark:text-blue-100">
           <span className="font-bold">Chế độ chỉ đọc</span> — bệnh nhân {viewPatientName || viewPatient.slice(0,8)}. Dữ liệu bên dưới là của bệnh nhân, không phải của bạn; mọi thao tác nhập/gửi đã ẩn.{" "}
           <Link href="/expert/patients" className="underline">← Danh sách bệnh nhân</Link>
-        </div>
+        </Alert>
       )}
       <div><h1 className="text-xl font-bold">Hướng A — Nhật ký đường huyết</h1><p className="text-sm text-slate-600 dark:text-slate-300">{readOnly ? `Bệnh nhân ${viewPatientName || viewPatient.slice(0,8)} (chỉ đọc) · Chỉ escalate khi critical hoặc 3×high.` : `User: ${user.username} (${user.role}) · KPI ≥3 lần/tuần. Chỉ escalate khi critical hoặc 3×high.`}</p></div>
       <div className="grid gap-6 lg:grid-cols-3">

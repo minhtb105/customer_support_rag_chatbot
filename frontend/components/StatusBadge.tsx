@@ -1,6 +1,6 @@
 "use client";
 import { AlertTriangle, TrendingUp, Eye, CheckCircle2 } from "lucide-react";
-import { cn } from "./ui/cn";
+import { cn } from "@/lib/utils";
 
 // Non-color cue (D6): always icon + text label, never color-only.
 const MAP: Record<string, { icon: any; cls: string; label: string }> = {

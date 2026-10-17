@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function useIsDark(): boolean {
   const [dark, setDark] = useState(false);
@@ -31,12 +32,14 @@ export default function ThemeToggle() {
     } catch {}
   };
   return (
-    <button
+    <Button
+      variant="outline"
+      size="icon"
       onClick={toggle}
       aria-label={dark ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối"}
-      className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800"
+      className="rounded-full min-w-11 text-slate-600 dark:text-slate-300 dark:border-slate-700"
     >
       {dark ? <Sun size={16} /> : <Moon size={16} />}
-    </button>
+    </Button>
   );
 }

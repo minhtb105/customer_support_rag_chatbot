@@ -4,6 +4,9 @@ import { generateSoap, generateSoapMarkdown, getGlucose } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import Link from "next/link";
 import GlucoseChart from "./GlucoseChart";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 
 function isAnomalyPoint(v: number){ return v>250 || v<70; }
 
@@ -60,17 +63,17 @@ export default function PrevisitView({ patientId, patientName, title, subtitle }
   return (
     <div className="space-y-6">
       <div><h1 className="text-xl font-bold">{title || "Hồ sơ trước tái khám (SOAP)"}</h1>{subtitle && <p className="text-sm text-slate-600 dark:text-slate-300">{subtitle}</p>}</div>
-      <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+      <Card className="p-5">
         <div className="flex flex-wrap items-end gap-3">
           <div className="text-xs">Bệnh nhân: {patientName || patientId.slice(0,8)}</div>
           <div><label className="text-xs">Số ngày</label><select value={days} onChange={(e)=>setDays(Number(e.target.value))} className="mt-1 rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]"><option value={7}>7 ngày</option><option value={14}>14 ngày</option><option value={30}>30 ngày</option><option value={90}>90 ngày</option></select></div>
-          <button data-testid="soap-json-btn" onClick={()=>gen(false)} disabled={loading} className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 min-h-[44px]">{loading?"Đang tạo...":"Tạo SOAP (JSON)"}</button>
-          <button onClick={()=>gen(true)} disabled={loading} className="rounded-lg border bg-white px-5 py-2.5 text-sm hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 min-h-[44px]">Tạo Markdown</button>
+          <Button data-testid="soap-json-btn" onClick={()=>gen(false)} disabled={loading} className="px-5">{loading?"Đang tạo...":"Tạo SOAP (JSON)"}</Button>
+          <Button onClick={()=>gen(true)} disabled={loading} variant="outline" className="px-5">Tạo Markdown</Button>
         </div>
-        {err && <div role="alert" className="mt-3 rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-200">{err}</div>}
-      </div>
+        {err && <Alert variant="destructive" className="mt-3 bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-200">{err}</Alert>}
+      </Card>
       {data && (
-        <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+        <Card className="p-5">
           <div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Kết quả SOAP — {data.period}</h2><div className="text-[11px] text-slate-500 dark:text-slate-400">{new Date(data.generated_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</div></div>
           <div className="mt-3 grid gap-4 lg:grid-cols-10 max-w-6xl">
             <div className="rounded-xl border bg-white p-4 shadow-sm lg:col-span-3 dark:bg-slate-900 dark:border-slate-700">
@@ -91,9 +94,9 @@ export default function PrevisitView({ patientId, patientName, title, subtitle }
             </div>
           </div>
           <details className="mt-4 rounded-lg bg-slate-900 p-3 text-xs text-slate-100"><summary className="cursor-pointer text-slate-300">Dữ liệu thô (kỹ thuật)</summary><pre className="mt-2 overflow-auto whitespace-pre-wrap break-words">{JSON.stringify(data,null,2)}</pre></details>
-        </div>
+        </Card>
       )}
-      {md && <div className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Markdown</h2><button onClick={downloadMd} className="rounded-full bg-slate-900 px-4 py-2 text-xs text-white min-h-[44px]">Tải .md</button></div><pre className="mt-3 overflow-auto rounded-lg bg-slate-50 p-4 text-xs whitespace-pre-wrap border dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">{md}</pre></div>}
+      {md && <Card className="p-5"><div className="flex items-center justify-between"><h2 className="text-sm font-semibold">Markdown</h2><Button variant="dark" onClick={downloadMd} className="rounded-full px-4 text-xs">Tải .md</Button></div><pre className="mt-3 overflow-auto rounded-lg bg-slate-50 p-4 text-xs whitespace-pre-wrap border dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200">{md}</pre></Card>}
       {!data && !md && !loading && <div className="rounded-2xl border border-dashed bg-slate-50 p-8 text-center text-sm text-slate-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300">Nhập logs ở Tracker trước rồi tạo SOAP.</div>}
     </div>
   );

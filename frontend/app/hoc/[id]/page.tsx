@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { getLesson, submitLessonQuiz } from "@/lib/api";
 import { playServerAudio } from "@/lib/voice";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Volume2, Square, HelpCircle, CheckCircle2, Info, Mic, Siren, Phone } from "lucide-react";
 
 const LETTERS = ["A", "B", "C"];
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -163,24 +166,26 @@ export default function LessonPage({ params }: { params: { id: string } }) {
     <div className="mx-auto max-w-2xl p-6">
       <Link href="/hoc" className="text-sm text-blue-700 underline dark:text-blue-300 min-h-[44px] inline-block py-2">← Về danh sách bài</Link>
       <h1 className="mt-2 text-lg font-bold">{lesson.title}</h1>
-      <button onClick={play} disabled={playing} className="mt-3 rounded-full bg-violet-600 px-6 py-3 text-sm font-bold text-white hover:bg-violet-700 min-h-[44px]">
-        {playing ? `🔊 ${chunkLabel || "Đang đọc…"}` : "🔊 Nghe bài (khoảng 1 phút)"}
-      </button>
+      <Button onClick={play} disabled={playing} variant="accent" className="mt-3 rounded-full px-6 py-3 font-bold">
+        <Volume2 aria-hidden />
+        {playing ? (chunkLabel || "Đang đọc…") : "Nghe bài (khoảng 1 phút)"}
+      </Button>
       {playing && (
         <div className="mt-2 flex items-center gap-2">
           <div className="text-xs text-slate-600 dark:text-slate-300">{chunkLabel}</div>
-          <button onClick={stop} className="rounded-full border px-4 py-2 text-xs min-h-[44px]">⏹ Dừng</button>
+          <Button onClick={stop} variant="outline" className="rounded-full px-4 text-xs"><Square size={14} aria-hidden /> Dừng</Button>
         </div>
       )}
       <p className="mt-3 text-sm leading-relaxed">{lesson.script_vi}</p>
-      <div className="mt-5 rounded-2xl border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-700">
-        <div className="text-sm font-bold">❓ {lesson.quiz?.q}</div>
+      <Card className="mt-5 p-4">
+        <div className="text-sm font-bold flex items-center gap-1.5"><HelpCircle size={15} aria-hidden /> {lesson.quiz?.q}</div>
         <div className="mt-3 space-y-2">
           {lesson.quiz?.options?.map((op: string, i: number) => (
-            <button
+            <Button
               key={i}
+              variant="outline"
               onClick={() => answer(i)}
-              className={`block w-full rounded-xl border px-4 py-3 text-left text-sm min-h-[44px] ${
+              className={`w-full justify-start whitespace-normal text-left ${
                 picked === i
                   ? result?.correct
                     ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950"
@@ -189,33 +194,38 @@ export default function LessonPage({ params }: { params: { id: string } }) {
               }`}
             >
               <b>{LETTERS[i]}.</b> {op}
-            </button>
+            </Button>
           ))}
         </div>
         {result && (
           <div className="mt-3 text-sm">
-            {result.correct ? "🎉 Đúng rồi, giỏi lắm bác!" : "💪 Chưa đúng, không sao cả."}{" "}
+            {result.correct ? (
+              <span className="inline-flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300"><CheckCircle2 size={14} aria-hidden /> Đúng rồi, giỏi lắm bác!</span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5"><Info size={14} aria-hidden /> Chưa đúng, không sao cả.</span>
+            )}{" "}
             {result.explanation}
           </div>
         )}
         {err && <div className="mt-2 text-sm text-red-600">{err}</div>}
         <div className="mt-3 border-t pt-3">
-          <button
+          <Button
+            variant="dark"
             onClick={answerVoice}
             disabled={recording}
-            className="rounded-full bg-slate-900 px-5 py-3 text-xs font-bold text-white dark:bg-slate-100 dark:text-slate-900 min-h-[44px]"
+            className="rounded-full px-5 py-3 text-xs font-bold"
           >
-            {recording ? "🎤 Đang nghe… (tối đa 8s)" : "🎤 Trả lời bằng giọng nói"}
-          </button>
+            <Mic size={14} aria-hidden /> {recording ? "Đang nghe… (tối đa 8s)" : "Trả lời bằng giọng nói"}
+          </Button>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">Nói “đáp án A/B/C” — nút A/B/C vẫn là cách chính.</div>
           {voiceEmergency && (
             <div role="alert" className="mt-2 rounded-xl border-2 border-red-600 bg-red-600 p-3 text-xs font-bold text-white">
-              🚨 {voiceEmergency} <a href="tel:115" className="ml-2 rounded-full bg-white px-4 py-2 text-red-700">📞 Gọi 115</a>
+              <Siren size={14} aria-hidden className="inline" /> {voiceEmergency} <a href="tel:115" className="ml-2 rounded-full bg-white px-4 py-2 text-red-700"><Phone size={14} aria-hidden className="inline" /> Gọi 115</a>
             </div>
           )}
           {voiceMsg && <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">{voiceMsg}</div>}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

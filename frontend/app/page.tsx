@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getHealth, getGuidelinesStatus, API_BASE } from "@/lib/api";
 import { Play, ArrowRight, ShieldCheck } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 export default function OverviewPage() {
   const [health, setHealth] = useState<any>(null);
@@ -17,7 +18,7 @@ export default function OverviewPage() {
   return (
     <div className="space-y-6">
       {/* Sticky CTA bar (dan toi #thu). TODO(user): doi text/primary-href khi co pricing that */}
-      <div className="sticky top-[57px] z-30 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-blue-200 bg-white/90 px-4 py-2 shadow-sm backdrop-blur dark:bg-slate-900/90 dark:border-slate-700">
+      <Card className="sticky top-[57px] z-30 flex flex-wrap items-center justify-between gap-2 border-blue-200 bg-white/90 px-4 py-2 backdrop-blur dark:bg-slate-900/90 dark:border-slate-700">
         <div className="text-xs text-slate-600 dark:text-slate-300">Bản demo nội bộ — miễn phí dùng thử luồng bệnh nhân & bác sĩ</div>
         <div className="flex gap-2">
           <a href="#demo" className="inline-flex min-h-[44px] items-center gap-1 rounded-full border px-4 py-2 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800">
@@ -27,7 +28,7 @@ export default function OverviewPage() {
             Dùng thử miễn phí <ArrowRight size={14} />
           </Link>
         </div>
-      </div>
+      </Card>
 
       {/* Hero */}
       <div className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 p-6 text-white sm:p-8">
@@ -61,7 +62,7 @@ export default function OverviewPage() {
       </div>
 
       {/* 5 criteria */}
-      <section className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+      <Card className="p-5">
         <h2 className="text-sm font-semibold">Khung 5 tiêu chí “Pain Point chín muồi”</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-5">
           <Criteria n="1" t="Quy mô & nghiêm trọng" d="7,3% ~7M, biến chứng vĩnh viễn" ok />
@@ -70,10 +71,10 @@ export default function OverviewPage() {
           <Criteria n="4" t="Lực đẩy" d="BHYT 1/7/2025 + thiếu BS + AI đã chấp nhận" ok />
           <Criteria n="5" t="Khoảng trống" d="Thiếu WHO-RAG audit trail" ok />
         </div>
-      </section>
+      </Card>
 
       {/* Market evidence table */}
-      <section className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+      <Card className="p-5">
         <h2 className="text-sm font-semibold">Bằng chứng định lượng — khoảng trống tái khám</h2>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-sm">
@@ -107,7 +108,7 @@ export default function OverviewPage() {
           </table>
           <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">Nguồn: Tạp chí Y học Việt Nam 2022/2025; vista.gov.vn 2023. Chuẩn HbA1c mỗi 3 tháng.</div>
         </div>
-      </section>
+      </Card>
 
       {/* 3 tracks */}
       <section className="grid gap-4 sm:grid-cols-3">
@@ -141,7 +142,7 @@ export default function OverviewPage() {
       </section>
 
       {/* Guidelines status */}
-      <section className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+      <Card className="p-5">
         <h2 className="text-sm font-semibold">Trạng thái Corpus Guideline</h2>
         {guidelines ? (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -159,7 +160,7 @@ export default function OverviewPage() {
           Pipeline: <code>scripts/crawl_guidelines.py</code> — WHO IRIS (DSpace 7 API), ADA, GOLD/GINA, BYT (QĐ 3319). Indexer đệ quy <code>data/raw/pdfs/**/*.pdf</code> → Chroma (
           {health?.embedding_model || "text-embedding-3-small"}).
         </div>
-      </section>
+      </Card>
 
       <div className="flex flex-wrap gap-2 text-xs">
         <a href="https://iris.who.int/handle/10665/325182" target="_blank" className="rounded-full border bg-white px-3 py-1 hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">WHO Classification 2019</a>
@@ -169,14 +170,14 @@ export default function OverviewPage() {
       </div>
 
       {/* Video demo (file phuc vu tu /public/demo.webm, canonical giu o docs/demo/) */}
-      <section id="demo" className="rounded-2xl border bg-white p-5 shadow-sm dark:bg-slate-900 dark:border-slate-700">
+      <Card id="demo" className="p-5">
         <h2 className="text-sm font-semibold">Xem demo 4 phút: bệnh nhân → bác sĩ → audit</h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Nhập 280 → banner đỏ • trend 3 ngày → chat hỏi ngữ cảnh • safeguard kháng sinh • bác sĩ xem sparkline 90 ngày + SOAP</p>
         <video controls preload="none" src="/demo.webm" className="mt-3 aspect-video w-full rounded-xl bg-black">
           Trình duyệt không hỗ trợ video. Tải tại <a href="/demo.webm" className="underline">demo.webm</a>.
         </video>
         <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">Kịch bản chi tiết: <code>docs/demo/script.md</code> • File gốc: <code>docs/demo/demo.webm</code></div>
-      </section>
+      </Card>
 
       {/* Final CTA + disclaimer demo-only */}
       <section className="rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 p-6 text-white sm:p-8">
@@ -224,7 +225,7 @@ function TrackCard({ badge, title, desc, kpi, href, cta, color }: any) {
     violet: "from-violet-500 to-purple-600",
   };
   return (
-    <div className="rounded-2xl border bg-white p-5 shadow-sm flex flex-col dark:bg-slate-900 dark:border-slate-700">
+    <Card className="p-5 flex flex-col">
       <div className={`inline-flex w-fit rounded-full bg-gradient-to-r ${colorMap[color]} px-3 py-1 text-xs font-semibold text-white`}>{badge}</div>
       <h3 className="mt-3 text-sm font-semibold">{title}</h3>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 line-clamp-3">{desc}</p>
@@ -232,6 +233,6 @@ function TrackCard({ badge, title, desc, kpi, href, cta, color }: any) {
       <Link href={href} className="mt-4 inline-flex w-fit rounded-full bg-slate-900 px-4 py-2 text-xs font-medium text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900 min-h-[44px] items-center">
         {cta}
       </Link>
-    </div>
+    </Card>
   );
 }
