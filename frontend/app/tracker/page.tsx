@@ -311,7 +311,10 @@ const FqgChat = (p: any) => {
   return (
     <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 shadow-sm dark:bg-blue-950/40 dark:border-blue-900">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">Hỏi thêm ngữ cảnh (FQG)</h3>
+        <div className="flex items-center gap-2">
+          <img src={recording || voiceLoop ? "/cocon-listen.png" : "/cocon.png"} alt="Cò Con" className="h-10 w-auto rounded-lg" />
+          <h3 className="text-sm font-semibold">Hỏi thêm ngữ cảnh (FQG)</h3>
+        </div>
         <button onClick={()=>setOpen((o)=>!o)} aria-expanded={open} className="text-xs text-blue-700 underline dark:text-blue-300 min-h-[44px] px-2">{open?"Thu gọn":"Mở chat"}</button>
       </div>
       {open && (
@@ -323,8 +326,15 @@ const FqgChat = (p: any) => {
                   <div className="whitespace-pre-wrap">{m.text}</div>
                   <a href="tel:115" aria-label="Gọi cấp cứu 115" className="mt-2 inline-flex min-h-[44px] items-center rounded-full bg-red-600 px-5 py-2 text-sm font-bold text-white hover:bg-red-700">Gọi 115</a>
                 </div>
+              ) : m.role==="ai" ? (
+                <div key={i} className="flex items-start gap-1.5">
+                  <img src="/cocon.png" alt="" aria-hidden className="mt-0.5 h-7 w-auto shrink-0 rounded-md" />
+                  <div className="mr-8 flex-1 rounded-lg p-2 text-sm leading-relaxed bg-blue-50 border border-blue-100 text-blue-900 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-100">
+                    <div className="whitespace-pre-wrap">{m.text}</div>
+                  </div>
+                </div>
               ) : (
-              <div key={i} className={`rounded-lg p-2 text-sm leading-relaxed ${m.role==="user"?"ml-8 bg-emerald-50 border border-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-100":m.role==="guard"?"bg-red-50 border border-red-200 text-red-800 dark:bg-red-950 dark:border-red-800 dark:text-red-100":m.role==="sys"?"bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300":"mr-8 bg-blue-50 border border-blue-100 text-blue-900 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-100"}`}>
+              <div key={i} className={`rounded-lg p-2 text-sm leading-relaxed ${m.role==="user"?"ml-8 bg-emerald-50 border border-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-100":m.role==="guard"?"bg-red-50 border border-red-200 text-red-800 dark:bg-red-950 dark:border-red-800 dark:text-red-100":"bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
                 {m.role==="guard" && <div className="font-bold flex items-center gap-1.5"><ShieldAlert size={14} aria-hidden /> Ngoài phạm vi hỗ trợ</div>}
                 <div className="whitespace-pre-wrap">{m.text}</div>
               </div>
