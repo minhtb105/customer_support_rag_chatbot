@@ -20,7 +20,7 @@ Env (gitignored, never commit): `.env` chạy NVIDIA (`LLM_PROVIDER=nvidia`, `EM
 - Domain packages: `src/{chat,diabetes,labs,learn,monitors,reviews,scheduling,triage,vitals,voice,auth,admin}/` — each owns `router.py` + store/tracker logic.
 - `src/shared/` — shared kernel. Reuse before writing: `text.py:unaccent`, `memory/_extract.py` (single entity extractor), `prompt_templates.build_strict()`, `monitors` use `run_job()`/`stage_version()`.
 - `scripts/` — one-shot tooling. Shared helpers: `nutrition/_fetch.py` (download), `nutrition/_parse_io.py`, `nutrition/_ingest.py --src md|json`, `reembed.py --provider local|nvidia`. Keep CLIs working when editing.
-- `frontend/app/` — Next.js routes (`tracker`, `previsit`, `monitor/*`, `admin/*`, `expert/*`); shared UI in `frontend/components/` (`AdminTable`, `ChatBox`, `GlucoseChart`, `MonitorList`); API wrappers in `frontend/lib/api.ts` via `apiGet`/`apiPost`.
+- `frontend/app/` — Next.js routes (`tracker`, `previsit`, `monitor/*`, `admin/*`, `expert/*`); shared UI in `frontend/components/` (`AdminTable`, `GlucoseChart`, `MonitorList`); API wrappers in `frontend/lib/api.ts` via `apiGet`/`apiPost`.
 - `tests/` — pytest; shared fixtures in `tests/_helpers.py` (extend it, don't copy-paste cases).
 - Chunking: `src/shared/chunk_strategies.py::VARIANTS` (registry `tên → (base, overrides)`; unknown name thì raise — không đặt tên tự do). Serving default single-source `src/shared/config.py::DEFAULT_CHUNK_STRATEGY` (hiện `hybrid_section_semantic`, winner B1 2026-10-12). Index tách theo provider: `embeddings/pdf_db_nvidia/<strategy>/` (2048d).
 

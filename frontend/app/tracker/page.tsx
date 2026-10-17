@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
 import GlucoseChart from "@/components/GlucoseChart";
-import VoiceWidget, { playServerAudio } from "@/components/VoiceWidget";
+import { playServerAudio, loadPersona, vnToday } from "@/lib/voice";
 import NutritionLookup from "@/components/NutritionLookup";
 import { Siren, TrendingUp, ShieldAlert, CalendarPlus, Phone, Building2, TriangleAlert, Mic, Square } from "lucide-react";
 
@@ -56,7 +56,7 @@ const EntryAlert = (p: any) => {
 };
 
 const FqgChat = (p: any) => {
-  const { isCritical, fqg, effectiveId, lastLogId, onAnomaly } = p;
+  const { isCritical, fqg, effectiveId, lastLogId, onAnomaly, persona } = p;
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const [open, setOpen] = useState(false);
@@ -132,13 +132,13 @@ const FqgChat = (p: any) => {
     if (data?.emergency === true) {
       const emgText = data?.message || "Gọi 115 ngay.";
       setMessages((prev)=>[...prev, { role: "emg", text: emgText }]);
-      try { await playServerAudio(emgText); } catch { /* fail-open */ }
+      try { await playServerAudio(emgText, { persona }); } catch { /* fail-open */ }
       return;
     }
     if (data?.parse && !data.parse.ambiguous) {
       if (transcript) setMessages((prev)=>[...prev, { role: "user", text: transcript }]);
       setVoicePending({ parse: data.parse, transcript });
-      try { await playServerAudio(data.parse.confirm_text || ""); } catch { /* fail-open */ }
+      try { await playServerAudio(data.parse.confirm_text || "", { persona }); } catch { /* fail-open */ }
       return;
     }
     if (!transcript) {
@@ -146,7 +146,7 @@ const FqgChat = (p: any) => {
       return;
     }
     const answer = await send(transcript);
-    if (answer) { try { await playServerAudio(answer); } catch { /* fail-open */ } }
+    if (answer) { try { await playServerAudio(answer, { persona }); } catch { /* fail-open */ } }
   };
   const toggleMic = async ()=>{
     if (recording) {
@@ -325,6 +325,40 @@ const TriageWidget = (p: any) => {
   );
 };
 
+// Daily missing-metrics nag: once per day after login (D5/D6). Lives at page
+// level, not in FqgChat (which is null when collapsed/critical). Persona-aware
+// greeting TTS; anti-nag key persists in localStorage.
+const DailyCheckBanner = (p: any) => {
+  const { userId, persona } = p;
+  const [daily, setDaily] = useState<any>(null);
+  useEffect(() => {
+    if (!userId || !persona) return;
+    const key = `voice_daily_${userId}_${vnToday()}`;
+    if (localStorage.getItem(key)) return;
+    (async () => {
+      try {
+        const res = await fetch(`${TRIAGE_API}/v1/voice/daily-check?user_id=${encodeURIComponent(userId)}`, { credentials: "include" });
+        if (!res.ok) return;
+        const data = await res.json();
+        localStorage.setItem(key, "1");
+        if (data?.missing_slots?.length) {
+          setDaily(data);
+          playServerAudio(data.greeting || "", { persona });
+        }
+      } catch { /* fail-open: no nag on error */ }
+    })();
+  }, [userId, persona]);
+  if (!daily?.missing_slots?.length) return null;
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-100">
+      <div className="flex items-start justify-between gap-2">
+        <span>{daily.greeting}</span>
+        <a href="#manual-entry" className="shrink-0 px-2 py-2 text-xs underline min-h-[44px]">Tự điền</a>
+      </div>
+    </div>
+  );
+};
+
 const MyTracker = (p: any) => {
   const { data, highlightId, trend, explainTrend, isCritical, anomalySet, hasServerIds, readOnly, loaded } = p;
   const points = data?.logs ? [...data.logs].reverse().map((l: any)=>({ time: l.measured_at.slice(5,16).replace("T"," "), value: l.value_mgdl, anomaly: hasServerIds ? anomalySet.has(Number(l.id)) : (l.value_mgdl > 250 || l.value_mgdl < 70) })) : [];
@@ -387,6 +421,7 @@ export default function TrackerPage(){
   const [fqg,setFqg]=useState<string[]>([]);
   const [lastLogId,setLastLogId]=useState<number|undefined>(undefined);
   const [loaded,setLoaded]=useState(false);
+  const [persona,setPersona]=useState("");
 
   const effectiveId = user?.id || "";
   const searchParams = useSearchParams();
@@ -414,6 +449,8 @@ export default function TrackerPage(){
     try{ const d=await getGlucose(fetchId,50,14); setData(d);}catch(e:any){ setMsg(e.message); }finally{ setLoaded(true); }
   };
   useEffect(()=>{ if(fetchId) refresh(); },[fetchId]);
+  // Load selected voice persona once (feeds daily-check greeting + FqgChat TTS).
+  useEffect(()=>{ if(effectiveId) loadPersona(effectiveId).then(setPersona); },[effectiveId]);
 
   const submit = async ()=>{
     if(!user){ setMsg("Cần đăng nhập"); return; }
@@ -462,9 +499,9 @@ export default function TrackerPage(){
       </div>
       {!readOnly && (
       <>
-      <FqgChat isCritical={isCritical} fqg={fqg} effectiveId={effectiveId} lastLogId={lastLogId} onAnomaly={handleFqgAnomaly} />
+      <DailyCheckBanner userId={effectiveId} persona={persona} />
+      <FqgChat isCritical={isCritical} fqg={fqg} effectiveId={effectiveId} lastLogId={lastLogId} onAnomaly={handleFqgAnomaly} persona={persona} />
       <NutritionLookup />
-      <VoiceWidget userId={effectiveId} />
       <TriageWidget effectiveId={effectiveId} />
       </>
       )}

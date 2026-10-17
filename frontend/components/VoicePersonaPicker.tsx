@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { PERSONAS, DEFAULT_PERSONA_ID } from "@/lib/personas";
-import { playServerAudio } from "./VoiceWidget";
+import { playServerAudio } from "@/lib/voice";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { getLesson, submitLessonQuiz } from "@/lib/api";
-import { playServerAudio } from "@/components/VoiceWidget";
+import { playServerAudio } from "@/lib/voice";
 
 const LETTERS = ["A", "B", "C"];
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
