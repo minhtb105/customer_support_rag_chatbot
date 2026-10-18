@@ -5,6 +5,8 @@ import { AdminTable, AdminEmpty, AdminPagination, AdminFilterBar, AdminSkeletonR
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const FACT_TYPES = ["all", "medication", "symptom", "condition", "allergy", "lifestyle", "general"];
 
@@ -64,15 +66,15 @@ export default function MemoryFactsPage() {
             ))}
           </select>
         </div>
-        <div><label className="text-xs">hoặc nhập tay</label><input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="nhập ID người dùng" className="ml-2 rounded border px-2 py-1 text-xs" /></div>
+        <div><label className="text-xs">hoặc nhập tay</label><Input value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="nhập ID người dùng" className="ml-2 w-auto text-xs" /></div>
         <div><label className="text-xs">Loại fact</label>
           <select value={factType} onChange={(e) => setFactType(e.target.value)} className="ml-2 rounded border px-2 py-1 text-xs">
             {FACT_TYPES.map((f) => <option key={f} value={f}>{f === "all" ? "tất cả" : f}</option>)}
           </select>
         </div>
-        <div><label className="text-xs">Tìm kiếm</label><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="từ khóa trong fact" className="ml-2 rounded border px-2 py-1 text-xs" /></div>
-        <button onClick={apply} className="rounded-full bg-slate-900 text-white px-4 py-1.5 text-xs">Lọc</button>
-        <button onClick={() => { setQ(""); setFactType("all"); setPage(1); }} className="rounded-full border px-4 py-1.5 text-xs">Xóa</button>
+        <div><label className="text-xs">Tìm kiếm</label><Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="từ khóa trong fact" className="ml-2 w-auto text-xs" /></div>
+        <Button variant="dark" size="sm" onClick={apply}>Lọc</Button>
+        <Button variant="outline" size="sm" onClick={() => { setQ(""); setFactType("all"); setPage(1); }}>Xóa</Button>
       </AdminFilterBar>
       {msg && <div className="rounded-lg bg-red-50 border border-red-200 p-2 text-xs text-red-700">{msg}</div>}
       <AdminTable columns={["#", "Fact type", "Entities", "Nội dung", "Conf.", "Weight", "Source"]} emptyText="Không có fact — chọn user rồi bấm Lọc">

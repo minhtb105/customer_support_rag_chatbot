@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { adminListPrompts, adminGetPromptTone, adminCreatePromptDraft, adminApprovePrompt, adminRejectPrompt, adminDryRun, fmtDT } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const tones = ["strict","friendly","balanced","diabetes","hypertension","respiratory","mental","soap","who_rag","evaluation"];
 
@@ -60,8 +62,8 @@ export default function PromptsPage(){
           <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
             <h2 className="text-sm font-semibold">Tạo Draft (chỉnh sửa)</h2>
             <textarea value={draft} onChange={(e)=>setDraft(e.target.value)} rows={10} className="mt-2 w-full rounded border p-2 text-xs" />
-            <input value={desc} onChange={(e)=>setDesc(e.target.value)} placeholder="description" className="mt-2 w-full rounded border p-2 text-xs" />
-            <button onClick={create} className="mt-2 rounded-full bg-blue-600 text-white px-4 py-2 text-xs">Tạo Draft (pending_approval)</button>
+            <Input value={desc} onChange={(e)=>setDesc(e.target.value)} placeholder="description" className="mt-2 text-xs" />
+            <Button onClick={create} className="mt-2">Tạo Draft (pending_approval)</Button>
             {msg && <div className="mt-2 text-xs bg-amber-50 border p-2 rounded dark:bg-amber-950 dark:border-amber-800 dark:text-amber-100">{msg}</div>}
           </div>
         </div>
@@ -70,7 +72,7 @@ export default function PromptsPage(){
         <h2 className="text-sm font-semibold">Dry-run preview — 5 queries (golden hoặc tự nhập)</h2>
         <p className="text-xs text-slate-500 dark:text-slate-400">Nếu để trống queries, hệ thống dùng 5 golden queries của tone. Hoặc nhập mỗi dòng 1 query (tối đa 10).</p>
         <textarea value={dryQueries} onChange={(e)=>setDryQueries(e.target.value)} rows={5} placeholder={"Nhập query tùy ý, mỗi dòng 1 câu\nvd: Ngưỡng chẩn đoán đái tháo đường là bao nhiêu?"} className="mt-2 w-full rounded border p-2 text-xs" />
-        <button onClick={doDry} disabled={dryLoading} className="mt-2 rounded-full bg-emerald-600 text-white px-4 py-2 text-xs disabled:opacity-50">{dryLoading?"Đang chạy 5 queries...":"Chạy dry-run 5 queries"}</button>
+        <Button variant="success" onClick={doDry} disabled={dryLoading} className="mt-2">{dryLoading?"Đang chạy 5 queries...":"Chạy dry-run 5 queries"}</Button>
         {dryRes && (
           <div className="mt-3 space-y-2">
             {dryRes.results?.map((r:any,i:number)=>(
@@ -95,8 +97,8 @@ export default function PromptsPage(){
                 <td className="p-2"><span className={`rounded-full px-2 py-0.5 border text-[11px] ${v.status==="active"?"bg-emerald-50 border-emerald-200 dark:bg-emerald-950 dark:border-emerald-800": v.status==="pending_approval"?"bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800":"bg-slate-100 dark:bg-slate-800 dark:border-slate-700"}`}>{v.status}</span></td>
                 <td className="p-2 text-[11px]">{fmtDT(v.created_at)}</td>
                 <td className="p-2 flex gap-1">
-                  {v.status==="pending_approval" && <><button onClick={()=>approve(v.version)} className="rounded bg-emerald-600 text-white px-2 py-1">Approve (2nd step)</button><button onClick={()=>reject(v.version)} className="rounded border px-2 py-1">Reject</button></>}
-                  {v.status==="archived" && <button onClick={()=>approve(v.version)} className="rounded border px-2 py-1">Rollback → active</button>}
+                  {v.status==="pending_approval" && <><Button variant="success" size="sm" onClick={()=>approve(v.version)}>Approve (2nd step)</Button><Button variant="outline" size="sm" onClick={()=>reject(v.version)}>Reject</Button></>}
+                  {v.status==="archived" && <Button variant="outline" size="sm" onClick={()=>approve(v.version)}>Rollback → active</Button>}
                 </td>
               </tr>
             ))}

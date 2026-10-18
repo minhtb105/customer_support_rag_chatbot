@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { adminListUsers, adminUpdateUser, adminVerifyExpert, API_BASE } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function AdminUsersPage() {
   const { user, loading } = useAuth();
@@ -41,15 +43,15 @@ export default function AdminUsersPage() {
       <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Tạo expert mới (admin)</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-5">
-          <input placeholder="username" value={form.username} onChange={(e)=>setForm({...form, username:e.target.value})} className="rounded border px-2 py-1 text-xs" />
-          <input placeholder="password" type="password" value={form.password} onChange={(e)=>setForm({...form, password:e.target.value})} className="rounded border px-2 py-1 text-xs" />
-          <input placeholder="email" value={form.email} onChange={(e)=>setForm({...form, email:e.target.value})} className="rounded border px-2 py-1 text-xs" />
-          <input placeholder="full name" value={form.full_name} onChange={(e)=>setForm({...form, full_name:e.target.value})} className="rounded border px-2 py-1 text-xs" />
+          <Input placeholder="username" value={form.username} onChange={(e)=>setForm({...form, username:e.target.value})} className="text-xs" />
+          <Input placeholder="password" type="password" value={form.password} onChange={(e)=>setForm({...form, password:e.target.value})} className="text-xs" />
+          <Input placeholder="email" value={form.email} onChange={(e)=>setForm({...form, email:e.target.value})} className="text-xs" />
+          <Input placeholder="full name" value={form.full_name} onChange={(e)=>setForm({...form, full_name:e.target.value})} className="text-xs" />
           <select value={form.role} onChange={(e)=>setForm({...form, role:e.target.value})} className="rounded border px-2 py-1 text-xs">
             <option value="doctor">doctor</option><option value="pharmacist">pharmacist</option><option value="specialist">specialist</option><option value="admin">admin</option><option value="user">user</option>
           </select>
         </div>
-        <button onClick={createExpert} className="mt-3 rounded-full bg-slate-900 text-white px-4 py-2 text-xs">Tạo</button>
+        <Button variant="dark" onClick={createExpert} className="mt-3">Tạo</Button>
       </div>
       <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <h2 className="text-sm font-semibold">Danh sách users ({users.length})</h2>

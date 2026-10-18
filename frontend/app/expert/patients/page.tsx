@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { getDoctorPatients } from "@/lib/api";
 import StatusBadge from "@/components/StatusBadge";
+import { Input } from "@/components/ui/input";
 
 const badge: Record<string,string> = {
   critical: "bg-red-100 text-red-800 border-red-200",
@@ -30,7 +31,7 @@ export default function DoctorPatientsPage(){
     <div className="space-y-4">
       <div><h1 className="text-xl font-bold">Hàng đợi bệnh nhân (Glucose)</h1><p className="text-sm text-slate-600 dark:text-slate-300">Sắp xếp theo mức ưu tiên: critical → trend → watch → safe.</p></div>
       <div className="rounded-2xl border bg-white p-4 shadow-sm dark:bg-slate-900 dark:border-slate-700">
-        <input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="Lọc theo username..." className="w-full rounded-lg border px-3 py-2 text-sm dark:bg-slate-900 dark:border-slate-700 min-h-[44px]" />
+        <Input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="Lọc theo username..." className="text-sm dark:bg-slate-900 dark:border-slate-700" />
       </div>
       {err && <div role="alert" className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700">{err}</div>}
       <div className="grid gap-3">

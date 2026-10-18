@@ -6,6 +6,8 @@ import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { TriangleAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function TracingListPage(){
   const { user, loading } = useAuth();
@@ -48,14 +50,14 @@ export default function TracingListPage(){
         <div className="text-xs text-slate-500 dark:text-slate-400">Tổng {total} traces · <Link href="/admin/tracing/chunks" className="text-blue-700 hover:underline font-medium dark:text-blue-300">Chunks →</Link> · <Link href="/admin/tracing/memory" className="text-blue-700 hover:underline font-medium dark:text-blue-300">Memory →</Link></div>
       </div>
       <AdminFilterBar>
-        <div><label className="text-xs" htmlFor="trace-q">Tìm kiếm</label><input id="trace-q" aria-label="Tìm kiếm trace (câu hỏi, câu trả lời hoặc ID)" value={q} onChange={(e)=>setQ(e.target.value)} placeholder="câu hỏi/câu trả lời/ID" className="ml-2 rounded border px-2 py-1 text-xs" /></div>
+        <div><label className="text-xs" htmlFor="trace-q">Tìm kiếm</label><Input id="trace-q" aria-label="Tìm kiếm trace (câu hỏi, câu trả lời hoặc ID)" value={q} onChange={(e)=>setQ(e.target.value)} placeholder="câu hỏi/câu trả lời/ID" className="ml-2 w-auto text-xs" /></div>
         <div><label className="text-xs" htmlFor="trace-tone">Tone</label><select id="trace-tone" aria-label="Lọc theo tone" value={tone} onChange={(e)=>setTone(e.target.value)} className="ml-2 rounded border px-2 py-1 text-xs min-h-[44px]"><option value="">tất cả</option><option value="diabetes">diabetes</option><option value="hypertension">hypertension</option><option value="respiratory">respiratory</option><option value="mental">mental</option><option value="balanced">balanced</option></select></div>
         <div><label className="text-xs" htmlFor="trace-sort">Sắp xếp</label><select id="trace-sort" aria-label="Sắp xếp theo" value={sortBy} onChange={(e)=>setSortBy(e.target.value)} className="ml-2 rounded border px-2 py-1 text-xs min-h-[44px]"><option value="created_at">Thời gian tạo</option><option value="total_latency_ms">Độ trễ</option></select>
         <select aria-label="Thứ tự sắp xếp" value={order} onChange={(e)=>setOrder(e.target.value)} className="ml-2 rounded border px-2 py-1 text-xs min-h-[44px]"><option value="desc">Mới nhất / cao nhất</option><option value="asc">Cũ nhất / thấp nhất</option></select></div>
         <div><label className="text-xs" htmlFor="trace-from">Từ ngày</label><input id="trace-from" aria-label="Lọc từ ngày (ISO)" type="date" value={from} onChange={(e)=>setFrom(e.target.value)} className="ml-2 rounded border px-2 py-1 text-xs min-h-[44px]" /></div>
         <div><label className="text-xs" htmlFor="trace-to">Đến ngày</label><input id="trace-to" aria-label="Lọc đến ngày (ISO)" type="date" value={to} onChange={(e)=>setTo(e.target.value)} className="ml-2 rounded border px-2 py-1 text-xs min-h-[44px]" /></div>
-        <button onClick={()=>load(1)} className="rounded-full bg-slate-900 text-white px-4 py-1.5 text-xs min-h-[44px]">Lọc</button>
-        <button onClick={()=>{ setQ(""); setTone(""); setSortBy("created_at"); setOrder("desc"); setFrom(""); setTo(""); load(1); }} className="rounded-full border px-4 py-1.5 text-xs min-h-[44px]">Xóa</button>
+        <Button variant="dark" size="sm" onClick={()=>load(1)}>Lọc</Button>
+        <Button variant="outline" size="sm" onClick={()=>{ setQ(""); setTone(""); setSortBy("created_at"); setOrder("desc"); setFrom(""); setTo(""); load(1); }}>Xóa</Button>
       </AdminFilterBar>
       <p className="text-[11px] text-slate-500 dark:text-slate-400">Lưu ý: traces chỉ giữ 30 ngày — khoảng ngày cũ hơn sẽ trả rỗng.</p>
       {msg && <div className="rounded-lg bg-red-50 border border-red-200 p-2 text-xs text-red-700">{msg}</div>}

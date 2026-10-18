@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { adminListTriageEvents, fmtDT } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function TriageMonitorPage() {
   const { user, loading, isAdmin } = useAuth();
@@ -51,8 +53,8 @@ export default function TriageMonitorPage() {
           <option value="true">Khẩn cấp</option>
           <option value="false">Thường</option>
         </select>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm trong excerpt..." className="rounded-lg border px-3 py-2 text-sm" />
-        <button onClick={() => { setPage(1); load(); }} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white">Lọc</button>
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm trong excerpt..." className="w-auto text-sm" />
+        <Button variant="dark" onClick={() => { setPage(1); load(); }}>Lọc</Button>
       </div>
       {err && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">{err}</div>}
       <div className="grid gap-2">
@@ -74,9 +76,9 @@ export default function TriageMonitorPage() {
         {!events.length && !err && <div className="rounded-2xl border border-dashed bg-slate-50 p-8 text-center text-sm text-slate-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300">Chưa có event nào.</div>}
       </div>
       <div className="flex items-center gap-3">
-        <button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="rounded-lg border bg-white px-4 py-2 text-sm disabled:opacity-50 dark:bg-slate-900 dark:border-slate-700">Trước</button>
+        <Button variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Trước</Button>
         <span className="text-xs text-slate-600 dark:text-slate-300">Trang {page} · {total} events</span>
-        <button disabled={page * limit >= total} onClick={() => setPage((p) => p + 1)} className="rounded-lg border bg-white px-4 py-2 text-sm disabled:opacity-50 dark:bg-slate-900 dark:border-slate-700">Sau</button>
+        <Button variant="outline" disabled={page * limit >= total} onClick={() => setPage((p) => p + 1)}>Sau</Button>
       </div>
     </div>
   );

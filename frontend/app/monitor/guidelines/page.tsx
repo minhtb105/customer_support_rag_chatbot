@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { listGuidelines, decideGuideline, triggerGuidelineCheck, fmtDT } from "@/lib/api";
 import { useMonitorList, MonitorMsg, MonitorLoading } from "@/components/MonitorList";
+import { Button } from "@/components/ui/button";
 
 type GItem = {
   id: string;
@@ -59,12 +60,12 @@ export default function GuidelinesPage() {
           <option value="rejected">rejected</option>
           <option value="superseded">superseded</option>
         </select>
-        <button onClick={fetchList} className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">
+        <Button variant="outline" onClick={fetchList}>
           Làm mới
-        </button>
-        <button onClick={trigger} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900">
+        </Button>
+        <Button variant="dark" onClick={trigger}>
           Kiểm tra ngay
-        </button>
+        </Button>
         <span className="py-2 text-xs text-slate-500 dark:text-slate-400">Tổng: {total}</span>
       </div>
       <MonitorMsg msg={msg} />
@@ -90,12 +91,12 @@ export default function GuidelinesPage() {
                   </div>
                   {it.status === "pending_review" && (
                     <div className="flex gap-2">
-                      <button onClick={() => decide(it.id, "approved")} className="rounded-full bg-emerald-600 px-4 py-2 min-h-[44px] text-xs text-white hover:bg-emerald-700">
+                      <Button variant="success" size="sm" onClick={() => decide(it.id, "approved")}>
                         Duyệt
-                      </button>
-                      <button onClick={() => decide(it.id, "rejected")} className="rounded-full border bg-white px-4 py-2 min-h-[44px] text-xs hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => decide(it.id, "rejected")}>
                         Từ chối
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>

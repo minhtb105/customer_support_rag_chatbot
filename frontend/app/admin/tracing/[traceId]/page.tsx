@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { adminGetTrace, adminTriggerRagas, adminAddTraceFeedback, parseFailedMetrics, formatRawJson, fmtDT } from "@/lib/api";
 import { useParams } from "next/navigation";
 import { Check, X, Copy, Star, ChevronRight, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const TABS = ["Tổng quan", "Chunks", "Memory", "RAGAS", "Raw"] as const;
 
@@ -80,7 +82,7 @@ export default function TraceDetailPage(){
     setLoading(true);
     try{ await adminTriggerRagas(traceId); await load(); setMsg("Đã tính RAGAS"); }catch(e:any){ setMsg(e.message); }finally{ setLoading(false); }
   };
-  if(!data) return <div className="p-6 text-sm space-y-2"><div>{msg || "Đang tải trace..."}</div>{!data && !msg && <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />}{!data && !msg && <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />}<button onClick={load} className="rounded-full border px-4 py-2 text-xs hover:bg-slate-50 dark:hover:bg-slate-800 min-h-[44px]">Tải lại</button></div>;
+  if(!data) return <div className="p-6 text-sm space-y-2"><div>{msg || "Đang tải trace..."}</div>{!data && !msg && <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />}{!data && !msg && <div className="h-4 w-1/2 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />}<Button variant="outline" size="sm" onClick={load}>Tải lại</Button></div>;
   const { trace, spans, chunks, ragas, review } = data;
   const MEMORY_DATASETS = ["short_term_memory", "episodic_memory", "long_term_memory"];
   const memoryRows = (chunks || []).filter((c: any) => MEMORY_DATASETS.includes(c.dataset));
@@ -211,7 +213,7 @@ export default function TraceDetailPage(){
       <div className="rounded-2xl border bg-white dark:bg-slate-900 dark:border-slate-700 p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">RAGAS (on-demand)</h2>
-          <button onClick={trigger} disabled={loading} className="rounded-full bg-violet-600 text-white px-3 py-1 text-xs disabled:opacity-50 min-h-[44px]">{loading?"Đang tính...":"Tính RAGAS"}</button>
+          <Button variant="accent" size="sm" onClick={trigger} disabled={loading}>{loading?"Đang tính...":"Tính RAGAS"}</Button>
         </div>
         {ragas ? (
           <div className="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -246,8 +248,8 @@ export default function TraceDetailPage(){
           ))}
         </div>
         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-          <input value={fbComment} onChange={(e)=>setFbComment(e.target.value)} placeholder="Nhận xét (tùy chọn)" aria-label="Nhận xét phản hồi" className="flex-1 rounded border px-3 py-2 text-xs min-h-[44px] dark:bg-slate-800 dark:border-slate-700" />
-          <button disabled={fbBusy || fbScore<1} onClick={async()=>{ setFbBusy(true); try{ await adminAddTraceFeedback(traceId, { score: fbScore, comment: fbComment || undefined }); setFbScore(0); setFbComment(""); await load(); setMsg("Đã lưu phản hồi"); }catch(e:any){ setMsg(e.message); }finally{ setFbBusy(false); } }} className="rounded-full bg-violet-600 text-white px-4 py-2 text-xs disabled:opacity-50 min-h-[44px]">Gửi phản hồi</button>
+          <Input value={fbComment} onChange={(e)=>setFbComment(e.target.value)} placeholder="Nhận xét (tùy chọn)" aria-label="Nhận xét phản hồi" className="flex-1 text-xs dark:bg-slate-800 dark:border-slate-700" />
+          <Button variant="accent" size="sm" disabled={fbBusy || fbScore<1} onClick={async()=>{ setFbBusy(true); try{ await adminAddTraceFeedback(traceId, { score: fbScore, comment: fbComment || undefined }); setFbScore(0); setFbComment(""); await load(); setMsg("Đã lưu phản hồi"); }catch(e:any){ setMsg(e.message); }finally{ setFbBusy(false); } }}>Gửi phản hồi</Button>
         </div>
         <div className="mt-3 space-y-2">
           {((data as any).feedback || []).map((f:any)=>(

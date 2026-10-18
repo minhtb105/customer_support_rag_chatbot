@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { listAlerts, decideAlert, triggerSafetyCheck, fmtDT } from "@/lib/api";
 import { useMonitorList, MonitorMsg, MonitorLoading } from "@/components/MonitorList";
+import { Button } from "@/components/ui/button";
 
 type AItem = {
   id: string;
@@ -68,15 +69,15 @@ export default function AlertsPage() {
           <option value="medium">medium</option>
           <option value="low">low</option>
         </select>
-        <button onClick={fetchList} className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">
+        <Button variant="outline" onClick={fetchList}>
           Làm mới
-        </button>
-        <button onClick={() => trigger("fda")} className="rounded-lg bg-slate-900 px-3 py-2 text-xs text-white hover:bg-black dark:bg-slate-100 dark:text-slate-900">
+        </Button>
+        <Button variant="dark" size="sm" onClick={() => trigger("fda")}>
           FDA daily
-        </button>
-        <button onClick={() => trigger("byt")} className="rounded-lg border bg-white px-3 py-2 text-xs hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => trigger("byt")}>
           BYT weekly
-        </button>
+        </Button>
         <span className="py-2 text-xs text-slate-500 dark:text-slate-400">Tổng pending: {total}</span>
       </div>
       <MonitorMsg msg={msg} />
@@ -107,12 +108,12 @@ export default function AlertsPage() {
                     <div className="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">{it.id.slice(0, 8)} · {it.status}</div>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => decide(it.id, "approved")} className="rounded-full bg-emerald-600 px-4 py-2 min-h-[44px] text-xs text-white hover:bg-emerald-700">
+                    <Button variant="success" size="sm" onClick={() => decide(it.id, "approved")}>
                       Duyệt
-                    </button>
-                    <button onClick={() => decide(it.id, "dismissed")} className="rounded-full border bg-white px-4 py-2 min-h-[44px] text-xs hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800">
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => decide(it.id, "dismissed")}>
                       Bỏ qua
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>

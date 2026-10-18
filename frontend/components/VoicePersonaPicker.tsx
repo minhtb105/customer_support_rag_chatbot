@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { PERSONAS, DEFAULT_PERSONA_ID } from "@/lib/personas";
 import { playServerAudio } from "@/lib/voice";
+import { Button } from "@/components/ui/button";
+import { Volume2 } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -64,28 +66,29 @@ export default function VoicePersonaPicker({
             <div className="text-[11px] text-slate-500 dark:text-slate-400">{REGION_LABEL[p.region] || p.region}</div>
             <div className="mt-2 min-h-[3rem] text-xs italic text-slate-600 dark:text-slate-300">“{p.greeting}”</div>
             <div className="mt-3 flex justify-center gap-2">
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => playServerAudio(p.greeting, { persona: p.id })}
-                className="rounded-lg border px-4 py-2 text-xs min-h-[44px] hover:bg-slate-50 dark:hover:bg-slate-800"
               >
-                🔊 Nghe thử
-              </button>
-              <button
+                <Volume2 aria-hidden /> Nghe thử
+              </Button>
+              <Button
+                size="sm"
                 onClick={() => save(p.id)}
                 disabled={busy !== ""}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 min-h-[44px] disabled:opacity-50"
               >
                 {busy === p.id ? "Đang lưu…" : selected === p.id ? "✓ Đã chọn" : "Chọn"}
-              </button>
+              </Button>
             </div>
           </div>
         ))}
       </div>
       {showSkip && (
         <div className="mt-4 text-center">
-          <button onClick={() => save("lan")} disabled={busy !== ""} className="text-xs text-slate-500 dark:text-slate-400 underline min-h-[44px] px-3 py-2">
+          <Button variant="ghost" size="sm" onClick={() => save("lan")} disabled={busy !== ""} className="text-xs text-slate-500 dark:text-slate-400 underline px-3">
             Bỏ qua (dùng giọng Bắc mặc định)
-          </button>
+          </Button>
         </div>
       )}
       {msg && <div className="mt-2 text-xs text-red-600">{msg}</div>}

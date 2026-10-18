@@ -5,6 +5,8 @@ import { AdminTable, AdminEmpty, AdminPagination, AdminFilterBar, AdminSkeletonR
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function ChunksPage(){
   const { user, loading } = useAuth();
@@ -75,9 +77,9 @@ export default function ChunksPage(){
             {datasets.map((d)=><option key={d} value={d}>{d}</option>)}
           </select>
         </div>
-        <div><label className="text-xs">Tìm kiếm</label><input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="từ khóa trong chunk" className="ml-2 rounded border px-2 py-1 text-xs" /></div>
-        <button onClick={apply} className="rounded-full bg-slate-900 text-white px-4 py-1.5 text-xs">Lọc</button>
-        <button onClick={()=>{ setQ(""); setDataset("all"); setPage(1); loadChunks(1, strategy, "all", ""); }} className="rounded-full border px-4 py-1.5 text-xs">Xóa</button>
+        <div><label className="text-xs">Tìm kiếm</label><Input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="từ khóa trong chunk" className="ml-2 w-auto text-xs" /></div>
+        <Button variant="dark" size="sm" onClick={apply}>Lọc</Button>
+        <Button variant="outline" size="sm" onClick={()=>{ setQ(""); setDataset("all"); setPage(1); loadChunks(1, strategy, "all", ""); }}>Xóa</Button>
       </AdminFilterBar>
       {msg && <div className="rounded-lg bg-red-50 border border-red-200 p-2 text-xs text-red-700">{msg}</div>}
       <AdminTable columns={["#", "Source", "File/dataset", "Trang", "Chunk idx", "Nội dung", "Cập nhật"]} emptyText="Không có chunk">

@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { getReviews, getReviewDetail, decideReview, API_BASE, parseFailedMetrics, fmtDT } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function ExpertQueuePage() {
   const { user, loading } = useAuth();
@@ -104,12 +106,12 @@ export default function ExpertQueuePage() {
               </div>
               <div>
                 <label className="text-xs">Expert notes</label>
-                <input value={notes} onChange={(e)=>setNotes(e.target.value)} className="w-full rounded-lg border p-2 text-xs" placeholder="ghi chú duyệt" />
+                <Input value={notes} onChange={(e)=>setNotes(e.target.value)} className="text-xs" placeholder="ghi chú duyệt" />
               </div>
               <div className="flex gap-2">
-                <button onClick={()=>decide("approved")} className="rounded-full bg-emerald-600 text-white px-4 py-2 text-xs">Duyệt (approved)</button>
-                <button onClick={()=>decide("revised")} className="rounded-full bg-blue-600 text-white px-4 py-2 text-xs">Duyệt có sửa (revised)</button>
-                <button onClick={()=>decide("rejected")} className="rounded-full bg-red-600 text-white px-4 py-2 text-xs">Từ chối</button>
+                <Button variant="success" size="sm" onClick={()=>decide("approved")}>Duyệt (approved)</Button>
+                <Button size="sm" onClick={()=>decide("revised")}>Duyệt có sửa (revised)</Button>
+                <Button variant="destructive" size="sm" onClick={()=>decide("rejected")}>Từ chối</Button>
               </div>
             </div>
           )}
